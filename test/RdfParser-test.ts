@@ -15,6 +15,7 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(require('@rdfjs/data-model'));
     expect((<any> instance).baseIRI).toBe('');
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with empty args', () => {
@@ -23,6 +24,7 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(DataFactory);
     expect((<any> instance).baseIRI).toBe('');
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom data factory', () => {
@@ -32,6 +34,7 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(dataFactory);
     expect((<any> instance).baseIRI).toBe('');
     expect((<any> instance).defaultGraph).toBe('abc');
+    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom base IRI', () => {
@@ -40,6 +43,7 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(DataFactory);
     expect((<any> instance).baseIRI).toEqual('myBaseIRI');
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom default graph', () => {
@@ -49,16 +53,27 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(DataFactory);
     expect((<any> instance).baseIRI).toEqual('');
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
+    expect((<any> instance).options.strict).toBeFalsy();
   });
 
-  it('should be constructable with args with a custom data factory, base IRI and default graph', () => {
+  it('should be constructable with args with strict', () => {
+    const instance = new RdfaParser({ strict: true });
+    expect(instance).toBeInstanceOf(RdfaParser);
+    expect((<any> instance).dataFactory).toBe(DataFactory);
+    expect((<any> instance).baseIRI).toEqual('');
+    expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).options.strict).toEqual(true);
+  });
+
+  it('should be constructable with args with a custom data factory, base IRI, strict and default graph', () => {
     const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => 'abc' };
     const defaultGraph = DataFactory.namedNode('abc');
-    const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph });
+    const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph, strict: true });
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(dataFactory);
     expect((<any> instance).baseIRI).toEqual('myBaseIRI');
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
+    expect((<any> instance).options.strict).toEqual(true);
   });
 
   describe('a default instance', () => {

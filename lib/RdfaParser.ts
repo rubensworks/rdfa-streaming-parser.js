@@ -43,7 +43,7 @@ export class RdfaParser extends Transform {
     this.baseIRI = options.baseIRI || '';
     this.defaultGraph = options.defaultGraph || this.dataFactory.defaultGraph();
 
-    this.parser = this.initializeParser();
+    this.parser = this.initializeParser(options.strict);
 
     this.activeTagStack.push({
       baseIRI: this.baseIRI,
@@ -74,17 +74,12 @@ export class RdfaParser extends Transform {
     // Determine the parent tag
     const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
 
-    // Create a new active tag
-    const activeTag: IActiveTag = {};
-    if (parentTag) {
-      // Inherit language scope and baseIRI from parent
-      activeTag.language = parentTag.language;
-      activeTag.baseIRI = parentTag.baseIRI;
-      activeTag.subject = parentTag.subject;
-    } else {
-      activeTag.baseIRI = this.baseIRI;
-      activeTag.subject = parentTag.subject;
-    }
+    // Create a new active tag and inherit language scope and baseIRI from parent
+    const activeTag: IActiveTag = {
+      baseIRI: parentTag.baseIRI,
+      language: parentTag.language,
+      subject: parentTag.subject,
+    };
     this.activeTagStack.push(activeTag);
 
     // Set subject on about attribute
@@ -146,11 +141,10 @@ export class RdfaParser extends Transform {
     this.push(this.dataFactory.quad(subject, predicate, object, this.defaultGraph));
   }
 
-  protected initializeParser(): HtmlParser {
+  protected initializeParser(strict: boolean): HtmlParser {
     return new HtmlParser(
       <DomHandler> <any> {
         onclosetag: () => this.onTagClose(),
-        onend: () => this.push(null),
         onerror: (error: Error) => this.emit('error', error),
         onopentag: (name: string, attributes: {[s: string]: string}) => this.onTagOpen(name, attributes),
         ontext: (data: string) => this.onText(data),
@@ -158,6 +152,7 @@ export class RdfaParser extends Transform {
       {
         decodeEntities: true,
         recognizeSelfClosing: true,
+        xmlMode: strict,
       });
   }
 
@@ -175,4 +170,5 @@ export interface IRdfaParserOptions {
   dataFactory?: RDF.DataFactory;
   baseIRI?: string;
   defaultGraph?: RDF.Term;
+  strict?: boolean;
 }
