@@ -1,4 +1,5 @@
 import {DomHandler} from "domhandler";
+import * as RDF from "rdf-js";
 import EventEmitter = NodeJS.EventEmitter;
 import {Parser as HtmlParser} from "htmlparser2";
 import {PassThrough, Transform, TransformCallback} from "stream";
@@ -9,12 +10,19 @@ import {PassThrough, Transform, TransformCallback} from "stream";
 export class RdfaParser extends Transform {
 
   private readonly options: IRdfaParserOptions;
+  private readonly dataFactory: RDF.DataFactory;
+  private readonly baseIRI: string;
+  private readonly defaultGraph?: RDF.Term;
   private readonly parser: HtmlParser;
 
   constructor(options?: IRdfaParserOptions) {
     super({ objectMode: true });
     options = options || {};
     this.options = options;
+
+    this.dataFactory = options.dataFactory || require('@rdfjs/data-model');
+    this.baseIRI = options.baseIRI || '';
+    this.defaultGraph = options.defaultGraph || this.dataFactory.defaultGraph();
 
     this.parser = this.initializeParser();
   }
@@ -68,5 +76,7 @@ export class RdfaParser extends Transform {
 }
 
 export interface IRdfaParserOptions {
-
+  dataFactory?: RDF.DataFactory;
+  baseIRI?: string;
+  defaultGraph?: RDF.Term;
 }
