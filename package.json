@@ -1,0 +1,96 @@
+{
+  "name": "rdfa-streaming-parser",
+  "version": "1.0.0",
+  "description": "A fast and lightweight streaming RDFa parser",
+  "keywords": [
+    "json",
+    "linked data",
+    "semantic web",
+    "rdfa",
+    "rdfa",
+    "rdf",
+    "rdfjs",
+    "streaming",
+    "asynchronous"
+  ],
+  "main": "index.js",
+  "typings": "index",
+  "repository": "git@github.com:rubensworks/streaming-rdfa-parser.js.git",
+  "author": "Ruben Taelman <rubensworks@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/rubensworks/streaming-rdfa-parser.js/issues"
+  },
+  "homepage": "https://github.com/rubensworks/streaming-rdfa-parser.js#readme",
+  "license": "MIT",
+  "files": [
+    "lib/**/*.d.ts",
+    "lib/**/*.js",
+    "index.d.ts",
+    "index.js"
+  ],
+  "dependencies": {
+    "@rdfjs/data-model": "^1.1.1",
+    "@types/htmlparser2": "^3.10.0",
+    "@types/rdf-js": "^2.0.1",
+    "htmlparser2": "^3.10.1"
+  },
+  "pre-commit": [
+    "build",
+    "lint",
+    "test"
+  ],
+  "devDependencies": {
+    "@types/jest": "^24.0.1",
+    "@types/jest-each": "^0.3.4",
+    "@types/node": "^11.9.0",
+    "arrayify-stream": "^1.0.0",
+    "coveralls": "^3.0.0",
+    "jest": "^24.3.0",
+    "jest-each": "^24.3.0",
+    "jest-rdf": "^1.3.0",
+    "manual-git-changelog": "^1.0.1",
+    "pre-commit": "^1.2.2",
+    "rdf-test-suite": "^1.5.3",
+    "streamify-string": "^1.0.1",
+    "ts-jest": "^24.0.0",
+    "tslint": "^5.8.0",
+    "tslint-eslint-rules": "^5.3.1",
+    "typescript": "^3.3.1"
+  },
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "test/tsconfig.json"
+      }
+    },
+    "setupFilesAfterEnv": [
+      "jest-rdf"
+    ],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx)$"
+    ],
+    "testRegex": "(/test/.*|(\\.|/)(test|spec))\\.ts$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "collectCoverage": true,
+    "testEnvironment": "node"
+  },
+  "scripts": {
+    "test": "jest ${1}",
+    "test-watch": "jest ${1} --watch",
+    "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls",
+    "lint": "tslint index.ts lib/**/*.ts test/**/*.ts --exclude '**/*.d.ts'",
+    "build": "tsc",
+    "validate": "npm ls",
+    "prepare": "npm run build",
+    "version": "manual-git-changelog onversion",
+    "spec": "rdf-test-suite spec/parser.js https://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -e",
+    "spec-earl": "rdf-test-suite spec/parser.js https://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa.ttl",
+    "spec-clean": "rm -r .rdf-test-suite-cache/"
+  }
+}
