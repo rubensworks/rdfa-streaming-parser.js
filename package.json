@@ -32,7 +32,8 @@
     "@rdfjs/data-model": "^1.1.1",
     "@types/htmlparser2": "^3.10.0",
     "@types/rdf-js": "^2.0.1",
-    "htmlparser2": "^3.10.1"
+    "htmlparser2": "^3.10.1",
+    "relative-to-absolute-iri": "^1.0.2"
   },
   "pre-commit": [
     "build",
@@ -89,7 +90,7 @@
     "validate": "npm ls",
     "prepare": "npm run build",
     "version": "manual-git-changelog onversion",
-    "spec": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -e",
+    "spec": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/",
     "spec-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa.ttl",
     "spec-clean": "rm -r .rdf-test-suite-cache/"
   }

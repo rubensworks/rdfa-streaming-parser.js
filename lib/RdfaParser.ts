@@ -1,7 +1,8 @@
 import {DomHandler} from "domhandler";
-import * as RDF from "rdf-js";
 import EventEmitter = NodeJS.EventEmitter;
 import {Parser as HtmlParser} from "htmlparser2";
+import * as RDF from "rdf-js";
+import {resolve} from "relative-to-absolute-iri";
 import {PassThrough, Transform, TransformCallback} from "stream";
 
 /**
@@ -9,11 +10,15 @@ import {PassThrough, Transform, TransformCallback} from "stream";
  */
 export class RdfaParser extends Transform {
 
+  public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
   private readonly baseIRI: string;
   private readonly defaultGraph?: RDF.Term;
   private readonly parser: HtmlParser;
+
+  private readonly activeTagStack: IActiveTag[] = [];
 
   constructor(options?: IRdfaParserOptions) {
     super({ objectMode: true });
@@ -25,6 +30,11 @@ export class RdfaParser extends Transform {
     this.defaultGraph = options.defaultGraph || this.dataFactory.defaultGraph();
 
     this.parser = this.initializeParser();
+
+    this.activeTagStack.push({
+      baseIRI: this.baseIRI,
+      subject: this.dataFactory.namedNode(this.baseIRI),
+    });
   }
 
   /**
@@ -46,16 +56,68 @@ export class RdfaParser extends Transform {
     callback();
   }
 
-  public onTagOpen(name: string, attributes: {[s: string]: string}) {
-    // TODO
+  protected onTagOpen(name: string, attributes: {[s: string]: string}) {
+    // Determine the parent tag
+    const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+
+    // Create a new active tag
+    const activeTag: IActiveTag = {};
+    if (parentTag) {
+      // Inherit language scope and baseIRI from parent
+      activeTag.language = parentTag.language;
+      activeTag.baseIRI = parentTag.baseIRI;
+      activeTag.subject = parentTag.subject;
+    } else {
+      activeTag.baseIRI = this.baseIRI;
+      activeTag.subject = parentTag.subject;
+    }
+    this.activeTagStack.push(activeTag);
+
+    // Set subject on about attribute
+    if (attributes.about) {
+      activeTag.subject = this.dataFactory.namedNode(resolve(attributes.about, activeTag.baseIRI));
+    }
+
+    // Set predicate on property attribute
+    if (attributes.property) {
+      activeTag.predicate = this.dataFactory.namedNode(attributes.property);
+    }
   }
 
-  public onTagClose() {
-    // TODO
+  protected onText(data: string) {
+    // Save the text inside the active tag
+    const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+    if (!activeTag.text) {
+      activeTag.text = [];
+    }
+    activeTag.text.push(data);
   }
 
-  public onText(data: string) {
-    // TODO
+  protected onTagClose() {
+    // Get the active tag
+    const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+
+    // Emit all triples that were determined in the active tag
+    if (activeTag.predicate && activeTag.text) {
+      this.emitTriple(
+        activeTag.subject,
+        activeTag.predicate,
+        this.dataFactory.literal(activeTag.text.join('')),
+      );
+    }
+
+    // Remove the active tag from the stack
+    this.activeTagStack.pop();
+  }
+
+  /**
+   * Emit the given triple to the stream.
+   * @param {Term} subject A subject term.
+   * @param {Term} predicate A predicate term.
+   * @param {Term} object An object term.
+   */
+  protected emitTriple(subject: RDF.Term, predicate: RDF.Term, object: RDF.Term) {
+    this.push(this.dataFactory.quad(subject, predicate, object, this.defaultGraph));
   }
 
   protected initializeParser(): HtmlParser {
@@ -73,6 +135,14 @@ export class RdfaParser extends Transform {
       });
   }
 
+}
+
+export interface IActiveTag {
+  subject?: RDF.Term;
+  predicate?: RDF.Term;
+  text?: string[];
+  baseIRI?: string;
+  language?: string;
 }
 
 export interface IRdfaParserOptions {

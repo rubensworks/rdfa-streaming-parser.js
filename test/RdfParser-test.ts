@@ -26,7 +26,7 @@ describe('RdfaParser', () => {
   });
 
   it('should be constructable with args with a custom data factory', () => {
-    const dataFactory: any = {defaultGraph: () => 'abc'};
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => 'abc' };
     const instance = new RdfaParser({dataFactory});
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(dataFactory);
@@ -52,7 +52,7 @@ describe('RdfaParser', () => {
   });
 
   it('should be constructable with args with a custom data factory, base IRI and default graph', () => {
-    const dataFactory: any = { defaultGraph: () => 'abc' };
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => 'abc' };
     const defaultGraph = DataFactory.namedNode('abc');
     const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph });
     expect(instance).toBeInstanceOf(RdfaParser);
@@ -66,7 +66,7 @@ describe('RdfaParser', () => {
     let parser;
 
     beforeEach(() => {
-      parser = new RdfaParser();
+      parser = new RdfaParser({ baseIRI: 'http://example.org/' });
     });
 
     describe('should error', () => {
@@ -74,10 +74,59 @@ describe('RdfaParser', () => {
     });
 
     describe('should parse', () => {
-      // 2.6
       it('an empty document', async () => {
         return expect(await parse(parser, ``))
           .toBeRdfIsomorphic([]);
+      });
+
+      it('property attributes to predicates', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://purl.org/dc/terms/title', '"The Trouble with Bob"'),
+          ]);
+      });
+
+      it('multi-line strings', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <h2 property="http://purl.org/dc/terms/title">The
+Trouble
+with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://purl.org/dc/terms/title', '"The\nTrouble\nwith Bob"'),
+          ]);
+      });
+
+      it('absolute about attributes to subjects', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <h2 about="http://example2.org/" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example2.org/', 'http://purl.org/dc/terms/title', '"The Trouble with Bob"'),
+          ]);
+      });
+
+      it('relative about attributes to subjects', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <h2 about="img.jpg" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/img.jpg', 'http://purl.org/dc/terms/title', '"The Trouble with Bob"'),
+          ]);
       });
     });
 
