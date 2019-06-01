@@ -35,6 +35,7 @@ export class RdfaParser extends Transform {
 
   public _transform(chunk: any, encoding: string, callback: TransformCallback): void {
     this.parser.write(chunk);
+    callback();
   }
 
   public onTagOpen(name: string, attributes: {[s: string]: string}) {
@@ -53,6 +54,7 @@ export class RdfaParser extends Transform {
     return new HtmlParser(
       <DomHandler> <any> {
         onclosetag: () => this.onTagClose(),
+        onend: () => this.push(null),
         onerror: (error: Error) => this.emit('error', error),
         onopentag: (name: string, attributes: {[s: string]: string}) => this.onTagOpen(name, attributes),
         ontext: (data: string) => this.onText(data),

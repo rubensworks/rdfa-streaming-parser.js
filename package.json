@@ -89,8 +89,8 @@
     "validate": "npm ls",
     "prepare": "npm run build",
     "version": "manual-git-changelog onversion",
-    "spec": "rdf-test-suite spec/parser.js https://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -e",
-    "spec-earl": "rdf-test-suite spec/parser.js https://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa.ttl",
+    "spec": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -e",
+    "spec-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa.ttl",
     "spec-clean": "rm -r .rdf-test-suite-cache/"
   }
 }
