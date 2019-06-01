@@ -12,6 +12,20 @@ export class RdfaParser extends Transform {
 
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 
+  protected static readonly PREDICATE_ATTRIBUTES: string[] = [
+    'property',
+    'rel',
+    'rev',
+    'typeof',
+  ];
+  protected static readonly OBJECT_ATTRIBUTES: string[] = [
+    'resource',
+    'href',
+    'content',
+    'src',
+    'typeof',
+  ];
+
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
   private readonly baseIRI: string;
@@ -78,9 +92,21 @@ export class RdfaParser extends Transform {
       activeTag.subject = this.dataFactory.namedNode(resolve(attributes.about, activeTag.baseIRI));
     }
 
-    // Set predicate on property attribute
-    if (attributes.property) {
-      activeTag.predicate = this.dataFactory.namedNode(attributes.property);
+    // Set predicate
+    for (const attributeName of RdfaParser.PREDICATE_ATTRIBUTES) {
+      if (attributes[attributeName]) {
+        activeTag.predicate = this.dataFactory.namedNode(attributes[attributeName]);
+      }
+    }
+
+    // Emit triples for all objects
+    if (activeTag.predicate) {
+      for (const attributeName of RdfaParser.OBJECT_ATTRIBUTES) {
+        if (attributes[attributeName]) {
+          const object = this.dataFactory.namedNode(resolve(attributes[attributeName], activeTag.baseIRI));
+          this.emitTriple(activeTag.subject, activeTag.predicate, object);
+        }
+      }
     }
   }
 

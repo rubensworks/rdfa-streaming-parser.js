@@ -128,6 +128,18 @@ with Bob</h2>
             quad('http://example.org/img.jpg', 'http://purl.org/dc/terms/title', '"The Trouble with Bob"'),
           ]);
       });
+
+      it('content attributes to objects', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <div property="http://purl.org/dc/terms/title" resource="img.jpg"></div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
+          ]);
+      });
     });
 
   });
