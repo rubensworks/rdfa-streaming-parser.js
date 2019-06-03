@@ -29,11 +29,12 @@ export class RdfaParser extends Transform {
 
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
-  private readonly baseIRI: string;
   private readonly defaultGraph?: RDF.Term;
   private readonly parser: HtmlParser;
 
   private readonly activeTagStack: IActiveTag[] = [];
+
+  private baseIRI: string;
 
   constructor(options?: IRdfaParserOptions) {
     super({ objectMode: true });
@@ -47,9 +48,8 @@ export class RdfaParser extends Transform {
     this.parser = this.initializeParser(options.strict);
 
     this.activeTagStack.push({
-      baseIRI: this.baseIRI,
+      name: '',
       prefixes: {},
-      subject: this.dataFactory.namedNode(this.baseIRI),
     });
   }
 
@@ -126,10 +126,16 @@ export class RdfaParser extends Transform {
     // Create a new active tag and inherit language scope and baseIRI from parent
     const activeTag: IActiveTag = {
       ...parentTag,
+      name,
       prefixes: RdfaParser.parsePrefixes(attributes, parentTag.prefixes),
       text: null,
     };
     this.activeTagStack.push(activeTag);
+
+    // <base> tags override the baseIRI
+    if (name === 'base' && attributes.href) {
+      this.baseIRI = attributes.href;
+    }
 
     // Set subject on about attribute
     if (attributes.about) {
@@ -148,7 +154,7 @@ export class RdfaParser extends Transform {
       for (const attributeName of RdfaParser.OBJECT_ATTRIBUTES) {
         if (attributes[attributeName]) {
           const object = this.createIri(attributes[attributeName], activeTag, false);
-          this.emitTriple(activeTag.subject, activeTag.predicate, object);
+          this.emitTriple(this.getSubject(activeTag), activeTag.predicate, object);
         }
       }
     }
@@ -170,7 +176,7 @@ export class RdfaParser extends Transform {
     // Emit all triples that were determined in the active tag
     if (activeTag.predicate && activeTag.text) {
       this.emitTriple(
-        activeTag.subject,
+        this.getSubject(activeTag),
         activeTag.predicate,
         this.dataFactory.literal(activeTag.text.join('')),
       );
@@ -178,6 +184,24 @@ export class RdfaParser extends Transform {
 
     // Remove the active tag from the stack
     this.activeTagStack.pop();
+  }
+
+  /**
+   * Get or create a subject node.
+   * @param {IActiveTag} activeTag The active tag.
+   * @return {NamedNode} An RDF named node term.
+   */
+  protected getSubject(activeTag: IActiveTag): RDF.Term {
+    return activeTag.subject || this.dataFactory.namedNode(this.getBaseIri(activeTag));
+  }
+
+  /**
+   * Get the active base IRI.
+   * @param {IActiveTag} activeTag The active tag.
+   * @return {string} A base IRI.
+   */
+  protected getBaseIri(activeTag: IActiveTag): string {
+    return activeTag.baseIRI || this.baseIRI;
   }
 
   /**
@@ -192,7 +216,7 @@ export class RdfaParser extends Transform {
   protected createIri(term: string, activeTag: IActiveTag, vocab: boolean): RDF.NamedNode {
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
     if (!vocab) {
-      iri = resolve(iri, activeTag.baseIRI);
+      iri = resolve(iri, this.getBaseIri(activeTag));
     }
     return this.dataFactory.namedNode(iri);
   }
@@ -225,6 +249,7 @@ export class RdfaParser extends Transform {
 }
 
 export interface IActiveTag {
+  name: string;
   prefixes: {[prefix: string]: string};
   subject?: RDF.Term;
   predicate?: RDF.Term;

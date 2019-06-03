@@ -172,7 +172,7 @@ describe('RdfaParser', () => {
 
   describe('#expandPrefixedTerm', () => {
     it('should expand a valid prefixed term', () => {
-      const activeTag = {
+      const activeTag: any = {
         prefixes: {
           dc: 'http://purl.org/dc/terms/',
         },
@@ -182,7 +182,7 @@ describe('RdfaParser', () => {
     });
 
     it('should not expand an unknown prefix', () => {
-      const activeTag = {
+      const activeTag: any = {
         prefixes: {
           dc: 'http://purl.org/dc/terms/',
         },
@@ -192,7 +192,7 @@ describe('RdfaParser', () => {
     });
 
     it('should not expand an url', () => {
-      const activeTag = {
+      const activeTag: any = {
         prefixes: {
           dc: 'http://purl.org/dc/terms/',
         },
@@ -292,6 +292,30 @@ with Bob</h2>
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
           ]);
+      });
+
+      it('base tags and set the baseIRI', async () => {
+        await parse(parser, `<html>
+<head>
+    <base href="http://base.com/" />
+</head>
+<body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
+    <div property="dc:title" resource="img.jpg"></div>
+</body>
+</html>`);
+        return expect(parser.baseIRI).toEqual('http://base.com/');
+      });
+
+      it('base tags without href and not set the baseIRI', async () => {
+        await parse(parser, `<html>
+<head>
+    <base />
+</head>
+<body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
+    <div property="dc:title" resource="img.jpg"></div>
+</body>
+</html>`);
+        return expect(parser.baseIRI).toEqual('http://example.org/');
       });
     });
 
