@@ -12,7 +12,7 @@ export class RdfaParser extends Transform {
 
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 
-  protected static readonly PREFIX_REGEX: RegExp = / *([^ :]*)*: *([^ ]*)* */g;
+  protected static readonly PREFIX_REGEX: RegExp = /[ \n]*([^ :\n]*)*:[ \n]*([^ \n]*)*[ \n]*/g;
 
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
@@ -127,16 +127,17 @@ export class RdfaParser extends Transform {
     }
 
     // Set subject on about attribute
-    let linkToParent: boolean = false;
     let newSubject: boolean = false;
+    let object: RDF.Term;
     if (attributes.about) {
       newSubject = true;
       activeTag.subject = this.createIri(attributes.about, activeTag, false);
     }
+
+    // Set the object on resource attribute (will become subject of child node)
     if (!activeTag.subject && attributes.resource) {
       newSubject = true;
-      linkToParent = true;
-      activeTag.subject = this.createIri(attributes.resource, activeTag, false);
+      object = this.createIri(attributes.resource, activeTag, false);
     }
 
     // Property sets predicate with literal object
@@ -149,15 +150,16 @@ export class RdfaParser extends Transform {
     if (objectResource) {
       if (attributes.rel) {
         this.emitTriple(
-          this.getSubject(parentTag),
+          this.getSubject(activeTag),
           this.createIri(attributes.rel, activeTag, true),
           this.createIri(objectResource, activeTag, false),
         );
-      } else if (attributes.rev) {
+      }
+      if (attributes.rev) {
         this.emitTriple(
           this.createIri(objectResource, activeTag, false),
           this.createIri(attributes.rev, activeTag, true),
-          this.getSubject(parentTag),
+          this.getSubject(activeTag),
         );
       }
     }
@@ -171,15 +173,20 @@ export class RdfaParser extends Transform {
 
       // Emit the triple
       this.emitTriple(
-        this.getSubject(activeTag),
+        object || this.getSubject(activeTag),
         this.dataFactory.namedNode(RdfaParser.RDF + 'type'),
         this.createIri(attributes.typeof, activeTag, true),
       );
     }
 
     // Emit triples for all objects
-    if (linkToParent && activeTag.predicate && newSubject) {
-      this.emitTriple(this.getSubject(parentTag), activeTag.predicate, this.getSubject(activeTag));
+    if (object && activeTag.predicate && newSubject) {
+      this.emitTriple(this.getSubject(parentTag), activeTag.predicate, object);
+    }
+
+    // Set the current object as subject
+    if (object) {
+      activeTag.subject = object;
     }
   }
 

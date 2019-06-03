@@ -169,6 +169,16 @@ describe('RdfaParser', () => {
         dc: 'http://purl.org/dc/terms/',
       });
     });
+
+    it('should parse a tag with one prefix with newlines', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/\nex: \nhttp://example.org/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+        dc: 'http://purl.org/dc/terms/',
+        ex: 'http://example.org/',
+      });
+    });
   });
 
   describe('#expandPrefixedTerm', () => {
@@ -532,6 +542,44 @@ with Bob</h2>
 </html>`))
           .toBeRdfIsomorphic([
             quad('http://example.org/o', 'http://example.org/p', 'http://example.org/'),
+          ]);
+      });
+
+      it('rel, rev and src as reverse resource links', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rel="http://example.org/p1" rev="http://example.org/p2" src="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p1', 'http://example.org/o'),
+            quad('http://example.org/o', 'http://example.org/p2', 'http://example.org/'),
+          ]);
+      });
+
+      it('complex combinations of about, rel, rev and href', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p>
+			This photo was taken by
+			<a about="photo1.jpg" rel="dc:creator" rev="foaf:img"
+   				href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.
+		</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/photo1.jpg',
+              'http://purl.org/dc/elements/1.1/creator',
+              'http://www.blogger.com/profile/1109404'),
+            quad('http://www.blogger.com/profile/1109404',
+              'http://xmlns.com/foaf/0.1/img',
+              'http://example.org/photo1.jpg'),
           ]);
       });
     });
