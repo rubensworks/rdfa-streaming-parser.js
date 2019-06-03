@@ -17,14 +17,6 @@ export class RdfaParser extends Transform {
     'property',
     'rel',
     'rev',
-    'typeof',
-  ];
-  protected static readonly OBJECT_ATTRIBUTES: string[] = [
-    'resource',
-    'href',
-    'content',
-    'src',
-    'typeof',
   ];
 
   private readonly options: IRdfaParserOptions;
@@ -138,8 +130,16 @@ export class RdfaParser extends Transform {
     }
 
     // Set subject on about attribute
+    let linkToParent: boolean = false;
+    let newSubject: boolean = false;
     if (attributes.about) {
+      newSubject = true;
       activeTag.subject = this.createIri(attributes.about, activeTag, false);
+    }
+    if (!activeTag.subject && attributes.resource) {
+      newSubject = true;
+      linkToParent = true;
+      activeTag.subject = this.createIri(attributes.resource, activeTag, false);
     }
 
     // Set predicate
@@ -149,14 +149,24 @@ export class RdfaParser extends Transform {
       }
     }
 
-    // Emit triples for all objects
-    if (activeTag.predicate) {
-      for (const attributeName of RdfaParser.OBJECT_ATTRIBUTES) {
-        if (attributes[attributeName]) {
-          const object = this.createIri(attributes[attributeName], activeTag, false);
-          this.emitTriple(this.getSubject(activeTag), activeTag.predicate, object);
-        }
+    // Typeof attribute sets rdf:type
+    if (attributes.typeof) {
+      // Typeof without about or resource attribute introduces a blank node subject
+      if (!newSubject) {
+        activeTag.subject = this.dataFactory.blankNode();
       }
+
+      // Emit the triple
+      this.emitTriple(
+        this.getSubject(activeTag),
+        this.dataFactory.namedNode(RdfaParser.RDF + 'type'),
+        this.createIri(attributes.typeof, activeTag, true),
+      );
+    }
+
+    // Emit triples for all objects
+    if (linkToParent && activeTag.predicate && newSubject) {
+      this.emitTriple(this.getSubject(parentTag), activeTag.predicate, this.getSubject(activeTag));
     }
   }
 
@@ -211,9 +221,15 @@ export class RdfaParser extends Transform {
    * @param {IActiveTag} activeTag The current active tag.
    * @param {boolean} vocab If creating an IRI in vocab-mode (based on vocab IRI),
    *                        or in base-mode (based on base IRI).
-   * @return {NamedNode} An RDF named node term.
+   * @return {Term} An RDF term.
    */
-  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean): RDF.NamedNode {
+  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean): RDF.Term {
+    // Handle blank nodes
+    if (term.startsWith('_:')) {
+      return this.dataFactory.blankNode(term.substr(2));
+    }
+
+    // Handle prefixed IRIs
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
     if (!vocab) {
       iri = resolve(iri, this.getBaseIri(activeTag));

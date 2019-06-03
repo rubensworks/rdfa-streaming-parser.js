@@ -270,6 +270,18 @@ with Bob</h2>
           ]);
       });
 
+      it('blank node about attributes to subjects', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <h2 about="_:b1" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1', 'http://purl.org/dc/terms/title', '"The Trouble with Bob"'),
+          ]);
+      });
+
       it('content attributes to objects', async () => {
         return expect(await parse(parser, `<html>
 <head></head>
@@ -316,6 +328,75 @@ with Bob</h2>
 </body>
 </html>`);
         return expect(parser.baseIRI).toEqual('http://example.org/');
+      });
+
+      it('typeof with about', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="schema: http://schema.org/">
+    <h2 about="#myDoc" typeof="schema:Document">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#myDoc', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/Document'),
+          ]);
+      });
+
+      it('typeof with resource', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="schema: http://schema.org/">
+    <h2 resource="#myDoc" typeof="schema:Document">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#myDoc', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/Document'),
+          ]);
+      });
+
+      it('typeof with about and resource', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="schema: http://schema.org/">
+    <h2 about="#myDoc1" resource="#myDoc2" typeof="schema:Document">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#myDoc1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/Document'),
+          ]);
+      });
+
+      it('typeof without about and resource', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="schema: http://schema.org/">
+    <h2 typeof="schema:Document">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/Document'),
+          ]);
+      });
+
+      it('typeof without about and resource and children', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="schema: http://schema.org/">
+    <div typeof="schema:Person">
+        <span property="schema:name">Albert Einstein</span>
+        <span property="schema:givenName">Albert</span>
+    </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://schema.org/Person'),
+            quad('_:b1', 'http://schema.org/name', '"Albert Einstein"'),
+            quad('_:b1', 'http://schema.org/givenName', '"Albert"'),
+          ]);
       });
     });
 
