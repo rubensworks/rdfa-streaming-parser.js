@@ -13,11 +13,6 @@ export class RdfaParser extends Transform {
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 
   protected static readonly PREFIX_REGEX: RegExp = / *([^ :]*)*: *([^ ]*)* */g;
-  protected static readonly PREDICATE_ATTRIBUTES: string[] = [
-    'property',
-    'rel',
-    'rev',
-  ];
 
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
@@ -144,10 +139,26 @@ export class RdfaParser extends Transform {
       activeTag.subject = this.createIri(attributes.resource, activeTag, false);
     }
 
-    // Set predicate
-    for (const attributeName of RdfaParser.PREDICATE_ATTRIBUTES) {
-      if (attributes[attributeName]) {
-        activeTag.predicate = this.createIri(attributes[attributeName], activeTag, true);
+    // Property sets predicate with literal object
+    if (attributes.property) {
+      activeTag.predicate = this.createIri(attributes.property, activeTag, true);
+    }
+
+    // Rel and rev set the predicate with resource object
+    const objectResource = this.getObjectResourceAttributeValue(attributes);
+    if (objectResource) {
+      if (attributes.rel) {
+        this.emitTriple(
+          this.getSubject(parentTag),
+          this.createIri(attributes.rel, activeTag, true),
+          this.createIri(objectResource, activeTag, false),
+        );
+      } else if (attributes.rev) {
+        this.emitTriple(
+          this.createIri(objectResource, activeTag, false),
+          this.createIri(attributes.rev, activeTag, true),
+          this.getSubject(parentTag),
+        );
       }
     }
 
@@ -237,6 +248,15 @@ export class RdfaParser extends Transform {
       iri = resolve(iri, this.getBaseIri(activeTag));
     }
     return this.dataFactory.namedNode(iri);
+  }
+
+  /**
+   * Get the first attribute that refers to a resource.
+   * @param {{[p: string]: string}} attributes Attributes
+   * @return {string} An attribute value or null.
+   */
+  protected getObjectResourceAttributeValue(attributes: {[s: string]: string}): string {
+    return attributes.href || attributes.resource || attributes.src;
   }
 
   /**

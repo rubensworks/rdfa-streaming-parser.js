@@ -456,6 +456,84 @@ with Bob</h2>
             quad('_:b1', 'http://schema.org/givenName', '"Albert"'),
           ]);
       });
+
+      it('rel and href as resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rel="http://example.org/p" href="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p', 'http://example.org/o'),
+          ]);
+      });
+
+      it('rel and resource as resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rel="http://example.org/p" resource="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p', 'http://example.org/o'),
+          ]);
+      });
+
+      it('rel and src as resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rel="http://example.org/p" src="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p', 'http://example.org/o'),
+          ]);
+      });
+
+      it('rev and href as reverse resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rev="http://example.org/p" href="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/o', 'http://example.org/p', 'http://example.org/'),
+          ]);
+      });
+
+      it('rev and resource as reverse resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rev="http://example.org/p" resource="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/o', 'http://example.org/p', 'http://example.org/'),
+          ]);
+      });
+
+      it('rev and src as reverse resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rev="http://example.org/p" src="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/o', 'http://example.org/p', 'http://example.org/'),
+          ]);
+      });
     });
 
   });
