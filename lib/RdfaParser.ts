@@ -12,6 +12,7 @@ export class RdfaParser extends Transform {
 
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 
+  protected static readonly PREFIX_REGEX: RegExp = / *([^ :]*)*: *([^ ]*)* */g;
   protected static readonly PREDICATE_ATTRIBUTES: string[] = [
     'property',
     'rel',
@@ -47,8 +48,56 @@ export class RdfaParser extends Transform {
 
     this.activeTagStack.push({
       baseIRI: this.baseIRI,
+      prefixes: {},
       subject: this.dataFactory.namedNode(this.baseIRI),
     });
+  }
+
+  /**
+   * Retrieve the prefixes of the current tag's attributes.
+   * @param {{[p: string]: string}} attributes A tag's attributes.
+   * @param {{[p: string]: string}} parentPrefixes The prefixes from the parent tag.
+   * @return {{[p: string]: string}} The new prefixes.
+   */
+  public static parsePrefixes(attributes: {[s: string]: string},
+                              parentPrefixes: {[prefix: string]: string}): {[prefix: string]: string} {
+    if (attributes.prefix) {
+      const prefixes: {[prefix: string]: string} = { ...parentPrefixes };
+      let prefixMatch;
+      // tslint:disable-next-line:no-conditional-assignment
+      while (prefixMatch = RdfaParser.PREFIX_REGEX.exec(attributes.prefix)) {
+        prefixes[prefixMatch[1]] = prefixMatch[2];
+      }
+
+      return prefixes;
+    } else {
+      return parentPrefixes;
+    }
+  }
+
+  /**
+   * Expand the given term value based on the given prefixes.
+   * @param {string} term A term value.
+   * @param {{[p: string]: string}[]} prefixes The available prefixes.
+   * @return {string} An expanded URL, or the term as-is.
+   */
+  public static expandPrefixedTerm(term: string, activeTag: IActiveTag): string {
+    // Check if the term is prefixed
+    const colonIndex: number = term.indexOf(':');
+    let prefix: string;
+    let local: string;
+    if (colonIndex >= 0) {
+      prefix = term.substr(0, colonIndex);
+      local = term.substr(colonIndex + 1);
+    }
+
+    // Try to expand the prefix
+    const prefixElement = activeTag.prefixes[prefix];
+    if (prefixElement) {
+      return prefixElement + local;
+    }
+
+    return term;
   }
 
   /**
@@ -76,21 +125,21 @@ export class RdfaParser extends Transform {
 
     // Create a new active tag and inherit language scope and baseIRI from parent
     const activeTag: IActiveTag = {
-      baseIRI: parentTag.baseIRI,
-      language: parentTag.language,
-      subject: parentTag.subject,
+      ...parentTag,
+      prefixes: RdfaParser.parsePrefixes(attributes, parentTag.prefixes),
+      text: null,
     };
     this.activeTagStack.push(activeTag);
 
     // Set subject on about attribute
     if (attributes.about) {
-      activeTag.subject = this.dataFactory.namedNode(resolve(attributes.about, activeTag.baseIRI));
+      activeTag.subject = this.createIri(attributes.about, activeTag, false);
     }
 
     // Set predicate
     for (const attributeName of RdfaParser.PREDICATE_ATTRIBUTES) {
       if (attributes[attributeName]) {
-        activeTag.predicate = this.dataFactory.namedNode(attributes[attributeName]);
+        activeTag.predicate = this.createIri(attributes[attributeName], activeTag, true);
       }
     }
 
@@ -98,7 +147,7 @@ export class RdfaParser extends Transform {
     if (activeTag.predicate) {
       for (const attributeName of RdfaParser.OBJECT_ATTRIBUTES) {
         if (attributes[attributeName]) {
-          const object = this.dataFactory.namedNode(resolve(attributes[attributeName], activeTag.baseIRI));
+          const object = this.createIri(attributes[attributeName], activeTag, false);
           this.emitTriple(activeTag.subject, activeTag.predicate, object);
         }
       }
@@ -132,6 +181,23 @@ export class RdfaParser extends Transform {
   }
 
   /**
+   * Create a named node for the given term.
+   * This will take care of prefix detection.
+   * @param {string} term A term string.
+   * @param {IActiveTag} activeTag The current active tag.
+   * @param {boolean} vocab If creating an IRI in vocab-mode (based on vocab IRI),
+   *                        or in base-mode (based on base IRI).
+   * @return {NamedNode} An RDF named node term.
+   */
+  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean): RDF.NamedNode {
+    let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
+    if (!vocab) {
+      iri = resolve(iri, activeTag.baseIRI);
+    }
+    return this.dataFactory.namedNode(iri);
+  }
+
+  /**
    * Emit the given triple to the stream.
    * @param {Term} subject A subject term.
    * @param {Term} predicate A predicate term.
@@ -159,6 +225,7 @@ export class RdfaParser extends Transform {
 }
 
 export interface IActiveTag {
+  prefixes: {[prefix: string]: string};
   subject?: RDF.Term;
   predicate?: RDF.Term;
   text?: string[];

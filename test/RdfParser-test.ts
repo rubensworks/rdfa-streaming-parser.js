@@ -76,6 +76,132 @@ describe('RdfaParser', () => {
     expect((<any> instance).options.strict).toEqual(true);
   });
 
+  describe('#parseNamespace', () => {
+    it('should parse a tag without prefix attribute', () => {
+      const attributes = {};
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({});
+    });
+
+    it('should parse a tag with empty prefix attribute', () => {
+      const attributes = {
+        prefix: '',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({});
+    });
+
+    it('should parse a tag with one prefix', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+        dc: 'http://purl.org/dc/terms/',
+      });
+    });
+
+    it('should parse a tag with two prefixes', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/ abc: http://example.org',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+        abc: 'http://example.org',
+        dc: 'http://purl.org/dc/terms/',
+      });
+    });
+
+    it('should parse a tag with one prefix and silently ignore invalid prefixes (1)', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/ abc',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+        dc: 'http://purl.org/dc/terms/',
+      });
+    });
+
+    it('should parse a tag with one prefix and silently ignore invalid prefixes (2)', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/ abc:',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+        dc: 'http://purl.org/dc/terms/',
+      });
+    });
+
+    it('should parse a tag without prefix attribute that inherits parent prefixes', () => {
+      const attributes = {};
+      return expect(RdfaParser.parsePrefixes(attributes, {
+        ex: 'http://example.org',
+      })).toEqual({
+        ex: 'http://example.org',
+      });
+    });
+
+    it('should parse a tag without prefixes that inherits parent prefixes', () => {
+      const attributes = {
+        prefix: '',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {
+        ex: 'http://example.org',
+      })).toEqual({
+        ex: 'http://example.org',
+      });
+    });
+
+    it('should parse a tag with one prefix that combines parent prefixes', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {
+        ex: 'http://example.org',
+      })).toEqual({
+        dc: 'http://purl.org/dc/terms/',
+        ex: 'http://example.org',
+      });
+    });
+
+    it('should parse a tag with one prefix that overrides a parent prefix', () => {
+      const attributes = {
+        prefix: 'dc: http://purl.org/dc/terms/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {
+        dc: 'http://example.org',
+      })).toEqual({
+        dc: 'http://purl.org/dc/terms/',
+      });
+    });
+  });
+
+  describe('#expandPrefixedTerm', () => {
+    it('should expand a valid prefixed term', () => {
+      const activeTag = {
+        prefixes: {
+          dc: 'http://purl.org/dc/terms/',
+        },
+      };
+      return expect(RdfaParser.expandPrefixedTerm('dc:bla', activeTag))
+        .toEqual('http://purl.org/dc/terms/bla');
+    });
+
+    it('should not expand an unknown prefix', () => {
+      const activeTag = {
+        prefixes: {
+          dc: 'http://purl.org/dc/terms/',
+        },
+      };
+      return expect(RdfaParser.expandPrefixedTerm('bla:bla', activeTag))
+        .toEqual('bla:bla');
+    });
+
+    it('should not expand an url', () => {
+      const activeTag = {
+        prefixes: {
+          dc: 'http://purl.org/dc/terms/',
+        },
+      };
+      return expect(RdfaParser.expandPrefixedTerm('http://example.org/bla', activeTag))
+        .toEqual('http://example.org/bla');
+    });
+  });
+
   describe('a default instance', () => {
 
     let parser;
@@ -149,6 +275,18 @@ with Bob</h2>
 <head></head>
 <body>
     <div property="http://purl.org/dc/terms/title" resource="img.jpg"></div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
+          ]);
+      });
+
+      it('prefixes and expand them', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
+    <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`))
           .toBeRdfIsomorphic([
