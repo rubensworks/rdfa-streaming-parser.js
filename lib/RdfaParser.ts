@@ -84,9 +84,11 @@ export class RdfaParser extends Transform {
     }
 
     // Try to expand the prefix
-    const prefixElement = activeTag.prefixes[prefix];
-    if (prefixElement) {
-      return prefixElement + local;
+    if (prefix) {
+      const prefixElement = activeTag.prefixes[prefix];
+      if (prefixElement) {
+        return prefixElement + local;
+      }
     }
 
     return term;

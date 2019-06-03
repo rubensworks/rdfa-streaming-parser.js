@@ -1,3 +1,4 @@
+import {blankNode, namedNode} from "@rdfjs/data-model";
 import "jest-rdf";
 import * as RDF from "rdf-js";
 import {PassThrough} from "stream";
@@ -200,6 +201,15 @@ describe('RdfaParser', () => {
       return expect(RdfaParser.expandPrefixedTerm('http://example.org/bla', activeTag))
         .toEqual('http://example.org/bla');
     });
+
+    it('should not expand a term', () => {
+      const activeTag: any = {
+        prefixes: {
+          dc: 'http://purl.org/dc/terms/',
+        },
+      };
+      return expect(RdfaParser.expandPrefixedTerm('bla', activeTag)).toEqual('bla');
+    });
   });
 
   describe('a default instance', () => {
@@ -208,6 +218,54 @@ describe('RdfaParser', () => {
 
     beforeEach(() => {
       parser = new RdfaParser({ baseIRI: 'http://example.org/' });
+    });
+
+    describe('#createIri', () => {
+      it('should create blank nodes', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('_:b1', activeTag, false))
+          .toEqualRdfTerm(blankNode('b1'));
+      });
+
+      it('should handle prefixed IRIs', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createIri('ex:def', activeTag, false))
+          .toEqualRdfTerm(namedNode('http://example.org/def'));
+      });
+
+      it('should handle prefixed IRIs with unknown prefixes', async () => {
+        const activeTag: any = {
+          prefixes: {},
+        };
+        return expect(parser.createIri('ex:def', activeTag, false))
+          .toEqualRdfTerm(namedNode('ex:def'));
+      });
+
+      it('should handle relative IRIs', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('def', activeTag, false))
+          .toEqualRdfTerm(namedNode('http://example.org/def'));
+      });
+
+      it('should not handle relative IRIs in vocab mode', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('def', activeTag, true))
+          .toEqualRdfTerm(namedNode('def'));
+      });
+
+      it('should handle prefixed relative IRIs', async () => {
+        const activeTag: any = {
+          prefixes: {
+            abc: 'abc/',
+          },
+        };
+        return expect(parser.createIri('abc:def', activeTag, false))
+          .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
+      });
     });
 
     describe('should error', () => {
