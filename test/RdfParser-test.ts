@@ -1,4 +1,4 @@
-import {blankNode, namedNode} from "@rdfjs/data-model";
+import {blankNode, literal, namedNode} from "@rdfjs/data-model";
 import "jest-rdf";
 import * as RDF from "rdf-js";
 import {PassThrough} from "stream";
@@ -275,6 +275,66 @@ describe('RdfaParser', () => {
         };
         return expect(parser.createIri('abc:def', activeTag, false))
           .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
+      });
+    });
+
+    describe('#createLiteral', () => {
+      it('should create string literals', async () => {
+        const activeTag: any = {};
+        return expect(parser.createLiteral('abc', activeTag))
+          .toEqualRdfTerm(literal('abc'));
+      });
+
+      it('should create datatyped literals', async () => {
+        const activeTag: any = {
+          datatype: namedNode('http://example.org/datatype'),
+        };
+        return expect(parser.createLiteral('abc', activeTag))
+          .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
+      });
+
+      it('should create language literals', async () => {
+        const activeTag: any = {
+          language: 'en-us',
+        };
+        return expect(parser.createLiteral('abc', activeTag))
+          .toEqualRdfTerm(literal('abc', 'en-us'));
+      });
+
+      it('should give preference to datatype literals over language literals', async () => {
+        const activeTag: any = {
+          datatype: namedNode('http://example.org/datatype'),
+          language: 'en-us',
+        };
+        return expect(parser.createLiteral('abc', activeTag))
+          .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
+      });
+
+      it('should give interpret datetimes', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-18T00:00:00Z', activeTag))
+          .toEqualRdfTerm(literal('2012-03-18T00:00:00Z',
+            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+      });
+
+      it('should give interpret times', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('00:00:00Z', activeTag))
+          .toEqualRdfTerm(literal('00:00:00Z',
+            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+      });
+
+      it('should give interpret dates', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-18', activeTag))
+          .toEqualRdfTerm(literal('2012-03-18',
+            namedNode('http://www.w3.org/2001/XMLSchema#date')));
       });
     });
 
@@ -768,6 +828,102 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
               '"abc"@en'),
+          ]);
+      });
+
+      it('time tags with dates', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title">2012-03-18</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#date'),
+          ]);
+      });
+
+      it('time tags with times', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title">00:00:00</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"00:00:00"^^http://www.w3.org/2001/XMLSchema#time'),
+          ]);
+      });
+
+      it('time tags with dateTimes', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title">2012-03-18T00:00:00Z</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"2012-03-18T00:00:00Z"^^http://www.w3.org/2001/XMLSchema#dateTime'),
+          ]);
+      });
+
+      it('time tags with dates in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="2012-03-18">Today</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#date'),
+          ]);
+      });
+
+      it('time tags with times in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="00:00:00">Today</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"00:00:00"^^http://www.w3.org/2001/XMLSchema#time'),
+          ]);
+      });
+
+      it('time tags with dateTimes in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="2012-03-18T00:00:00Z">Today</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"2012-03-18T00:00:00Z"^^http://www.w3.org/2001/XMLSchema#dateTime'),
           ]);
       });
     });

@@ -11,8 +11,13 @@ import {PassThrough, Transform, TransformCallback} from "stream";
 export class RdfaParser extends Transform {
 
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+  public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
 
   protected static readonly PREFIX_REGEX: RegExp = /[ \n]*([^ :\n]*)*:[ \n]*([^ \n]*)*[ \n]*/g;
+  protected static readonly TIME_DATE_REGEX: RegExp = /[0-9]+-[0-9][0-9]-[0-9][0-9]/;
+  protected static readonly TIME_TIME_REGEX: RegExp = /[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/;
+  protected static readonly TIME_DATETIME_REGEX: RegExp
+    = /[0-9]+-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/;
 
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
@@ -116,6 +121,7 @@ export class RdfaParser extends Transform {
     const activeTag: IActiveTag = {
       ...parentTag,
       datatype: null,
+      interpretObjectAsTime: false,
       language: null,
       name,
       predicate: null,
@@ -188,6 +194,11 @@ export class RdfaParser extends Transform {
       );
     }
 
+    // <time> tags set an initial datatype
+    if (name === 'time' && !attributes.datatype) {
+      activeTag.interpretObjectAsTime = true;
+    }
+
     // Save datatype attribute value in active tag
     if (attributes.datatype) {
       activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true);
@@ -212,6 +223,18 @@ export class RdfaParser extends Transform {
         this.getSubject(activeTag),
         activeTag.predicate,
         this.createLiteral(attributes.content, activeTag),
+      );
+
+      // Unset predicate to avoid text contents to produce new triples
+      activeTag.predicate = null;
+    }
+
+    // Datatime attribute on time tag has preference over text content
+    if (activeTag.interpretObjectAsTime && attributes.datetime) {
+      this.emitTriple(
+        this.getSubject(activeTag),
+        activeTag.predicate,
+        this.createLiteral(attributes.datetime, activeTag),
       );
 
       // Unset predicate to avoid text contents to produce new triples
@@ -292,6 +315,15 @@ export class RdfaParser extends Transform {
    * @return {Literal} A new literal node.
    */
   protected createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
+    if (activeTag.interpretObjectAsTime) {
+      if (literal.match(RdfaParser.TIME_DATETIME_REGEX)) {
+        activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + 'dateTime');
+      } else if (literal.match(RdfaParser.TIME_DATE_REGEX)) {
+        activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + 'date');
+      } else if (literal.match(RdfaParser.TIME_TIME_REGEX)) {
+        activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + 'time');
+      }
+    }
     return this.dataFactory.literal(literal, activeTag.datatype || activeTag.language);
   }
 
@@ -364,6 +396,7 @@ export interface IActiveTag {
   language?: string;
   datatype?: RDF.NamedNode;
   collectChildTags?: boolean;
+  interpretObjectAsTime?: boolean;
 }
 
 export interface IRdfaParserOptions {
