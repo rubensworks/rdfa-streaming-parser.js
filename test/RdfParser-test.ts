@@ -273,12 +273,21 @@ describe('RdfaParser', () => {
           .toEqualRdfTerm(namedNode('http://example.org/def'));
       });
 
-      it('should not handle relative IRIs in vocab mode', async () => {
+      it('should not handle relative IRIs in vocab mode without active vocab', async () => {
         const activeTag: any = {
           prefixes: {},
         };
         return expect(parser.createIri('def', activeTag, true))
           .toEqualRdfTerm(namedNode('def'));
+      });
+
+      it('should handle relative IRIs in vocab mode with active vocab', async () => {
+        const activeTag: any = {
+          prefixes: {},
+          vocab: 'http://vocab.org/',
+        };
+        return expect(parser.createIri('def', activeTag, true))
+          .toEqualRdfTerm(namedNode('http://vocab.org/def'));
       });
 
       it('should handle prefixed relative IRIs', async () => {
@@ -307,6 +316,27 @@ describe('RdfaParser', () => {
         const activeTag: any = {};
         return expect(parser.createIri('[_:]', activeTag, false))
           .toEqual(blankNode('b_identity'));
+      });
+
+      it('should do term expansion', async () => {
+        const activeTag: any = {
+          prefixes: {
+            license: 'http://www.w3.org/1999/xhtml/vocab#license',
+          },
+        };
+        return expect(parser.createIri('license', activeTag, true))
+          .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
+      });
+
+      it('should make term expansion give priority to vocab', async () => {
+        const activeTag: any = {
+          prefixes: {
+            license: 'http://www.w3.org/1999/xhtml/vocab#license',
+          },
+          vocab: 'http://vocab.org/',
+        };
+        return expect(parser.createIri('license', activeTag, true))
+          .toEqual(namedNode('http://vocab.org/license'));
       });
     });
 
@@ -1078,6 +1108,78 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
               '"2012-03-18T00:00:00Z"^^http://www.w3.org/2001/XMLSchema#dateTime'),
+          ]);
+      });
+
+      it('vocab emits an rdfa:usesVocabulary triple', async () => {
+        return expect(await parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+	<body>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://xmlns.com/foaf/0.1/'),
+          ]);
+      });
+
+      it('vocab sets the active vocabulary', async () => {
+        return expect(await parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+	<body>
+	  <p property="name">Name</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://xmlns.com/foaf/0.1/'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Name"'),
+          ]);
+      });
+
+      it('vocab override the active vocabulary', async () => {
+        return expect(await parse(parser, `<html vocab="http://example.org/">
+	<head>
+	</head>
+	<body vocab="http://xmlns.com/foaf/0.1/">
+	  <p property="name">Name</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://example.org/'),
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://xmlns.com/foaf/0.1/'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Name"'),
+          ]);
+      });
+
+      it('with vocab set in parser constructor', async () => {
+        parser = new RdfaParser({
+          baseIRI: 'http://example.org/',
+          vocab: 'http://xmlns.com/foaf/0.1/',
+        });
+        return expect(await parse(parser, `<html>
+	<head>
+	</head>
+	<body>
+	  <p property="name">Name</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Name"'),
           ]);
       });
     });

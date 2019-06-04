@@ -13,6 +13,7 @@ export class RdfaParser extends Transform {
 
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
   public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
+  public static readonly RDFA = 'http://www.w3.org/ns/rdfa#';
 
   protected static readonly PREFIX_REGEX: RegExp = /[ \n]*([^ :\n]*)*:[ \n]*([^ \n]*)*[ \n]*/g;
   protected static readonly TIME_REGEXES: { regex: RegExp, type: string }[] = [
@@ -49,6 +50,7 @@ export class RdfaParser extends Transform {
     this.activeTagStack.push({
       name: '',
       prefixes: INITIAL_CONTEXT['@context'],
+      vocab: options.vocab,
     });
   }
 
@@ -151,6 +153,16 @@ export class RdfaParser extends Transform {
     // <base> tags override the baseIRI
     if (name === 'base' && attributes.href) {
       this.baseIRI = attributes.href;
+    }
+
+    // Vocab sets the active vocabulary
+    if ('vocab' in attributes) {
+      activeTag.vocab = attributes.vocab;
+      this.emitTriple(
+        this.dataFactory.namedNode(this.baseIRI),
+        this.dataFactory.namedNode(RdfaParser.RDFA + 'usesVocabulary'),
+        this.dataFactory.namedNode(activeTag.vocab),
+      );
     }
 
     // Set subject on about attribute
@@ -358,6 +370,13 @@ export class RdfaParser extends Transform {
       return this.dataFactory.blankNode(term.substr(2) || 'b_identity');
     }
 
+    // Handle vocab IRIs
+    if (vocab) {
+      if (activeTag.vocab && term.indexOf(':') < 0) {
+        return this.dataFactory.namedNode(activeTag.vocab + term);
+      }
+    }
+
     // Handle prefixed IRIs
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
     if (!vocab) {
@@ -409,6 +428,7 @@ export interface IActiveTag {
   predicate?: RDF.Term;
   text?: string[];
   baseIRI?: string;
+  vocab?: string;
   language?: string;
   datatype?: RDF.NamedNode;
   collectChildTags?: boolean;
@@ -418,6 +438,7 @@ export interface IActiveTag {
 export interface IRdfaParserOptions {
   dataFactory?: RDF.DataFactory;
   baseIRI?: string;
+  vocab?: string;
   defaultGraph?: RDF.Term;
   strict?: boolean;
 }
