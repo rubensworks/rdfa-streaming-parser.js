@@ -348,9 +348,14 @@ export class RdfaParser extends Transform {
    * @return {Term} An RDF term.
    */
   protected createIri(term: string, activeTag: IActiveTag, vocab: boolean): RDF.Term {
+    // Handle explicit blank nodes
+    if (term[0] === '[' && term[term.length - 1] === ']') {
+      term = term.substr(1, term.length - 2);
+    }
+
     // Handle blank nodes
     if (term.startsWith('_:')) {
-      return this.dataFactory.blankNode(term.substr(2));
+      return this.dataFactory.blankNode(term.substr(2) || 'b_identity');
     }
 
     // Handle prefixed IRIs

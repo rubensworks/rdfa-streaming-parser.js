@@ -290,6 +290,24 @@ describe('RdfaParser', () => {
         return expect(parser.createIri('abc:def', activeTag, false))
           .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
       });
+
+      it('should handle explicit blank nodes', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('[_:b]', activeTag, false))
+          .toEqual(blankNode('b'));
+      });
+
+      it('should handle blank nodes with no label', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('_:', activeTag, false))
+          .toEqual(blankNode('b_identity'));
+      });
+
+      it('should handle explicit blank nodes with no label', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('[_:]', activeTag, false))
+          .toEqual(blankNode('b_identity'));
+      });
     });
 
     describe('#createLiteral', () => {
