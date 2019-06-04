@@ -192,6 +192,16 @@ describe('RdfaParser', () => {
         .toEqual('http://purl.org/dc/terms/bla');
     });
 
+    it('should expand a valid term', () => {
+      const activeTag: any = {
+        prefixes: {
+          term: 'http://purl.org/dc/terms/term',
+        },
+      };
+      return expect(RdfaParser.expandPrefixedTerm('term', activeTag))
+        .toEqual('http://purl.org/dc/terms/term');
+    });
+
     it('should not expand an unknown prefix', () => {
       const activeTag: any = {
         prefixes: {
@@ -256,13 +266,17 @@ describe('RdfaParser', () => {
       });
 
       it('should handle relative IRIs', async () => {
-        const activeTag: any = {};
+        const activeTag: any = {
+          prefixes: {},
+        };
         return expect(parser.createIri('def', activeTag, false))
           .toEqualRdfTerm(namedNode('http://example.org/def'));
       });
 
       it('should not handle relative IRIs in vocab mode', async () => {
-        const activeTag: any = {};
+        const activeTag: any = {
+          prefixes: {},
+        };
         return expect(parser.createIri('def', activeTag, true))
           .toEqualRdfTerm(namedNode('def'));
       });

@@ -25,6 +25,7 @@
   "files": [
     "lib/**/*.d.ts",
     "lib/**/*.js",
+    "lib/**/*.json",
     "index.d.ts",
     "index.js"
   ],

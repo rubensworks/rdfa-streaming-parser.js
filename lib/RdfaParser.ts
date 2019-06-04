@@ -4,6 +4,7 @@ import {Parser as HtmlParser} from "htmlparser2";
 import * as RDF from "rdf-js";
 import {resolve} from "relative-to-absolute-iri";
 import {PassThrough, Transform, TransformCallback} from "stream";
+import * as INITIAL_CONTEXT from "./initial-context.json";
 
 /**
  * A stream transformer that parses RDFa (text) streams to an {@link RDF.Stream}.
@@ -41,7 +42,7 @@ export class RdfaParser extends Transform {
 
     this.activeTagStack.push({
       name: '',
-      prefixes: {},
+      prefixes: INITIAL_CONTEXT['@context'],
     });
   }
 
@@ -89,6 +90,12 @@ export class RdfaParser extends Transform {
       if (prefixElement) {
         return prefixElement + local;
       }
+    }
+
+    // Try to expand the term
+    const expandedTerm = activeTag.prefixes[term];
+    if (expandedTerm) {
+      return expandedTerm;
     }
 
     return term;
