@@ -115,11 +115,20 @@ export class RdfaParser extends Transform {
     // Create a new active tag and inherit language scope and baseIRI from parent
     const activeTag: IActiveTag = {
       ...parentTag,
+      datatype: null,
+      language: null,
       name,
+      predicate: null,
       prefixes: RdfaParser.parsePrefixes(attributes, parentTag.prefixes),
       text: null,
     };
     this.activeTagStack.push(activeTag);
+
+    // Save the tag contents if needed
+    if (activeTag.collectChildTags) {
+      const attributesSerialized = Object.keys(attributes).map((key) => `${key}="${attributes[key]}"`).join(' ');
+      activeTag.text = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
+    }
 
     // <base> tags override the baseIRI
     if (name === 'base' && attributes.href) {
@@ -179,6 +188,14 @@ export class RdfaParser extends Transform {
       );
     }
 
+    // Save datatype attribute value in active tag
+    if (attributes.datatype) {
+      activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true);
+      if (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral') {
+        activeTag.collectChildTags = true;
+      }
+    }
+
     // Emit triples for all objects
     if (object && activeTag.predicate && newSubject) {
       this.emitTriple(this.getSubject(parentTag), activeTag.predicate, object);
@@ -189,7 +206,7 @@ export class RdfaParser extends Transform {
       this.emitTriple(
         this.getSubject(activeTag),
         activeTag.predicate,
-        this.dataFactory.literal(attributes.content),
+        this.createLiteral(attributes.content, activeTag),
       );
 
       // Unset predicate to avoid text contents to produce new triples
@@ -214,18 +231,35 @@ export class RdfaParser extends Transform {
   protected onTagClose() {
     // Get the active tag
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+    const parentTag: IActiveTag = this.activeTagStack.length > 1
+      ? this.activeTagStack[this.activeTagStack.length - 2] : null;
 
     // Emit all triples that were determined in the active tag
     if (activeTag.predicate && activeTag.text) {
       this.emitTriple(
         this.getSubject(activeTag),
         activeTag.predicate,
-        this.dataFactory.literal(activeTag.text.join('')),
+        this.createLiteral(activeTag.text.join(''), activeTag),
       );
+      activeTag.text = null;
     }
 
     // Remove the active tag from the stack
     this.activeTagStack.pop();
+
+    // Save the tag contents if needed
+    if (activeTag.collectChildTags && activeTag.text) {
+      activeTag.text.push(`</${activeTag.name}>`);
+    }
+
+    // If we still have text contents, try to append it to the parent tag
+    if (activeTag.text && parentTag) {
+      if (!parentTag.text) {
+        parentTag.text = activeTag.text;
+      } else {
+        parentTag.text = parentTag.text.concat(activeTag.text);
+      }
+    }
   }
 
   /**
@@ -244,6 +278,16 @@ export class RdfaParser extends Transform {
    */
   protected getBaseIri(activeTag: IActiveTag): string {
     return activeTag.baseIRI || this.baseIRI;
+  }
+
+  /**
+   * Create a new literal node.
+   * @param {string} literal The literal value.
+   * @param {IActiveTag} activeTag The current active tag.
+   * @return {Literal} A new literal node.
+   */
+  protected createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
+    return this.dataFactory.literal(literal, activeTag.datatype);
   }
 
   /**
@@ -313,6 +357,8 @@ export interface IActiveTag {
   text?: string[];
   baseIRI?: string;
   language?: string;
+  datatype?: RDF.NamedNode;
+  collectChildTags?: boolean;
 }
 
 export interface IRdfaParserOptions {

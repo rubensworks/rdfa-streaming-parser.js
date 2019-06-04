@@ -616,6 +616,92 @@ foaf: http://xmlns.com/foaf/0.1/">
               '"Portrait of Mark"'),
           ]);
       });
+
+      it('datatype to set the object literal datatype', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="xsd:integer">3</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"3"^^http://www.w3.org/2001/XMLSchema#integer'),
+          ]);
+      });
+
+      it('datatype to set the object literal datatype for content attributes', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="xsd:integer" content="3" />
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"3"^^http://www.w3.org/2001/XMLSchema#integer'),
+          ]);
+      });
+
+      it('datatype to set the object literal datatype with strings in a nested tag', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="xsd:string"><b>Mark Birbeck</b></p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Mark Birbeck"'),
+          ]);
+      });
+
+      it('datatype to set the object literal datatype with strings in nested tags', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="xsd:string"><b>M</b>ark <b>B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Mark Birbeck"'),
+          ]);
+      });
+
+      it('rdf:XMLLiteral datatype to preserve all nested tags', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"<b some="attribute">M</b>ark <b>B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+          ]);
+      });
     });
 
   });
