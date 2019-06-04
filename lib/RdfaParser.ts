@@ -196,6 +196,11 @@ export class RdfaParser extends Transform {
       }
     }
 
+    // Save language attribute value in active tag
+    if (attributes.lang || attributes['xml:lang']) {
+      activeTag.language = attributes.lang || attributes['xml:lang'];
+    }
+
     // Emit triples for all objects
     if (object && activeTag.predicate && newSubject) {
       this.emitTriple(this.getSubject(parentTag), activeTag.predicate, object);
@@ -287,7 +292,7 @@ export class RdfaParser extends Transform {
    * @return {Literal} A new literal node.
    */
   protected createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
-    return this.dataFactory.literal(literal, activeTag.datatype);
+    return this.dataFactory.literal(literal, activeTag.datatype || activeTag.language);
   }
 
   /**

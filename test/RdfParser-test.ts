@@ -702,6 +702,74 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
               '"<b some="attribute">M</b>ark <b>B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
           ]);
       });
+
+      it('lang to set the object literal language', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" lang="en">abc</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"abc"@en'),
+          ]);
+      });
+
+      it('xml:lang to set the object literal language', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" xml:lang="en">abc</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"abc"@en'),
+          ]);
+      });
+
+      it('lang to set the object literal language for content attributes', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" lang="en" content="abc" />
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"abc"@en'),
+          ]);
+      });
+
+      it('xml:lang to set the object literal language for content attributes', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" xml:lang="en" content="abc" />
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"abc"@en'),
+          ]);
+      });
     });
 
   });
