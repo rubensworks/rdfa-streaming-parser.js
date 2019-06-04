@@ -15,7 +15,7 @@ export class RdfaParser extends Transform {
   public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
   public static readonly RDFA = 'http://www.w3.org/ns/rdfa#';
 
-  protected static readonly PREFIX_REGEX: RegExp = /[ \n]*([^ :\n]*)*:[ \n]*([^ \n]*)*[ \n]*/g;
+  protected static readonly PREFIX_REGEX: RegExp = /[ \n\t]*([^ :\n\t]*)*:[ \n\t]*([^ \n\t]*)*[ \n\t]*/g;
   protected static readonly TIME_REGEXES: { regex: RegExp, type: string }[] = [
     {
       regex: /^[0-9]+-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]((Z?)|([\+-][0-9][0-9]:[0-9][0-9]))$/,
@@ -138,7 +138,7 @@ export class RdfaParser extends Transform {
       datatype: null,
       interpretObjectAsTime: false,
       name,
-      predicate: null,
+      predicates: null,
       prefixes: RdfaParser.parsePrefixes(attributes, parentTag.prefixes),
       text: null,
     };
@@ -181,7 +181,8 @@ export class RdfaParser extends Transform {
 
     // Property sets predicate with literal object
     if (attributes.property) {
-      activeTag.predicate = this.createIri(attributes.property, activeTag, true);
+      activeTag.predicates = attributes.property.split(/[ \n\t]+/)
+        .map((property) => this.createIri(property, activeTag, true));
     }
 
     // Rel and rev set the predicate with resource object
@@ -237,32 +238,38 @@ export class RdfaParser extends Transform {
     }
 
     // Emit triples for all objects
-    if (object && activeTag.predicate && newSubject) {
-      this.emitTriple(this.getSubject(parentTag), activeTag.predicate, object);
+    if (object && activeTag.predicates && newSubject) {
+      for (const predicate of activeTag.predicates) {
+        this.emitTriple(this.getSubject(parentTag), predicate, object);
+      }
     }
 
     // Content attribute has preference over text content
-    if (attributes.content) {
-      this.emitTriple(
-        this.getSubject(activeTag),
-        activeTag.predicate,
-        this.createLiteral(attributes.content, activeTag),
-      );
+    if (attributes.content && activeTag.predicates) {
+      for (const predicate of activeTag.predicates) {
+        this.emitTriple(
+          this.getSubject(activeTag),
+          predicate,
+          this.createLiteral(attributes.content, activeTag),
+        );
+      }
 
       // Unset predicate to avoid text contents to produce new triples
-      activeTag.predicate = null;
+      activeTag.predicates = null;
     }
 
     // Datatime attribute on time tag has preference over text content
-    if (activeTag.interpretObjectAsTime && attributes.datetime) {
-      this.emitTriple(
-        this.getSubject(activeTag),
-        activeTag.predicate,
-        this.createLiteral(attributes.datetime, activeTag),
-      );
+    if (activeTag.interpretObjectAsTime && attributes.datetime && activeTag.predicates) {
+      for (const predicate of activeTag.predicates) {
+        this.emitTriple(
+          this.getSubject(activeTag),
+          predicate,
+          this.createLiteral(attributes.datetime, activeTag),
+        );
+      }
 
       // Unset predicate to avoid text contents to produce new triples
-      activeTag.predicate = null;
+      activeTag.predicates = null;
     }
 
     // Set the current object as subject
@@ -287,12 +294,14 @@ export class RdfaParser extends Transform {
       ? this.activeTagStack[this.activeTagStack.length - 2] : null;
 
     // Emit all triples that were determined in the active tag
-    if (activeTag.predicate && activeTag.text) {
-      this.emitTriple(
-        this.getSubject(activeTag),
-        activeTag.predicate,
-        this.createLiteral(activeTag.text.join(''), activeTag),
-      );
+    if (activeTag.predicates && activeTag.text) {
+      for (const predicate of activeTag.predicates) {
+        this.emitTriple(
+          this.getSubject(activeTag),
+          predicate,
+          this.createLiteral(activeTag.text.join(''), activeTag),
+        );
+      }
       activeTag.text = null;
     }
 
@@ -425,7 +434,7 @@ export interface IActiveTag {
   name: string;
   prefixes: {[prefix: string]: string};
   subject?: RDF.Term;
-  predicate?: RDF.Term;
+  predicates?: RDF.Term[];
   text?: string[];
   baseIRI?: string;
   vocab?: string;

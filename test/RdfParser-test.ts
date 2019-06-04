@@ -1182,6 +1182,45 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
               '"Name"'),
           ]);
       });
+
+      it('multiple properties', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+	<body>
+	  <p property="dc:title foaf:title">Title</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Title"'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/title',
+              '"Title"'),
+          ]);
+      });
+
+      it('multiple properties separated by newlines and spaces', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+	<body>
+	  <p property="dc:title
+	  foaf:title">Title</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Title"'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/title',
+              '"Title"'),
+          ]);
+      });
     });
 
   });
