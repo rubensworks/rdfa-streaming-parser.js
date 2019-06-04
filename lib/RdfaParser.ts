@@ -184,6 +184,18 @@ export class RdfaParser extends Transform {
       this.emitTriple(this.getSubject(parentTag), activeTag.predicate, object);
     }
 
+    // Content attribute has preference over text content
+    if (attributes.content) {
+      this.emitTriple(
+        this.getSubject(activeTag),
+        activeTag.predicate,
+        this.dataFactory.literal(attributes.content),
+      );
+
+      // Unset predicate to avoid text contents to produce new triples
+      activeTag.predicate = null;
+    }
+
     // Set the current object as subject
     if (object) {
       activeTag.subject = object;

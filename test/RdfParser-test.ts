@@ -582,6 +582,40 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://example.org/photo1.jpg'),
           ]);
       });
+
+      it('content attributes', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p about="photo1.jpg" property="dc:title" content="Portrait of Mark" />
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/photo1.jpg',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Portrait of Mark"'),
+          ]);
+      });
+
+      it('content that overrides text content', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p about="photo1.jpg" property="dc:title" content="Portrait of Mark">Mark Birbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/photo1.jpg',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Portrait of Mark"'),
+          ]);
+      });
     });
 
   });
