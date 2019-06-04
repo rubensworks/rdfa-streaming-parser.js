@@ -2537,12 +2537,12 @@ log-driver@^1.2.7:
   resolved "https://registry.yarnpkg.com/log-driver/-/log-driver-1.2.7.tgz#63b95021f0702fedfa2c9bb0a24e7797d71871d8"
   integrity sha512-U7KCmLdqsGHBLeWqYlFA0V0Sl6P08EE1ZrmA9cxjUE0WVqT9qnyVDPz1kzpFEP0jdJuFnasWIfSd7fsaNXkpbg==
 
-log-symbols@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-2.2.0.tgz#5740e1c5d6f0dfda4ad9323b5332107ef6b4c40a"
-  integrity sha512-VeIAFslyIerEJLXHziedo2basKbMKtTw3vfn5IzG0XTjhAVEJyNHnL2p7vc+wBDSdQuUpNw3M2u6xb9QsAY5Eg==
+log-symbols@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-3.0.0.tgz#f3a08516a5dea893336a7dee14d18a1cfdab77c4"
+  integrity sha512-dSkNGuI7iG3mfvDzUuYZyvk5dD9ocYCYzNU6CYDE6+Xqd+gwme6Z00NS3dUh8mq/73HaEtT7m6W+yUPtU6BZnQ==
   dependencies:
-    chalk "^2.0.1"
+    chalk "^2.4.2"
 
 loose-envify@^1.0.0:
   version "1.4.0"
@@ -3333,17 +3333,17 @@ rdf-terms@^1.4.0:
     "@rdfjs/data-model" "^1.1.1"
     lodash.uniqwith "^4.5.0"
 
-rdf-test-suite@^1.5.3:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/rdf-test-suite/-/rdf-test-suite-1.8.2.tgz#928b531fd1abd3f498ec98872ea618259b4670cb"
-  integrity sha512-QojUAoLMXgp3nT7P0WkKkSMIIwDYA6RFYcn17PZcwWonuz+r008o9FK9a5w6Bnhw38N6+wdpD+YP86G4CD+UQA==
+rdf-test-suite@^1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/rdf-test-suite/-/rdf-test-suite-1.9.0.tgz#8910f6abeec7e3f3ae58e3e82bceb28887898ff9"
+  integrity sha512-gJzV0vS5wZjQ9uCI9D9B7bEGuRVsWcjW6iVPGI6QFTGWzTX+cuHN0G9VPwoV8Ym7H0t6786oF8C//BfIJESmIw==
   dependencies:
     "@rdfjs/data-model" "^1.1.1"
     arrayify-stream "^1.0.0"
     isomorphic-fetch "^2.2.1"
     json-stable-stringify "^1.0.1"
     jsonld-streaming-parser "^1.0.1"
-    log-symbols "^2.2.0"
+    log-symbols "^3.0.0"
     minimist "^1.2.0"
     n3 "^1.0.0"
     node-web-streams "^0.2.2"

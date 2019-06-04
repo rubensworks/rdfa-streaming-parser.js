@@ -8,7 +8,7 @@ script:
   - npm run build
   - npm run lint
   - npm test
-  - npm run spec
+  - npm run spec -e
 after_success:
   - npm run coveralls
 cache:
