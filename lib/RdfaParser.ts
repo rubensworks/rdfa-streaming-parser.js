@@ -135,7 +135,6 @@ export class RdfaParser extends Transform {
       ...parentTag,
       datatype: null,
       interpretObjectAsTime: false,
-      language: null,
       name,
       predicate: null,
       prefixes: RdfaParser.parsePrefixes(attributes, parentTag.prefixes),
