@@ -769,6 +769,19 @@ with Bob</h2>
           ]);
       });
 
+      it('resource should be prioritized over href', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+    <a property="http://example.org/p" resource="http://example.org/o1" href="http://example.org/o2"></a>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p', 'http://example.org/o1'),
+          ]);
+      });
+
       it('complex combinations of about, rel, rev and href', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">

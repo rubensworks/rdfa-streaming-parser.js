@@ -400,7 +400,7 @@ export class RdfaParser extends Transform {
    * @return {string} An attribute value or null.
    */
   protected getObjectResourceAttributeValue(attributes: {[s: string]: string}): string {
-    return attributes.href || attributes.resource || attributes.src;
+    return attributes.resource || attributes.href || attributes.src;
   }
 
   /**
