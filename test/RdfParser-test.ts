@@ -324,7 +324,16 @@ describe('RdfaParser', () => {
           .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
       });
 
-      it('should give interpret datetimes', async () => {
+      it('should give interpret datetimes without Z', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-18T00:00:00', activeTag))
+          .toEqualRdfTerm(literal('2012-03-18T00:00:00',
+            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+      });
+
+      it('should give interpret datetimes with Z', async () => {
         const activeTag: any = {
           interpretObjectAsTime: true,
         };
@@ -333,7 +342,52 @@ describe('RdfaParser', () => {
             namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
       });
 
-      it('should give interpret times', async () => {
+      it('should give interpret datetimes with negative offset', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-18T00:00:00-10:00', activeTag))
+          .toEqualRdfTerm(literal('2012-03-18T00:00:00-10:00',
+            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+      });
+
+      it('should give interpret datetimes with positive offset', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-18T00:00:00+10:00', activeTag))
+          .toEqualRdfTerm(literal('2012-03-18T00:00:00+10:00',
+            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+      });
+
+      it('should give interpret times without Z', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('00:00:00', activeTag))
+          .toEqualRdfTerm(literal('00:00:00',
+            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+      });
+
+      it('should give interpret times with positive offset', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('00:00:00+01:10', activeTag))
+          .toEqualRdfTerm(literal('00:00:00+01:10',
+            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+      });
+
+      it('should give interpret times with negative offset', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('00:00:00-01:10', activeTag))
+          .toEqualRdfTerm(literal('00:00:00-01:10',
+            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+      });
+
+      it('should give interpret times with Z', async () => {
         const activeTag: any = {
           interpretObjectAsTime: true,
         };
@@ -349,6 +403,40 @@ describe('RdfaParser', () => {
         return expect(parser.createLiteral('2012-03-18', activeTag))
           .toEqualRdfTerm(literal('2012-03-18',
             namedNode('http://www.w3.org/2001/XMLSchema#date')));
+      });
+
+      it('should give interpret years', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012', activeTag))
+          .toEqualRdfTerm(literal('2012',
+            namedNode('http://www.w3.org/2001/XMLSchema#gYear')));
+      });
+
+      it('should give interpret years', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03', activeTag))
+          .toEqualRdfTerm(literal('2012-03',
+            namedNode('http://www.w3.org/2001/XMLSchema#gYearMonth')));
+      });
+
+      it('should give not interpret invalid dates (1)', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral(' 2012-03-12', activeTag))
+          .toEqualRdfTerm(literal(' 2012-03-12'));
+      });
+
+      it('should give not interpret invalid dates (2)', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-12 ', activeTag))
+          .toEqualRdfTerm(literal('2012-03-12 '));
       });
     });
 
@@ -867,13 +955,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
 	<head>
 	</head>
 	<body>
-	  <time property="dc:title">00:00:00</time>
+	  <time property="dc:title">00:00:00Z</time>
 	</body>
 </html>`))
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
-              '"00:00:00"^^http://www.w3.org/2001/XMLSchema#time'),
+              '"00:00:00Z"^^http://www.w3.org/2001/XMLSchema#time'),
           ]);
       });
 
@@ -915,13 +1003,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
 	<head>
 	</head>
 	<body>
-	  <time property="dc:title" datetime="00:00:00">Today</time>
+	  <time property="dc:title" datetime="00:00:00Z">Today</time>
 	</body>
 </html>`))
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
-              '"00:00:00"^^http://www.w3.org/2001/XMLSchema#time'),
+              '"00:00:00Z"^^http://www.w3.org/2001/XMLSchema#time'),
           ]);
       });
 

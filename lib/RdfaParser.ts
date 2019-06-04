@@ -15,10 +15,16 @@ export class RdfaParser extends Transform {
   public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
 
   protected static readonly PREFIX_REGEX: RegExp = /[ \n]*([^ :\n]*)*:[ \n]*([^ \n]*)*[ \n]*/g;
-  protected static readonly TIME_DATE_REGEX: RegExp = /[0-9]+-[0-9][0-9]-[0-9][0-9]/;
-  protected static readonly TIME_TIME_REGEX: RegExp = /[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/;
-  protected static readonly TIME_DATETIME_REGEX: RegExp
-    = /[0-9]+-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/;
+  protected static readonly TIME_REGEXES: { regex: RegExp, type: string }[] = [
+    {
+      regex: /^[0-9]+-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]((Z?)|([\+-][0-9][0-9]:[0-9][0-9]))$/,
+      type: 'dateTime',
+    },
+    { regex: /^[0-9]+-[0-9][0-9]-[0-9][0-9]$/, type: 'date' },
+    { regex: /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]((Z?)|([\+-][0-9][0-9]:[0-9][0-9]))$/, type: 'time' },
+    { regex: /^[0-9]+-[0-9][0-9]$/, type: 'gYearMonth' },
+    { regex: /^[0-9]+$/, type: 'gYear' },
+  ];
 
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
@@ -323,12 +329,11 @@ export class RdfaParser extends Transform {
    */
   protected createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
     if (activeTag.interpretObjectAsTime) {
-      if (literal.match(RdfaParser.TIME_DATETIME_REGEX)) {
-        activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + 'dateTime');
-      } else if (literal.match(RdfaParser.TIME_DATE_REGEX)) {
-        activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + 'date');
-      } else if (literal.match(RdfaParser.TIME_TIME_REGEX)) {
-        activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + 'time');
+      for (const entry of RdfaParser.TIME_REGEXES) {
+        if (literal.match(entry.regex)) {
+          activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + entry.type);
+          break;
+        }
       }
     }
     return this.dataFactory.literal(literal, activeTag.datatype || activeTag.language);
