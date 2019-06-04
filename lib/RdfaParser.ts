@@ -220,7 +220,7 @@ export class RdfaParser extends Transform {
     }
 
     // Save language attribute value in active tag
-    if (attributes.lang || attributes['xml:lang']) {
+    if ('lang' in attributes || 'xml:lang' in attributes) {
       activeTag.language = attributes.lang || attributes['xml:lang'];
     }
 
