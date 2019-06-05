@@ -231,7 +231,7 @@ export class RdfaParser extends Transform {
           newSubject = this.createIri(attributes.about || attributes.resource || attributes.href || attributes.src,
             activeTag, false);
         } else {
-          if (this.activeTagStack.length === 2) { // If this is the root tag
+          if (isRootTag) {
             newSubject = true;
           } else if (attributes.typeof) {
             newSubject = this.dataFactory.blankNode();
@@ -268,9 +268,6 @@ export class RdfaParser extends Transform {
         currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
           activeTag, false);
       } else if (attributes.typeof && !attributes.about) {
-        currentObjectResource = this.dataFactory.blankNode();
-      }
-      if (!currentObjectResource) {
         currentObjectResource = this.dataFactory.blankNode();
       }
 
@@ -335,6 +332,11 @@ export class RdfaParser extends Transform {
           predicate: this.createIri(attributes.rev, activeTag, true),
           reverse: true,
         });
+      }
+
+      // Set a blank node object, so the children can make use of this when completing the triples
+      if (activeTag.incompleteTriples.length > 0) {
+        currentObjectResource = this.dataFactory.blankNode();
       }
     }
 
@@ -404,7 +406,9 @@ export class RdfaParser extends Transform {
     }
 
     // 12: Complete incomplete triples
+    let incompleteTriplesCompleted = false;
     if (!skipElement && newSubject && parentTag.incompleteTriples.length > 0) {
+      incompleteTriplesCompleted = true;
       for (const incompleteTriple of parentTag.incompleteTriples) {
         if (!incompleteTriple.reverse) {
           this.emitTriple(
@@ -420,9 +424,8 @@ export class RdfaParser extends Transform {
           );
         }
       }
-      parentTag.incompleteTriples = [];
     }
-    if (parentTag.incompleteTriples.length > 0) {
+    if (!incompleteTriplesCompleted && parentTag.incompleteTriples.length > 0) {
       activeTag.incompleteTriples = activeTag.incompleteTriples.concat(parentTag.incompleteTriples);
     }
 

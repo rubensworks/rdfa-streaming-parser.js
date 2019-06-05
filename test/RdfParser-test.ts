@@ -1363,6 +1363,195 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://schema.org/'),
           ]);
       });
+
+      it('rel with one typeof child should have their blank node be connected', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
+	</div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+          ]);
+      });
+
+      it('complex blank node nesting', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p property="foaf:name">Dan Brickley</p>
+	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
+	</div>
+	<p property="foaf:name">Dan Brickley?</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b2'),
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley"'),
+            quad('_:b2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley?"'),
+          ]);
+      });
+
+      it('complex explicit blank node nesting', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p about="[_:]" property="foaf:name">Dan Brickley</p>
+	    <p about="[_:]" typeof="foaf:Person">Dan Brickley again:-)</p>
+	</div>
+	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley"'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley?"'),
+          ]);
+      });
+
+      it('complex partial explicit blank node nesting', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p property="foaf:name">Dan Brickley</p>
+	    <p about="[_:]" typeof="foaf:Person">Dan Brickley again:-)</p>
+	</div>
+	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b2'),
+            quad('_:b2',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley"'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley?"'),
+          ]);
+      });
+
+      it('complex disconnected explicit blank node nesting', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p property="foaf:name">Dan Brickley</p>
+	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
+	</div>
+	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b2'),
+            quad('_:b2',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley"'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+            quad('_:b3',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley?"'),
+          ]);
+      });
+
+      it('complex connected explicit blank node nesting', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p property="foaf:name">Dan Brickley</p>
+	    <p property="foaf:name">Dan Brickley again:-)</p>
+	</div>
+	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley"'),
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley again:-)"'),
+            quad('_:b3',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Dan Brickley?"'),
+          ]);
+      });
+
+      it('blank node nesting with typeof', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div about="http://www.example.org/#somebody" rel="foaf:knows">
+	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
+	</div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/#somebody',
+              'http://xmlns.com/foaf/0.1/knows',
+              '_:b1'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+          ]);
+      });
     });
 
   });
