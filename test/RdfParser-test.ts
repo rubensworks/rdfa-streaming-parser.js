@@ -585,7 +585,7 @@ with Bob</h2>
       });
 
       it('base tags and set the baseIRI', async () => {
-        await parse(parser, `<html>
+        const output = await parse(parser, `<html>
 <head>
     <base href="http://base.com/" />
 </head>
@@ -593,6 +593,9 @@ with Bob</h2>
     <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`);
+        expect(output).toBeRdfIsomorphic([
+          quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
+        ]);
         return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
       });
 
