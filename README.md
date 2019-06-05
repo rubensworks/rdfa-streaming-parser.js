@@ -39,7 +39,7 @@ const RdfaParser = require("rdfa-streaming-parser").RdfaParser;
 ## Usage
 
 `RdfaParser` is a Node [Transform stream](https://nodejs.org/api/stream.html#stream_class_stream_transform)
-that takes in chunks of JSON-LD data,
+that takes in chunks of RDFa data,
 and outputs [RDFJS](http://rdf.js.org/)-compliant quads.
 
 It can be used to [`pipe`](https://nodejs.org/api/stream.html#stream_readable_pipe_destination_options) streams to,

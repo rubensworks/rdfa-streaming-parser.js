@@ -14,7 +14,7 @@ describe('RdfaParser', () => {
     const instance = new RdfaParser();
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(require('@rdfjs/data-model'));
-    expect((<any> instance).baseIRI).toBe('');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
     expect((<any> instance).options.strict).toBeFalsy();
   });
@@ -23,17 +23,17 @@ describe('RdfaParser', () => {
     const instance = new RdfaParser({});
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toBe('');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
     expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom data factory', () => {
-    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => 'abc' };
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
     const instance = new RdfaParser({dataFactory});
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(dataFactory);
-    expect((<any> instance).baseIRI).toBe('');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe('abc');
     expect((<any> instance).options.strict).toBeFalsy();
   });
@@ -42,7 +42,7 @@ describe('RdfaParser', () => {
     const instance = new RdfaParser({baseIRI: 'myBaseIRI'});
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqual('myBaseIRI');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('myBaseIRI'));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
     expect((<any> instance).options.strict).toBeFalsy();
   });
@@ -52,7 +52,7 @@ describe('RdfaParser', () => {
     const instance = new RdfaParser({defaultGraph});
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqual('');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
     expect((<any> instance).options.strict).toBeFalsy();
   });
@@ -61,18 +61,18 @@ describe('RdfaParser', () => {
     const instance = new RdfaParser({ strict: true });
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqual('');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
     expect((<any> instance).options.strict).toEqual(true);
   });
 
   it('should be constructable with args with a custom data factory, base IRI, strict and default graph', () => {
-    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => 'abc' };
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
     const defaultGraph = DataFactory.namedNode('abc');
     const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph, strict: true });
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(dataFactory);
-    expect((<any> instance).baseIRI).toEqual('myBaseIRI');
+    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
     expect((<any> instance).options.strict).toEqual(true);
   });
@@ -593,7 +593,7 @@ with Bob</h2>
     <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`);
-        return expect(parser.baseIRI).toEqual('http://base.com/');
+        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
       });
 
       it('base tags without href and not set the baseIRI', async () => {
@@ -605,7 +605,7 @@ with Bob</h2>
     <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`);
-        return expect(parser.baseIRI).toEqual('http://example.org/');
+        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
       });
 
       it('typeof with about', async () => {
