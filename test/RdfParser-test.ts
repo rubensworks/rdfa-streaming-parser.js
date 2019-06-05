@@ -1260,6 +1260,92 @@ foaf: http://xmlns.com/foaf/0.1/">
               '"Ben Adida"'),
           ]);
       });
+
+      it('and ignore rel if there is a property and rel is a non-CURIE and non-URI', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rel="nofollow">Some Body</a>.
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              'http://homepage.org/'),
+          ]);
+      });
+
+      it('and ignore rev if there is a property and rel is a non-CURIE and non-URI', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rev="nofollow">Some Body</a>.
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              'http://homepage.org/'),
+          ]);
+      });
+
+      it('and not ignore rel if there is a property and rel is a CURIE', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rel="schema:follow">Some Body</a>.
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://example.org/',
+              'http://schema.org/follow',
+              'http://homepage.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              'http://homepage.org/'),
+          ]);
+      });
+
+      it('and not ignore rel if there is a property and rel is a URI', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rel="http://example.org/follow">Some Body</a>.
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://example.org/',
+              'http://example.org/follow',
+              'http://homepage.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              'http://homepage.org/'),
+          ]);
+      });
     });
 
   });

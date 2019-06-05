@@ -296,14 +296,14 @@ export class RdfaParser extends Transform {
 
       // Determine predicates using rel or rev (unless rel and inlist are present)
       if (!(attributes.rel && attributes.inlist)) {
-        if (attributes.rel) {
+        if (attributes.rel && (!attributes.property || attributes.rel.indexOf(':') >= 0)) {
           this.emitTriple(
             this.getResourceOrBaseIri(newSubject, activeTag),
             this.createIri(attributes.rel, activeTag, true),
             this.getResourceOrBaseIri(currentObjectResource, activeTag),
           );
         }
-        if (attributes.rev) {
+        if (attributes.rev && (!attributes.property || attributes.rev.indexOf(':') >= 0)) {
           this.emitTriple(
             this.getResourceOrBaseIri(currentObjectResource, activeTag),
             this.createIri(attributes.rev, activeTag, true),
