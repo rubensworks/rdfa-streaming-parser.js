@@ -1237,6 +1237,29 @@ foaf: http://xmlns.com/foaf/0.1/">
               '"Title"'),
           ]);
       });
+
+      it('chained rel and property', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+  <body>
+  	<p>
+    	This paper was written by
+    	<span rel="dc:creator">
+      		<span property="foaf:name">Ben Adida</span>.
+    	</span>
+	</p>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/creator',
+              '_:b'),
+            quad('_:b',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Ben Adida"'),
+          ]);
+      });
     });
 
   });

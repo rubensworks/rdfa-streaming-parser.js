@@ -136,7 +136,7 @@ export class RdfaParser extends Transform {
     // Create a new active tag and inherit language scope and baseIRI from parent
     const activeTag: IActiveTag = {
       collectChildTags: parentTag.collectChildTags,
-      incompleteTriples: parentTag.incompleteTriples.concat([]),
+      incompleteTriples: [],
       name,
       prefixes: null,
     };
@@ -244,7 +244,7 @@ export class RdfaParser extends Transform {
         }
       }
     } else if (attributes.rel || attributes.rev) {
-      // 6: Determine the new subject when rel or rev are not present
+      // 6: Determine the new subject when rel or rev are present
 
       // Define new subject
       if (attributes.about) {
@@ -263,6 +263,9 @@ export class RdfaParser extends Transform {
         currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
           activeTag, false);
       } else if (attributes.typeof && !attributes.about) {
+        currentObjectResource = this.dataFactory.blankNode();
+      }
+      if (!currentObjectResource) {
         currentObjectResource = this.dataFactory.blankNode();
       }
 
@@ -396,8 +399,8 @@ export class RdfaParser extends Transform {
     }
 
     // 12: Complete incomplete triples
-    if (!skipElement && newSubject && activeTag.incompleteTriples.length > 0) {
-      for (const incompleteTriple of activeTag.incompleteTriples) {
+    if (!skipElement && newSubject && parentTag.incompleteTriples.length > 0) {
+      for (const incompleteTriple of parentTag.incompleteTriples) {
         if (!incompleteTriple.reverse) {
           this.emitTriple(
             this.getResourceOrBaseIri(parentTag.subject, activeTag),
@@ -412,7 +415,10 @@ export class RdfaParser extends Transform {
           );
         }
       }
-      activeTag.incompleteTriples = [];
+      parentTag.incompleteTriples = [];
+    }
+    if (parentTag.incompleteTriples.length > 0) {
+      activeTag.incompleteTriples = activeTag.incompleteTriples.concat(parentTag.incompleteTriples);
     }
 
     // 13: Save evaluation context into active tag
