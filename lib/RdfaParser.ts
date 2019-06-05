@@ -74,6 +74,7 @@ export class RdfaParser extends Transform {
 
     this.activeTagStack.push({
       incompleteTriples: [],
+      language: options.language,
       name: '',
       prefixes: INITIAL_CONTEXT['@context'],
       vocab: options.vocab,
@@ -629,6 +630,7 @@ export interface IActiveTag {
 export interface IRdfaParserOptions {
   dataFactory?: RDF.DataFactory;
   baseIRI?: string;
+  language?: string;
   vocab?: string;
   defaultGraph?: RDF.Term;
   strict?: boolean;

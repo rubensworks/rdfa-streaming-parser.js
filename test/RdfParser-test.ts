@@ -1304,6 +1304,25 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
           ]);
       });
 
+      it('with language set in parser constructor', async () => {
+        parser = new RdfaParser({
+          baseIRI: 'http://example.org/',
+          language: 'nl-be',
+        });
+        return expect(await parse(parser, `<html>
+	<head>
+	</head>
+	<body>
+	  <p property="http://xmlns.com/foaf/0.1/name">Name</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Name"@nl-be'),
+          ]);
+      });
+
       it('multiple properties', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
