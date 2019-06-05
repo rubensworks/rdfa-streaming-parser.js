@@ -168,12 +168,17 @@ export class RdfaParser extends Transform {
     // 2: handle vocab attribute to set active vocabulary
     // Vocab sets the active vocabulary
     if ('vocab' in attributes) {
-      activeTag.vocab = attributes.vocab;
-      this.emitTriple(
-        this.baseIRI,
-        this.dataFactory.namedNode(RdfaParser.RDFA + 'usesVocabulary'),
-        this.dataFactory.namedNode(activeTag.vocab),
-      );
+      if (attributes.vocab) {
+        activeTag.vocab = attributes.vocab;
+        this.emitTriple(
+          this.baseIRI,
+          this.dataFactory.namedNode(RdfaParser.RDFA + 'usesVocabulary'),
+          this.dataFactory.namedNode(activeTag.vocab),
+        );
+      } else {
+        // If vocab is set to '', then we fallback to the root vocab as defined via the parser constructor
+        activeTag.vocab = this.activeTagStack[0].vocab;
+      }
     } else {
       activeTag.vocab = parentTag.vocab;
     }
@@ -548,6 +553,12 @@ export class RdfaParser extends Transform {
    * @param {Term} object An object term.
    */
   protected emitTriple(subject: RDF.Term, predicate: RDF.Term, object: RDF.Term) {
+    // Validate IRIs
+    if ((subject.termType === 'NamedNode' && subject.value.indexOf(':') < 0)
+      || (predicate.termType === 'NamedNode' && predicate.value.indexOf(':') < 0)
+      || (object.termType === 'NamedNode' && object.value.indexOf(':') < 0)) {
+      return;
+    }
     this.push(this.dataFactory.quad(subject, predicate, object, this.defaultGraph));
   }
 

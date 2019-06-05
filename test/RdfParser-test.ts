@@ -1346,6 +1346,23 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://homepage.org/'),
           ]);
       });
+
+      it('unsetting vocab', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body vocab="http://schema.org/">
+  <p vocab="">
+    The homepage of <a property="homepage">Some Body</a>.
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+          ]);
+      });
     });
 
   });
