@@ -14,6 +14,29 @@ export class RdfaParser extends Transform {
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
   public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
   public static readonly RDFA = 'http://www.w3.org/ns/rdfa#';
+  // tslint:disable:object-literal-sort-keys
+  public static readonly RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
+    '': {
+      baseTag: true,
+      langAttribute: true,
+      onlyAllowUriRelRevIfProperty: true,
+      onlyAllowSubjectInheritanceInHeadBody: true,
+      datetimeAttribute: true,
+      timeTag: true,
+      htmlDatatype: true,
+    },
+    'core': {},
+    'html': {
+      baseTag: true,
+      langAttribute: true,
+      onlyAllowUriRelRevIfProperty: true,
+      onlyAllowSubjectInheritanceInHeadBody: true,
+      datetimeAttribute: true,
+      timeTag: true,
+      htmlDatatype: true,
+    },
+  };
+  // tslint:enable:object-literal-sort-keys
 
   protected static readonly PREFIX_REGEX: RegExp = /[ \n\t]*([^ :\n\t]*)*:[ \n\t]*([^ \n\t]*)*[ \n\t]*/g;
   protected static readonly TIME_REGEXES: { regex: RegExp, type: string }[] = [
@@ -31,6 +54,7 @@ export class RdfaParser extends Transform {
   private readonly dataFactory: RDF.DataFactory;
   private readonly defaultGraph?: RDF.Term;
   private readonly parser: HtmlParser;
+  private readonly features: IRdfaFeatures;
 
   private readonly activeTagStack: IActiveTag[] = [];
 
@@ -44,6 +68,7 @@ export class RdfaParser extends Transform {
     this.dataFactory = options.dataFactory || require('@rdfjs/data-model');
     this.baseIRI = this.dataFactory.namedNode(options.baseIRI || '');
     this.defaultGraph = options.defaultGraph || this.dataFactory.defaultGraph();
+    this.features = options.features || RdfaParser.RDFA_FEATURES[options.profile] || RdfaParser.RDFA_FEATURES[''];
 
     this.parser = this.initializeParser(options.strict);
 
@@ -149,12 +174,12 @@ export class RdfaParser extends Transform {
     }
 
     // <base> tags override the baseIRI
-    if (name === 'base' && attributes.href) {
+    if (this.features.baseTag && name === 'base' && attributes.href) {
       this.baseIRI = this.dataFactory.namedNode(attributes.href);
     }
 
     // <time> tags set an initial datatype
-    if (name === 'time' && !attributes.datatype) {
+    if (this.features.timeTag && name === 'time' && !attributes.datatype) {
       activeTag.interpretObjectAsTime = true;
     }
 
@@ -188,8 +213,8 @@ export class RdfaParser extends Transform {
 
     // 4: handle language
     // Save language attribute value in active tag
-    if ('lang' in attributes || 'xml:lang' in attributes) {
-      activeTag.language = attributes.lang || attributes['xml:lang'];
+    if ('xml:lang' in attributes || (this.features.langAttribute && 'lang' in attributes)) {
+      activeTag.language = attributes['xml:lang'] || attributes.lang;
     } else {
       activeTag.language = parentTag.language;
     }
@@ -298,14 +323,16 @@ export class RdfaParser extends Transform {
 
       // Determine predicates using rel or rev (unless rel and inlist are present)
       if (!(attributes.rel && attributes.inlist)) {
-        if (attributes.rel && (!attributes.property || attributes.rel.indexOf(':') >= 0)) {
+        if (attributes.rel && (!this.features.onlyAllowUriRelRevIfProperty
+          || (!attributes.property || attributes.rel.indexOf(':') >= 0))) {
           this.emitTriple(
             this.getResourceOrBaseIri(newSubject, activeTag),
             this.createIri(attributes.rel, activeTag, true),
             this.getResourceOrBaseIri(currentObjectResource, activeTag),
           );
         }
-        if (attributes.rev && (!attributes.property || attributes.rev.indexOf(':') >= 0)) {
+        if (attributes.rev && (!this.features.onlyAllowUriRelRevIfProperty
+          || !attributes.property || attributes.rev.indexOf(':') >= 0)) {
           this.emitTriple(
             this.getResourceOrBaseIri(currentObjectResource, activeTag),
             this.createIri(attributes.rev, activeTag, true),
@@ -349,7 +376,8 @@ export class RdfaParser extends Transform {
       // Save datatype attribute value in active tag
       if (attributes.datatype) {
         activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true);
-        if (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral') {
+        if (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
+          || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML')) {
           activeTag.collectChildTags = true;
         }
       }
@@ -378,7 +406,8 @@ export class RdfaParser extends Transform {
 
         // Unset predicate to avoid text contents to produce new triples
         activeTag.predicates = null;
-      } else if (activeTag.interpretObjectAsTime && attributes.datetime) {
+      } else if (this.features.datetimeAttribute && attributes.datetime) {
+        activeTag.interpretObjectAsTime = true;
         // Datetime attribute on time tag has preference over text content
         for (const predicate of activeTag.predicates) {
           this.emitTriple(
@@ -603,4 +632,43 @@ export interface IRdfaParserOptions {
   vocab?: string;
   defaultGraph?: RDF.Term;
   strict?: boolean;
+  features?: IRdfaFeatures;
+  profile?: RdfaProfile;
+}
+
+export type RdfaProfile =
+  '' | // All possible RDFa features
+  'core' | // https://www.w3.org/TR/rdfa-core/
+  'html'; // https://www.w3.org/TR/html-rdfa/
+
+export interface IRdfaFeatures {
+  /**
+   * If the baseIRI can be set via the <base> tag.
+   */
+  baseTag?: boolean;
+  /**
+   * If the language can be set via the language attribute.
+   */
+  langAttribute?: boolean;
+  /**
+   * If non-CURIE and non-URI rel and rev have to be ignored if property is present.
+   */
+  onlyAllowUriRelRevIfProperty?: boolean;
+  /**
+   * If subject can only be inherited from parent objects if we're inside <head> or <body>
+   * if the resource defines no new subject.
+   */
+  onlyAllowSubjectInheritanceInHeadBody?: boolean;
+  /**
+   * If the datetime attribute must be interpreted as datetimes.
+   */
+  datetimeAttribute?: boolean;
+  /**
+   * If the time tag contents should be interpreted as datetimes.
+   */
+  timeTag?: boolean;
+  /**
+   * If rdf:HTML as datatype should cause tag contents to be serialized to text.
+   */
+  htmlDatatype?: boolean;
 }

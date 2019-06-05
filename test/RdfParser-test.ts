@@ -599,6 +599,22 @@ with Bob</h2>
         return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
       });
 
+      it('base tags are ignored when features.baseTag is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        const output = await parse(parser, `<html>
+<head>
+    <base href="http://base.com/" />
+</head>
+<body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
+    <div property="dc:title" resource="img.jpg"></div>
+</body>
+</html>`);
+        expect(output).toBeRdfIsomorphic([
+          quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
+        ]);
+        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
+      });
+
       it('base tags without href and not set the baseIRI', async () => {
         await parse(parser, `<html>
 <head>
@@ -929,6 +945,43 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
           ]);
       });
 
+      it('rdf:HTML datatype to preserve all nested tags when features.htmlDatatype is enabled', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:HTML"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"<b some="attribute">M</b>ark <b>B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
+          ]);
+      });
+
+      it('rdf:HTML datatype to not preserve all nested tags when features.htmlDatatype is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:HTML"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Mark Birbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
+          ]);
+      });
+
       it('lang to set the object literal language', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
@@ -943,6 +996,24 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
               '"abc"@en'),
+          ]);
+      });
+
+      it('lang should be ignored when features.langAttribute is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" lang="en">abc</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"abc"'),
           ]);
       });
 
@@ -1047,6 +1118,23 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
           ]);
       });
 
+      it('time tags with dates when features.timeTag is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title">2012-03-18</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"2012-03-18"'),
+          ]);
+      });
+
       it('time tags with times', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
@@ -1092,6 +1180,23 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
               '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#date'),
+          ]);
+      });
+
+      it('time tags with dates in datetime when features.datetimeAttribute is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="2012-03-18">Today</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Today"'),
           ]);
       });
 
@@ -1277,6 +1382,31 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://schema.org/'),
             quad('http://example.org/',
               'http://schema.org/homepage',
+              'http://homepage.org/'),
+          ]);
+      });
+
+      it('and not ignore rel if there is a property and rel is a non-CURIE and non-URI if ' +
+        'features.onlyAllowUriRelRevIfProperty is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rel="follow">Some Body</a>.
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              'http://homepage.org/'),
+            quad('http://example.org/',
+              'http://schema.org/follow',
               'http://homepage.org/'),
           ]);
       });
