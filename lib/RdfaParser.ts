@@ -24,6 +24,7 @@ export class RdfaParser extends Transform {
       datetimeAttribute: true,
       timeTag: true,
       htmlDatatype: true,
+      copyRdfaPatterns: true,
     },
     'core': {},
     'html': {
@@ -34,6 +35,7 @@ export class RdfaParser extends Transform {
       datetimeAttribute: true,
       timeTag: true,
       htmlDatatype: true,
+      copyRdfaPatterns: true,
     },
   };
   // tslint:enable:object-literal-sort-keys
@@ -55,6 +57,8 @@ export class RdfaParser extends Transform {
   private readonly defaultGraph?: RDF.Term;
   private readonly parser: HtmlParser;
   private readonly features: IRdfaFeatures;
+  private readonly rdfaPatterns: {[patternId: string]: IRdfaPattern};
+  private readonly pendingRdfaPatternCopies: {[copyTargetPatternId: string]: IActiveTag[]};
 
   private readonly activeTagStack: IActiveTag[] = [];
 
@@ -69,6 +73,8 @@ export class RdfaParser extends Transform {
     this.baseIRI = this.dataFactory.namedNode(options.baseIRI || '');
     this.defaultGraph = options.defaultGraph || this.dataFactory.defaultGraph();
     this.features = options.features || RdfaParser.RDFA_FEATURES[options.profile] || RdfaParser.RDFA_FEATURES[''];
+    this.rdfaPatterns = this.features.copyRdfaPatterns ? {} : null;
+    this.pendingRdfaPatternCopies = this.features.copyRdfaPatterns ? {} : null;
 
     this.parser = this.initializeParser(options.strict);
 
@@ -167,6 +173,51 @@ export class RdfaParser extends Transform {
       prefixes: null,
     };
     this.activeTagStack.push(activeTag);
+
+    if (this.features.copyRdfaPatterns) {
+      // Save the tag if needed
+      if (parentTag.collectedPatternTag) {
+        const patternTag: IRdfaPattern = {
+          attributes,
+          children: [],
+          name,
+          referenced: false,
+          rootPattern: false,
+          text: [],
+        };
+        parentTag.collectedPatternTag.children.push(patternTag);
+        activeTag.collectedPatternTag = patternTag;
+        return;
+      }
+
+      // Store tags with type rdfa:Pattern as patterns
+      if (attributes.typeof === 'rdfa:Pattern') {
+        activeTag.collectedPatternTag = {
+          attributes,
+          children: [],
+          name,
+          parentTag,
+          referenced: false,
+          rootPattern: true,
+          text: [],
+        };
+        return;
+      }
+
+      // Instantiate patterns on rdfa:copy
+      if (attributes.property === 'rdfa:copy') {
+        const copyTargetPatternId: string = attributes.resource || attributes.href || attributes.src;
+        if (this.rdfaPatterns[copyTargetPatternId]) {
+          this.emitPatternCopy(parentTag, this.rdfaPatterns[copyTargetPatternId], copyTargetPatternId);
+        } else {
+          if (!this.pendingRdfaPatternCopies[copyTargetPatternId]) {
+            this.pendingRdfaPatternCopies[copyTargetPatternId] = [];
+          }
+          this.pendingRdfaPatternCopies[copyTargetPatternId].push(parentTag);
+        }
+        return;
+      }
+    }
 
     // Save the tag contents if needed
     if (activeTag.collectChildTags) {
@@ -468,8 +519,15 @@ export class RdfaParser extends Transform {
   }
 
   protected onText(data: string) {
-    // Save the text inside the active tag
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+
+    // Collect text in pattern tag if needed
+    if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag) {
+      activeTag.collectedPatternTag.text.push(data);
+      return;
+    }
+
+    // Save the text inside the active tag
     if (!activeTag.text) {
       activeTag.text = [];
     }
@@ -481,6 +539,36 @@ export class RdfaParser extends Transform {
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
     const parentTag: IActiveTag = this.activeTagStack.length > 1
       ? this.activeTagStack[this.activeTagStack.length - 2] : null;
+
+    // If we detect a finalized rdfa:Pattern tag, store it
+    if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag && activeTag.collectedPatternTag.rootPattern) {
+      const patternId = activeTag.collectedPatternTag.attributes.resource;
+
+      // Remove resource and typeof attributes to avoid it being seen as a new pattern
+      delete activeTag.collectedPatternTag.attributes.resource;
+      delete activeTag.collectedPatternTag.attributes.typeof;
+
+      // Store the pattern
+      this.rdfaPatterns[patternId] = activeTag.collectedPatternTag;
+
+      // Apply all pending copies for this pattern
+      if (this.pendingRdfaPatternCopies[patternId]) {
+        for (const tag of this.pendingRdfaPatternCopies[patternId]) {
+          this.emitPatternCopy(tag, activeTag.collectedPatternTag, patternId);
+        }
+        delete this.pendingRdfaPatternCopies[patternId];
+      }
+
+      // Remove the active tag from the stack
+      this.activeTagStack.pop();
+
+      // Call end method if our last tag has been popped
+      if (this.activeTagStack.length === 1) {
+        this.onEnd();
+      }
+
+      return;
+    }
 
     // Emit all triples that were determined in the active tag
     if (activeTag.predicates && activeTag.text) {
@@ -509,6 +597,42 @@ export class RdfaParser extends Transform {
       } else {
         parentTag.text = parentTag.text.concat(activeTag.text);
       }
+    }
+
+    // Call end method if our last tag has been popped
+    if (this.activeTagStack.length === 1) {
+      this.onEnd();
+    }
+  }
+
+  protected onEnd() {
+    if (this.features.copyRdfaPatterns) {
+      this.features.copyRdfaPatterns = false;
+
+      // Emit all unreferenced patterns
+      for (const patternId in this.rdfaPatterns) {
+        const pattern = this.rdfaPatterns[patternId];
+        if (!pattern.referenced) {
+          pattern.attributes.typeof = 'rdfa:Pattern';
+          pattern.attributes.resource = patternId;
+          this.emitPatternCopy(pattern.parentTag, pattern, patternId);
+          pattern.referenced = false;
+          delete pattern.attributes.typeof;
+          delete pattern.attributes.resource;
+        }
+      }
+
+      // Emit all unreferenced copy links
+      for (const patternId in this.pendingRdfaPatternCopies) {
+        for (const parentTag of this.pendingRdfaPatternCopies[patternId]) {
+          this.activeTagStack.push(parentTag);
+          this.onTagOpen('link', { property: 'rdfa:copy', href: patternId });
+          this.onTagClose();
+          this.activeTagStack.pop();
+        }
+      }
+
+      this.features.copyRdfaPatterns = true;
     }
   }
 
@@ -595,6 +719,45 @@ export class RdfaParser extends Transform {
     this.push(this.dataFactory.quad(subject, predicate, object, this.defaultGraph));
   }
 
+  /**
+   * Emit an instantiation of the given pattern with the given parent tag.
+   * @param {IActiveTag} parentTag The parent tag to instantiate in.
+   * @param {IRdfaPattern} pattern The pattern to instantiate.
+   * @param {string} rootPatternId The pattern id.
+   */
+  protected emitPatternCopy(parentTag: IActiveTag, pattern: IRdfaPattern, rootPatternId: string) {
+    this.activeTagStack.push(parentTag);
+    pattern.referenced = true;
+    this.emitPatternCopyAbsolute(pattern, true, rootPatternId);
+    this.activeTagStack.pop();
+  }
+
+  /**
+   * Emit an instantiation of the given pattern with the given parent tag.
+   *
+   * This should probably not be called directly,
+   * call {@link emitPatternCopy} instead.
+   *
+   * @param {IRdfaPattern} pattern The pattern to instantiate.
+   * @param {boolean} root If this is the root call for the given pattern.
+   * @param {string} rootPatternId The pattern id.
+   */
+  protected emitPatternCopyAbsolute(pattern: IRdfaPattern, root: boolean, rootPatternId: string) {
+    // Stop on detection of cyclic patterns
+    if (!root && pattern.attributes.property === 'rdfa:copy' && pattern.attributes.href === rootPatternId) {
+      return;
+    }
+
+    this.onTagOpen(pattern.name, pattern.attributes);
+    for (const text of pattern.text) {
+      this.onText(text);
+    }
+    for (const child of pattern.children) {
+      this.emitPatternCopyAbsolute(child, false, rootPatternId);
+    }
+    this.onTagClose();
+  }
+
   protected initializeParser(strict: boolean): HtmlParser {
     return new HtmlParser(
       <DomHandler> <any> {
@@ -609,7 +772,6 @@ export class RdfaParser extends Transform {
         xmlMode: strict,
       });
   }
-
 }
 
 export interface IActiveTag {
@@ -623,6 +785,7 @@ export interface IActiveTag {
   language?: string;
   datatype?: RDF.NamedNode;
   collectChildTags?: boolean;
+  collectedPatternTag?: IRdfaPattern;
   interpretObjectAsTime?: boolean;
   incompleteTriples?: { predicate: RDF.Term, reverse: boolean }[];
 }
@@ -673,4 +836,18 @@ export interface IRdfaFeatures {
    * If rdf:HTML as datatype should cause tag contents to be serialized to text.
    */
   htmlDatatype?: boolean;
+  /**
+   * If rdfa:copy property links can refer to rdfa:Pattern's for copying.
+   */
+  copyRdfaPatterns?: boolean;
+}
+
+export interface IRdfaPattern {
+  rootPattern: boolean;
+  name: string;
+  attributes: {[s: string]: string};
+  text: string[];
+  children: IRdfaPattern[];
+  referenced: boolean;
+  parentTag?: IActiveTag;
 }
