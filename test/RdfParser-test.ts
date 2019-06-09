@@ -2147,6 +2147,26 @@ foaf: http://xmlns.com/foaf/0.1/">
           ]);
       });
 
+      it('typeof with a single property', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p about="" typeof="foaf:Document" property="foaf:topic">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              '"John Doe"'),
+          ]);
+      });
+
     });
 
   });
