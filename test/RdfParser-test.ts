@@ -627,6 +627,21 @@ with Bob</h2>
         return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
       });
 
+      it('base tags with fragment and set the baseIRI', async () => {
+        const output = await parse(parser, `<html>
+<head>
+    <base href="http://base.com/#fragment" />
+</head>
+<body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
+    <div property="dc:title" resource="img.jpg"></div>
+</body>
+</html>`);
+        expect(output).toBeRdfIsomorphic([
+          quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
+        ]);
+        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
+      });
+
       it('base tags without href and not set the baseIRI', async () => {
         await parse(parser, `<html>
 <head>

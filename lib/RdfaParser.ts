@@ -232,7 +232,12 @@ export class RdfaParser extends Transform {
 
     // <base> tags override the baseIRI
     if (this.features.baseTag && name === 'base' && attributes.href) {
-      this.baseIRI = this.dataFactory.namedNode(attributes.href);
+      let href: string = attributes.href;
+      const fragmentIndex = href.indexOf('#');
+      if (fragmentIndex >= 0) {
+        href = href.substr(0, fragmentIndex);
+      }
+      this.baseIRI = this.dataFactory.namedNode(href);
     }
 
     // <time> tags set an initial datatype
