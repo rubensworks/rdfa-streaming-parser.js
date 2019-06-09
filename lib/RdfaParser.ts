@@ -432,7 +432,7 @@ export class RdfaParser extends Transform {
       activeTag.predicates = this.createPredicates(attributes.property, activeTag);
 
       // Save datatype attribute value in active tag
-      if ('datatype' in attributes) {
+      if (attributes.datatype) {
         activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true);
         if (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
           || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML')) {
