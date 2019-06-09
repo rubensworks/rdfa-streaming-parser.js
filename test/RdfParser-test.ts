@@ -1249,6 +1249,22 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
           ]);
       });
 
+      it('time tags with dates in datetime, with overridden datatype', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="2012-03-18" datatype="xsd:thing">Today</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#thing'),
+          ]);
+      });
+
       it('time tags with dates in datetime when features.datetimeAttribute is disabled', async () => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/

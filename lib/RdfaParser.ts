@@ -680,7 +680,7 @@ export class RdfaParser extends Transform {
    * @return {Literal} A new literal node.
    */
   protected createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
-    if (activeTag.interpretObjectAsTime) {
+    if (activeTag.interpretObjectAsTime && !activeTag.datatype) {
       for (const entry of RdfaParser.TIME_REGEXES) {
         if (literal.match(entry.regex)) {
           activeTag.datatype = this.dataFactory.namedNode(RdfaParser.XSD + entry.type);
