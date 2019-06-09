@@ -722,6 +722,20 @@ with Bob</h2>
           ]);
       });
 
+      it('rel (2x) and resource as resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rel="http://example.org/p1 http://example.org/p2" resource="http://example.org/o" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p1', 'http://example.org/o'),
+            quad('http://example.org/', 'http://example.org/p2', 'http://example.org/o'),
+          ]);
+      });
+
       it('rel and src as resource link', async () => {
         return expect(await parse(parser, `<html>
 <head>
@@ -1378,6 +1392,32 @@ foaf: http://xmlns.com/foaf/0.1/">
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/creator',
+              '_:b'),
+            quad('_:b',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Ben Adida"'),
+          ]);
+      });
+
+      it('multiple chained rel and property', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+  <body>
+  	<p>
+    	This paper was written by
+    	<span rel="dc:creator dc:creator2">
+      		<span property="foaf:name">Ben Adida</span>.
+    	</span>
+	</p>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/creator',
+              '_:b'),
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/creator2',
               '_:b'),
             quad('_:b',
               'http://xmlns.com/foaf/0.1/name',

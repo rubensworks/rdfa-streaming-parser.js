@@ -377,19 +377,23 @@ export class RdfaParser extends Transform {
       if (!('rel' in attributes && 'inlist' in attributes)) {
         if ('rel' in attributes && (!this.features.onlyAllowUriRelRevIfProperty
           || (!('property' in attributes) || attributes.rel.indexOf(':') >= 0))) {
-          this.emitTriple(
-            this.getResourceOrBaseIri(newSubject, activeTag),
-            this.createIri(attributes.rel, activeTag, true),
-            this.getResourceOrBaseIri(currentObjectResource, activeTag),
-          );
+          for (const predicate of this.createPredicates(attributes.rel, activeTag)) {
+            this.emitTriple(
+              this.getResourceOrBaseIri(newSubject, activeTag),
+              predicate,
+              this.getResourceOrBaseIri(currentObjectResource, activeTag),
+            );
+          }
         }
         if ('rev' in attributes && (!this.features.onlyAllowUriRelRevIfProperty
           || !('property' in attributes) || attributes.rev.indexOf(':') >= 0)) {
-          this.emitTriple(
-            this.getResourceOrBaseIri(currentObjectResource, activeTag),
-            this.createIri(attributes.rev, activeTag, true),
-            this.getResourceOrBaseIri(newSubject, activeTag),
-          );
+          for (const predicate of this.createPredicates(attributes.rev, activeTag)) {
+            this.emitTriple(
+              this.getResourceOrBaseIri(currentObjectResource, activeTag),
+              predicate,
+              this.getResourceOrBaseIri(newSubject, activeTag),
+            );
+          }
         }
       }
     }
@@ -400,17 +404,15 @@ export class RdfaParser extends Transform {
         if ('inlist' in attributes) {
           // TODO
         } else {
-          activeTag.incompleteTriples.push({
-            predicate: this.createIri(attributes.rel, activeTag, true),
-            reverse: false,
-          });
+          for (const predicate of this.createPredicates(attributes.rel, activeTag)) {
+            activeTag.incompleteTriples.push({ predicate, reverse: false });
+          }
         }
       }
       if ('rev' in attributes) {
-        activeTag.incompleteTriples.push({
-          predicate: this.createIri(attributes.rev, activeTag, true),
-          reverse: true,
-        });
+        for (const predicate of this.createPredicates(attributes.rev, activeTag)) {
+          activeTag.incompleteTriples.push({ predicate, reverse: true });
+        }
       }
 
       // Set a blank node object, so the children can make use of this when completing the triples
@@ -422,8 +424,7 @@ export class RdfaParser extends Transform {
     // 11: Determine current property value
     if ('property' in attributes) {
       // Create predicates
-      activeTag.predicates = attributes.property.split(/[ \n\t]+/)
-        .map((property) => this.createIri(property, activeTag, true));
+      activeTag.predicates = this.createPredicates(attributes.property, activeTag);
 
       // Save datatype attribute value in active tag
       if ('datatype' in attributes) {
@@ -647,6 +648,17 @@ export class RdfaParser extends Transform {
    */
   protected getBaseIriTerm(activeTag: IActiveTag): RDF.NamedNode {
     return this.baseIRI;
+  }
+
+  /**
+   * Create predicate terms for the given property attribute.
+   * @param {string} properties A property attribute value.
+   * @param {IActiveTag} activeTag The current active tag.
+   * @return {Term[]} The predicate terms.
+   */
+  protected createPredicates(properties: string, activeTag: IActiveTag): RDF.Term[] {
+    return properties.split(/[ \n\t]+/)
+      .map((property) => this.createIri(property, activeTag, true));
   }
 
   /**
