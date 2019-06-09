@@ -125,6 +125,11 @@ export class RdfaParser extends Transform {
       local = term.substr(colonIndex + 1);
     }
 
+    // Expand default namespace
+    if (prefix === '') {
+      return 'http://www.w3.org/1999/xhtml/vocab#' + local;
+    }
+
     // Try to expand the prefix
     if (prefix) {
       const prefixElement = activeTag.prefixes[prefix];

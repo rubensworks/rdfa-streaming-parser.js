@@ -584,6 +584,18 @@ with Bob</h2>
           ]);
       });
 
+      it('property with default prefix and expand them', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
+    <div property=":title" resource="img.jpg"></div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://www.w3.org/1999/xhtml/vocab#title', 'http://example.org/img.jpg'),
+          ]);
+      });
+
       it('base tags and set the baseIRI', async () => {
         const output = await parse(parser, `<html>
 <head>
