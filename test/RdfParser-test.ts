@@ -667,6 +667,21 @@ with Bob</h2>
           ]);
       });
 
+      it('typeofs with about', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body prefix="schema: http://schema.org/">
+    <h2 about="#myDoc" typeof="schema:Document1 schema:Document2">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#myDoc', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/Document1'),
+            quad('http://example.org/#myDoc', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/Document2'),
+          ]);
+      });
+
       it('typeof with resource', async () => {
         return expect(await parse(parser, `<html>
 <head></head>

@@ -366,11 +366,13 @@ export class RdfaParser extends Transform {
 
     // 7: If a typed resource was defined, emit it as a triple
     if (typedResource) {
-      this.emitTriple(
-        this.getResourceOrBaseIri(typedResource, activeTag),
-        this.dataFactory.namedNode(RdfaParser.RDF + 'type'),
-        this.createIri(attributes.typeof, activeTag, true),
-      );
+      for (const type of this.createVocabIris(attributes.typeof, activeTag)) {
+        this.emitTriple(
+          this.getResourceOrBaseIri(typedResource, activeTag),
+          this.dataFactory.namedNode(RdfaParser.RDF + 'type'),
+          type,
+        );
+      }
     }
 
     // 8: Reset list mapping if we have a new subject
@@ -387,7 +389,7 @@ export class RdfaParser extends Transform {
       if (!('rel' in attributes && 'inlist' in attributes)) {
         if ('rel' in attributes && (!this.features.onlyAllowUriRelRevIfProperty
           || (!('property' in attributes) || attributes.rel.indexOf(':') >= 0))) {
-          for (const predicate of this.createPredicates(attributes.rel, activeTag)) {
+          for (const predicate of this.createVocabIris(attributes.rel, activeTag)) {
             this.emitTriple(
               this.getResourceOrBaseIri(newSubject, activeTag),
               predicate,
@@ -397,7 +399,7 @@ export class RdfaParser extends Transform {
         }
         if ('rev' in attributes && (!this.features.onlyAllowUriRelRevIfProperty
           || !('property' in attributes) || attributes.rev.indexOf(':') >= 0)) {
-          for (const predicate of this.createPredicates(attributes.rev, activeTag)) {
+          for (const predicate of this.createVocabIris(attributes.rev, activeTag)) {
             this.emitTriple(
               this.getResourceOrBaseIri(currentObjectResource, activeTag),
               predicate,
@@ -414,13 +416,13 @@ export class RdfaParser extends Transform {
         if ('inlist' in attributes) {
           // TODO
         } else {
-          for (const predicate of this.createPredicates(attributes.rel, activeTag)) {
+          for (const predicate of this.createVocabIris(attributes.rel, activeTag)) {
             activeTag.incompleteTriples.push({ predicate, reverse: false });
           }
         }
       }
       if ('rev' in attributes) {
-        for (const predicate of this.createPredicates(attributes.rev, activeTag)) {
+        for (const predicate of this.createVocabIris(attributes.rev, activeTag)) {
           activeTag.incompleteTriples.push({ predicate, reverse: true });
         }
       }
@@ -434,7 +436,7 @@ export class RdfaParser extends Transform {
     // 11: Determine current property value
     if ('property' in attributes) {
       // Create predicates
-      activeTag.predicates = this.createPredicates(attributes.property, activeTag);
+      activeTag.predicates = this.createVocabIris(attributes.property, activeTag);
 
       // Save datatype attribute value in active tag
       if (attributes.datatype) {
@@ -661,13 +663,13 @@ export class RdfaParser extends Transform {
   }
 
   /**
-   * Create predicate terms for the given property attribute.
-   * @param {string} properties A property attribute value.
+   * Create vocab terms for the given terms attribute.
+   * @param {string} terms An attribute value.
    * @param {IActiveTag} activeTag The current active tag.
-   * @return {Term[]} The predicate terms.
+   * @return {Term[]} The IRI terms.
    */
-  protected createPredicates(properties: string, activeTag: IActiveTag): RDF.Term[] {
-    return properties.split(/[ \n\t]+/)
+  protected createVocabIris(terms: string, activeTag: IActiveTag): RDF.Term[] {
+    return terms.split(/[ \n\t]+/)
       .map((property) => this.createIri(property, activeTag, true));
   }
 
