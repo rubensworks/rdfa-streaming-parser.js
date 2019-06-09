@@ -139,7 +139,7 @@ export class RdfaParser extends Transform {
     }
 
     // Try to expand the term
-    const expandedTerm = activeTag.prefixes[term];
+    const expandedTerm = activeTag.prefixes[term.toLocaleLowerCase()];
     if (expandedTerm) {
       return expandedTerm;
     }

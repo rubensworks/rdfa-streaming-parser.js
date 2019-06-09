@@ -328,6 +328,16 @@ describe('RdfaParser', () => {
           .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
+      it('should do case-insensitive term expansion', async () => {
+        const activeTag: any = {
+          prefixes: {
+            license: 'http://www.w3.org/1999/xhtml/vocab#license',
+          },
+        };
+        return expect(parser.createIri('LiCeNSe', activeTag, true))
+          .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
+      });
+
       it('should make term expansion give priority to vocab', async () => {
         const activeTag: any = {
           prefixes: {
