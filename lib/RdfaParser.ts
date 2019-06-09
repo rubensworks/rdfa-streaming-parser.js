@@ -591,7 +591,11 @@ export class RdfaParser extends Transform {
           this.createLiteral(activeTag.text.join(''), activeTag),
         );
       }
-      activeTag.text = null;
+
+      // Reset text, unless the parent is also collecting text
+      if (!parentTag.text) {
+        activeTag.text = null;
+      }
     }
 
     // Remove the active tag from the stack
