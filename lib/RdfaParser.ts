@@ -80,7 +80,10 @@ export class RdfaParser extends Transform {
 
     this.activeTagStack.push({
       incompleteTriples: [],
+      inlist: false,
       language: options.language,
+      listMapping: {},
+      listMappingLocal: {},
       name: '',
       prefixes: INITIAL_CONTEXT['@context'],
       vocab: options.vocab,
@@ -174,6 +177,9 @@ export class RdfaParser extends Transform {
     const activeTag: IActiveTag = {
       collectChildTags: parentTag.collectChildTags,
       incompleteTriples: [],
+      inlist: 'inlist' in attributes,
+      listMapping: <{[predicate: string]: (RDF.Term|boolean)[]}> <any> [],
+      listMappingLocal: parentTag.listMapping,
       name,
       prefixes: null,
     };
@@ -377,13 +383,17 @@ export class RdfaParser extends Transform {
 
     // 8: Reset list mapping if we have a new subject
     if (newSubject) {
-      // TODO: Reset list mapping
+      activeTag.listMapping = {};
     }
 
     // 9: If an object was defined, emit triples for it
     if (currentObjectResource) {
       // Handle list mapping
-      // TODO
+      if ('rel' in attributes && 'inlist' in attributes) {
+        for (const predicate of this.createVocabIris(attributes.rel, activeTag)) {
+          this.addListMapping(activeTag, predicate, currentObjectResource);
+        }
+      }
 
       // Determine predicates using rel or rev (unless rel and inlist are present)
       if (!('rel' in attributes && 'inlist' in attributes)) {
@@ -414,7 +424,10 @@ export class RdfaParser extends Transform {
     if (!currentObjectResource) {
       if ('rel' in attributes) {
         if ('inlist' in attributes) {
-          // TODO
+          for (const predicate of this.createVocabIris(attributes.rel, activeTag)) {
+            this.addListMapping(activeTag, predicate, null);
+            activeTag.incompleteTriples.push({ predicate, reverse: false, list: true });
+          }
         } else {
           for (const predicate of this.createVocabIris(attributes.rel, activeTag)) {
             activeTag.incompleteTriples.push({ predicate, reverse: false });
@@ -456,16 +469,18 @@ export class RdfaParser extends Transform {
         currentObjectResource = typedResource;
       }
 
-      // TODO: handle @inlist
-
       if ('content' in attributes) {
         // Emit triples based on content attribute has preference over text content
-        for (const predicate of activeTag.predicates) {
-          this.emitTriple(
-            this.getResourceOrBaseIri(newSubject, activeTag),
-            predicate,
-            this.createLiteral(attributes.content, activeTag),
-          );
+        const object = this.createLiteral(attributes.content, activeTag);
+        if ('inlist' in attributes) {
+          for (const predicate of activeTag.predicates) {
+            this.addListMapping(activeTag, predicate, object);
+          }
+        } else {
+          const subject = this.getResourceOrBaseIri(newSubject, activeTag);
+          for (const predicate of activeTag.predicates) {
+            this.emitTriple(subject, predicate, object);
+          }
         }
 
         // Unset predicate to avoid text contents to produce new triples
@@ -473,24 +488,32 @@ export class RdfaParser extends Transform {
       } else if (this.features.datetimeAttribute && 'datetime' in attributes) {
         activeTag.interpretObjectAsTime = true;
         // Datetime attribute on time tag has preference over text content
-        for (const predicate of activeTag.predicates) {
-          this.emitTriple(
-            this.getResourceOrBaseIri(newSubject, activeTag),
-            predicate,
-            this.createLiteral(attributes.datetime, activeTag),
-          );
+        const object = this.createLiteral(attributes.datetime, activeTag);
+        if ('inlist' in attributes) {
+          for (const predicate of activeTag.predicates) {
+            this.addListMapping(activeTag, predicate, object);
+          }
+        } else {
+          const subject = this.getResourceOrBaseIri(newSubject, activeTag);
+          for (const predicate of activeTag.predicates) {
+            this.emitTriple(subject, predicate, object);
+          }
         }
 
         // Unset predicate to avoid text contents to produce new triples
         activeTag.predicates = null;
       } else if (currentObjectResource) {
         // Emit triples for all resource objects
-        for (const predicate of activeTag.predicates) {
-          this.emitTriple(
-            this.getResourceOrBaseIri(newSubject, activeTag),
-            predicate,
-            this.getResourceOrBaseIri(currentObjectResource, activeTag),
-            );
+        const object = this.getResourceOrBaseIri(currentObjectResource, activeTag);
+        if ('inlist' in attributes) {
+          for (const predicate of activeTag.predicates) {
+            this.addListMapping(activeTag, predicate, object);
+          }
+        } else {
+          const subject = this.getResourceOrBaseIri(newSubject, activeTag);
+          for (const predicate of activeTag.predicates) {
+            this.emitTriple(subject, predicate, object);
+          }
         }
 
         // Unset predicate to avoid text contents to produce new triples
@@ -502,19 +525,27 @@ export class RdfaParser extends Transform {
     let incompleteTriplesCompleted = false;
     if (!skipElement && newSubject && parentTag.incompleteTriples.length > 0) {
       incompleteTriplesCompleted = true;
+      const subject = this.getResourceOrBaseIri(parentTag.subject, activeTag);
+      const object = this.getResourceOrBaseIri(newSubject, activeTag);
       for (const incompleteTriple of parentTag.incompleteTriples) {
         if (!incompleteTriple.reverse) {
-          this.emitTriple(
-            this.getResourceOrBaseIri(parentTag.subject, activeTag),
-            incompleteTriple.predicate,
-            this.getResourceOrBaseIri(newSubject, activeTag),
-          );
+          if (incompleteTriple.list) {
+            // Find the active tag that defined the list by going up the stack
+            let firstInListTag = null;
+            for (let i = this.activeTagStack.length - 1; i >= 0; i--) {
+              if (this.activeTagStack[i].inlist) {
+                firstInListTag = this.activeTagStack[i];
+                break;
+              }
+            }
+            if (firstInListTag) {
+              this.addListMapping(firstInListTag, incompleteTriple.predicate, object);
+            }
+          } else {
+            this.emitTriple(subject, incompleteTriple.predicate, object);
+          }
         } else {
-          this.emitTriple(
-            this.getResourceOrBaseIri(newSubject, activeTag),
-            incompleteTriple.predicate,
-            this.getResourceOrBaseIri(parentTag.subject, activeTag),
-          );
+          this.emitTriple(object, incompleteTriple.predicate, subject);
         }
       }
     }
@@ -525,9 +556,6 @@ export class RdfaParser extends Transform {
     // 13: Save evaluation context into active tag
     activeTag.subject = newSubject;
     activeTag.object = currentObjectResource || newSubject;
-
-    // 14: Handle local list mapping
-    // TODO
   }
 
   protected onText(data: string) {
@@ -584,17 +612,48 @@ export class RdfaParser extends Transform {
 
     // Emit all triples that were determined in the active tag
     if (activeTag.predicates && activeTag.text) {
-      for (const predicate of activeTag.predicates) {
-        this.emitTriple(
-          this.getResourceOrBaseIri(activeTag.subject, activeTag),
-          predicate,
-          this.createLiteral(activeTag.text.join(''), activeTag),
-        );
+      const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
+      const object = this.createLiteral(activeTag.text.join(''), activeTag);
+      if (activeTag.inlist) {
+        for (const predicate of activeTag.predicates) {
+          this.addListMapping(activeTag, predicate, object);
+        }
+      } else {
+        for (const predicate of activeTag.predicates) {
+          this.emitTriple(subject, predicate, object);
+        }
       }
 
       // Reset text, unless the parent is also collecting text
       if (!parentTag.text) {
         activeTag.text = null;
+      }
+    }
+
+    // 14: Handle local list mapping
+    if (activeTag.subject && Object.keys(activeTag.listMapping).length > 0) {
+      const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
+      for (const predicateValue in activeTag.listMapping) {
+        const predicate = this.dataFactory.namedNode(predicateValue);
+        const values = activeTag.listMapping[predicateValue];
+
+        if (values.length > 0) {
+          // Non-empty list, emit linked list of rdf:first and rdf:rest chains
+          const bnodes = values.map(() => this.dataFactory.blankNode());
+          for (let i = 0; i < values.length; i++) {
+            const object = this.getResourceOrBaseIri(values[i], activeTag);
+            this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'first'),
+              object);
+            this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'rest'),
+              (i < values.length - 1) ? bnodes[i + 1] : this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+          }
+
+          // Emit triple for the first linked list chain
+          this.emitTriple(subject, predicate, bnodes[0]);
+        } else {
+          // Empty list, just emit rdf:nil
+          this.emitTriple(subject, predicate, this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+        }
       }
     }
 
@@ -733,6 +792,22 @@ export class RdfaParser extends Transform {
   }
 
   /**
+   * Add a list mapping for the given predicate and object in the active tag.
+   * @param {IActiveTag} activeTag The active tag.
+   * @param {Term} predicate A predicate term.
+   * @param {Term | boolean} currentObjectResource The current object resource.
+   */
+  protected addListMapping(activeTag: IActiveTag, predicate: RDF.Term, currentObjectResource: RDF.Term | boolean) {
+    let predicateList = activeTag.listMappingLocal[predicate.value];
+    if (!predicateList) {
+      activeTag.listMappingLocal[predicate.value] = predicateList = [];
+    }
+    if (currentObjectResource) {
+      predicateList.push(currentObjectResource);
+    }
+  }
+
+  /**
    * Emit the given triple to the stream.
    * @param {Term} subject A subject term.
    * @param {Term} predicate A predicate term.
@@ -801,6 +876,7 @@ export class RdfaParser extends Transform {
         xmlMode: strict,
       });
   }
+
 }
 
 export interface IActiveTag {
@@ -816,7 +892,10 @@ export interface IActiveTag {
   collectChildTags?: boolean;
   collectedPatternTag?: IRdfaPattern;
   interpretObjectAsTime?: boolean;
-  incompleteTriples?: { predicate: RDF.Term, reverse: boolean }[];
+  incompleteTriples?: { predicate: RDF.Term, reverse: boolean, list?: boolean }[];
+  inlist: boolean;
+  listMapping: {[predicate: string]: (RDF.Term|boolean)[]};
+  listMappingLocal: {[predicate: string]: (RDF.Term|boolean)[]};
 }
 
 export interface IRdfaParserOptions {

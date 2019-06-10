@@ -2280,7 +2280,6 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property', async () => {
-        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
         return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
 		<title>Test 0051</title>
@@ -2296,6 +2295,331 @@ foaf: http://xmlns.com/foaf/0.1/">
             quad('http://example.org/',
               'http://xmlns.com/foaf/0.1/topic',
               '"John Doe"'),
+          ]);
+      });
+
+      it('properties with inlist', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <a inlist="" property="dc:creator"
+                   href="http://ben.adida.net/#me">Ben Adida</a>,
+      <a inlist="" property="dc:creator"
+                   href="http://twitter.com/markbirbeck">Mark Birbeck</a>, and
+      <a inlist="" property="dc:creator"
+                   href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://ben.adida.net/#me'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://twitter.com/markbirbeck'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l3'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://www.ivan-herman.net/foaf#me'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('properties with inlist and tag literals', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <a inlist="" property="dc:creator"
+                   href="http://ben.adida.net/#me">Ben Adida</a>,
+      <a inlist="" property="dc:creator">Mark Birbeck</a>, and
+      <a inlist="" property="dc:creator"
+                   href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://ben.adida.net/#me'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Mark Birbeck"'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l3'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://www.ivan-herman.net/foaf#me'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('properties with inlist and content literals', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <a inlist="" property="dc:creator"
+                   href="http://ben.adida.net/#me">Ben Adida</a>,
+      <a inlist="" property="dc:creator" content="Mark Birbeck">BlaBla</a>, and
+      <a inlist="" property="dc:creator"
+                   href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://ben.adida.net/#me'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Mark Birbeck"'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l3'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://www.ivan-herman.net/foaf#me'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('properties with inlist and datetime literals', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <a inlist="" property="dc:creator"
+                   href="http://ben.adida.net/#me">Ben Adida</a>,
+      <time inlist="" property="dc:creator" datetime="2018">BlaBla</time>, and
+      <a inlist="" property="dc:creator"
+                   href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://ben.adida.net/#me'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"2018"^^http://www.w3.org/2001/XMLSchema#gYear'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l3'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://www.ivan-herman.net/foaf#me'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('properties and rel with inlist and mixed values', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <a inlist="" rel="dc:creator"
+                   href="http://ben.adida.net/#me">Ben Adida</a>,
+      <a inlist="" property="dc:creator">Mark Birbeck</a>, and
+      <a inlist="" rel="dc:creator"
+                   href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://ben.adida.net/#me'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Mark Birbeck"'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l3'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://www.ivan-herman.net/foaf#me'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('inlist with incomplete triples', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+  	  <span rel="dc:creator" inlist="">
+        <a href="http://ben.adida.net/#me">Ben Adida</a>,
+        <a href="http://twitter.com/markbirbeck">Mark Birbeck</a>, and
+        <a href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
+      </span>
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://ben.adida.net/#me'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://twitter.com/markbirbeck'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l3'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://www.ivan-herman.net/foaf#me'),
+            quad('_:b_l3',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('an empty list', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+  	  <span rel="dc:creator" inlist=""></span>
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('a manual empty list', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+  	  <span rel="dc:creator" resource="rdf:nil" />
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://purl.org/ontology/bibo/Chapter'),
+            quad('_:b1',
+              'http://purl.org/dc/terms/creator',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('@rel and @inlist with decendent IRI elements creates list', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<div about="">
+      <ol rel="rdf:value" inlist="">
+        <li><a href="foo">Foo</a></li>
+        <li><a href="bar">Bar</a></li>
+      </ol>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://example.org/foo'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              '_:b_l2'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              'http://example.org/bar'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
           ]);
       });
 
