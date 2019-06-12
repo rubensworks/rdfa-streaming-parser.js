@@ -39,6 +39,17 @@ export class RdfaParser extends Transform {
       copyRdfaPatterns: true,
       xmlnsPrefixMappings: true,
     },
+    'xhtml': {
+      baseTag: true,
+      langAttribute: true,
+      onlyAllowUriRelRevIfProperty: true,
+      onlyAllowSubjectInheritanceInHeadBody: true,
+      datetimeAttribute: true,
+      timeTag: true,
+      htmlDatatype: true,
+      copyRdfaPatterns: true,
+      xmlnsPrefixMappings: true,
+    },
   };
   // tslint:enable:object-literal-sort-keys
 
@@ -928,7 +939,8 @@ export interface IRdfaParserOptions {
 export type RdfaProfile =
   '' | // All possible RDFa features
   'core' | // https://www.w3.org/TR/rdfa-core/
-  'html'; // https://www.w3.org/TR/html-rdfa/
+  'html' | // https://www.w3.org/TR/html-rdfa/
+  'xhtml'; // https://www.w3.org/TR/xhtml-rdfa/
 
 export interface IRdfaFeatures {
   /**
