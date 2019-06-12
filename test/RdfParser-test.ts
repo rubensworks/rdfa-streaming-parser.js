@@ -80,21 +80,21 @@ describe('RdfaParser', () => {
   describe('#parseNamespace', () => {
     it('should parse a tag without prefix attribute', () => {
       const attributes = {};
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({});
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({});
     });
 
     it('should parse a tag with empty prefix attribute', () => {
       const attributes = {
         prefix: '',
       };
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({});
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({});
     });
 
     it('should parse a tag with one prefix', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/',
       };
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
@@ -103,7 +103,7 @@ describe('RdfaParser', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/ abc: http://example.org',
       };
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
         abc: 'http://example.org',
         dc: 'http://purl.org/dc/terms/',
       });
@@ -113,7 +113,7 @@ describe('RdfaParser', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/ abc',
       };
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
@@ -122,7 +122,7 @@ describe('RdfaParser', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/ abc:',
       };
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
@@ -131,7 +131,7 @@ describe('RdfaParser', () => {
       const attributes = {};
       return expect(RdfaParser.parsePrefixes(attributes, {
         ex: 'http://example.org',
-      })).toEqual({
+      }, false)).toEqual({
         ex: 'http://example.org',
       });
     });
@@ -142,7 +142,7 @@ describe('RdfaParser', () => {
       };
       return expect(RdfaParser.parsePrefixes(attributes, {
         ex: 'http://example.org',
-      })).toEqual({
+      }, false)).toEqual({
         ex: 'http://example.org',
       });
     });
@@ -153,7 +153,7 @@ describe('RdfaParser', () => {
       };
       return expect(RdfaParser.parsePrefixes(attributes, {
         ex: 'http://example.org',
-      })).toEqual({
+      }, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
         ex: 'http://example.org',
       });
@@ -165,7 +165,7 @@ describe('RdfaParser', () => {
       };
       return expect(RdfaParser.parsePrefixes(attributes, {
         dc: 'http://example.org',
-      })).toEqual({
+      }, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
@@ -174,8 +174,55 @@ describe('RdfaParser', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/\nex: \nhttp://example.org/',
       };
-      return expect(RdfaParser.parsePrefixes(attributes, {})).toEqual({
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
+        ex: 'http://example.org/',
+      });
+    });
+
+    it('should not parse an xmlns attribute if xmlnsPrefixMappings is false', () => {
+      const attributes = {
+        'xmlns:ex': 'http://example.org/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({});
+    });
+
+    it('should parse an xmlns attribute if xmlnsPrefixMappings is true', () => {
+      const attributes = {
+        'xmlns:ex': 'http://example.org/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {}, true)).toEqual({
+        ex: 'http://example.org/',
+      });
+    });
+
+    it('should parse an xmlns attribute if xmlnsPrefixMappings is true and inherit from parent', () => {
+      const attributes = {
+        'xmlns:ex': 'http://example.org/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
+        abc: 'def',
+        ex: 'http://example.org/',
+      });
+    });
+
+    it('should parse an xmlns attribute but give @prefix preference if xmlnsPrefixMappings is true', () => {
+      const attributes = {
+        'prefix': 'ex: http://example.org/',
+        'xmlns:ex': 'http://exampleignored.org/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, {}, true)).toEqual({
+        ex: 'http://example.org/',
+      });
+    });
+
+    it('should parse an xmlns attribute but give @prefix preference and inherit if xmlnsPrefixMappings is true', () => {
+      const attributes = {
+        'prefix': 'ex: http://example.org/',
+        'xmlns:ex': 'http://exampleignored.org/',
+      };
+      return expect(RdfaParser.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
+        abc: 'def',
         ex: 'http://example.org/',
       });
     });
@@ -2620,6 +2667,39 @@ foaf: http://xmlns.com/foaf/0.1/">
             quad('_:b_l2',
               'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
               'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('xmlns definition', async () => {
+        return expect(await parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
+   <head>
+      <link rel="ex:next" href="http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml" />
+   </head>
+   <body>
+      <p>This is the first chapter in a series of chapters.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://example.org/next',
+              'http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml'),
+          ]);
+      });
+
+      it('xmlns definition when features.xmlnsPrefixMappings is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
+   <head>
+      <link rel="ex:next" href="http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml" />
+   </head>
+   <body>
+      <p>This is the first chapter in a series of chapters.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'ex:next',
+              'http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml'),
           ]);
       });
 

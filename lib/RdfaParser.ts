@@ -25,6 +25,7 @@ export class RdfaParser extends Transform {
       timeTag: true,
       htmlDatatype: true,
       copyRdfaPatterns: true,
+      xmlnsPrefixMappings: true,
     },
     'core': {},
     'html': {
@@ -36,6 +37,7 @@ export class RdfaParser extends Transform {
       timeTag: true,
       htmlDatatype: true,
       copyRdfaPatterns: true,
+      xmlnsPrefixMappings: true,
     },
   };
   // tslint:enable:object-literal-sort-keys
@@ -94,16 +96,30 @@ export class RdfaParser extends Transform {
    * Retrieve the prefixes of the current tag's attributes.
    * @param {{[p: string]: string}} attributes A tag's attributes.
    * @param {{[p: string]: string}} parentPrefixes The prefixes from the parent tag.
+   * @param {boolean} xmlnsPrefixMappings If prefixes should be extracted from xmlnsPrefixMappings.
    * @return {{[p: string]: string}} The new prefixes.
    */
   public static parsePrefixes(attributes: {[s: string]: string},
-                              parentPrefixes: {[prefix: string]: string}): {[prefix: string]: string} {
-    if (attributes.prefix) {
-      const prefixes: {[prefix: string]: string} = { ...parentPrefixes };
-      let prefixMatch;
-      // tslint:disable-next-line:no-conditional-assignment
-      while (prefixMatch = RdfaParser.PREFIX_REGEX.exec(attributes.prefix)) {
-        prefixes[prefixMatch[1]] = prefixMatch[2];
+                              parentPrefixes: {[prefix: string]: string},
+                              xmlnsPrefixMappings: boolean): {[prefix: string]: string} {
+    const additionalPrefixes: {[prefix: string]: string} = {};
+    if (xmlnsPrefixMappings) {
+      for (const attribute in attributes) {
+        if (attribute.startsWith('xmlns:')) {
+          additionalPrefixes[attribute.substr(6)] = attributes[attribute];
+        }
+      }
+    }
+
+    if (attributes.prefix || Object.keys(additionalPrefixes).length > 0) {
+      const prefixes: {[prefix: string]: string} = { ...parentPrefixes, ...additionalPrefixes };
+
+      if (attributes.prefix) {
+        let prefixMatch;
+        // tslint:disable-next-line:no-conditional-assignment
+        while (prefixMatch = RdfaParser.PREFIX_REGEX.exec(attributes.prefix)) {
+          prefixes[prefixMatch[1]] = prefixMatch[2];
+        }
       }
 
       return prefixes;
@@ -277,7 +293,7 @@ export class RdfaParser extends Transform {
     }
 
     // 3: handle prefixes
-    activeTag.prefixes = RdfaParser.parsePrefixes(attributes, parentTag.prefixes);
+    activeTag.prefixes = RdfaParser.parsePrefixes(attributes, parentTag.prefixes, this.features.xmlnsPrefixMappings);
 
     // 4: handle language
     // Save language attribute value in active tag
@@ -948,6 +964,10 @@ export interface IRdfaFeatures {
    * If rdfa:copy property links can refer to rdfa:Pattern's for copying.
    */
   copyRdfaPatterns?: boolean;
+  /**
+   * If prefixes should be extracted from xmlnsPrefixMappings.
+   */
+  xmlnsPrefixMappings?: boolean;
 }
 
 export interface IRdfaPattern {
