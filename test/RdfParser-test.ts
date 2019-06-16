@@ -288,9 +288,21 @@ describe('RdfaParser', () => {
     });
 
     describe('#createIri', () => {
+      it('should create relative IRIs when CURIEs are not allowed', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('http://ex.org/abc', activeTag, false, false))
+          .toEqualRdfTerm(namedNode('http://ex.org/abc'));
+      });
+
+      it('should create absolute IRIs when CURIEs are not allowed', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('abc', activeTag, false, false))
+          .toEqualRdfTerm(namedNode('http://example.org/abc'));
+      });
+
       it('should create blank nodes', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('_:b1', activeTag, false))
+        return expect(parser.createIri('_:b1', activeTag, false, true))
           .toEqualRdfTerm(blankNode('b1'));
       });
 
@@ -300,7 +312,7 @@ describe('RdfaParser', () => {
             ex: 'http://example.org/',
           },
         };
-        return expect(parser.createIri('ex:def', activeTag, false))
+        return expect(parser.createIri('ex:def', activeTag, false, true))
           .toEqualRdfTerm(namedNode('http://example.org/def'));
       });
 
@@ -308,7 +320,7 @@ describe('RdfaParser', () => {
         const activeTag: any = {
           prefixes: {},
         };
-        return expect(parser.createIri('ex:def', activeTag, false))
+        return expect(parser.createIri('ex:def', activeTag, false, true))
           .toEqualRdfTerm(namedNode('ex:def'));
       });
 
@@ -316,7 +328,7 @@ describe('RdfaParser', () => {
         const activeTag: any = {
           prefixes: {},
         };
-        return expect(parser.createIri('def', activeTag, false))
+        return expect(parser.createIri('def', activeTag, false, true))
           .toEqualRdfTerm(namedNode('http://example.org/def'));
       });
 
@@ -324,7 +336,7 @@ describe('RdfaParser', () => {
         const activeTag: any = {
           prefixes: {},
         };
-        return expect(parser.createIri('def', activeTag, true))
+        return expect(parser.createIri('def', activeTag, true, true))
           .toEqualRdfTerm(namedNode('def'));
       });
 
@@ -333,7 +345,7 @@ describe('RdfaParser', () => {
           prefixes: {},
           vocab: 'http://vocab.org/',
         };
-        return expect(parser.createIri('def', activeTag, true))
+        return expect(parser.createIri('def', activeTag, true, true))
           .toEqualRdfTerm(namedNode('http://vocab.org/def'));
       });
 
@@ -343,25 +355,25 @@ describe('RdfaParser', () => {
             abc: 'abc/',
           },
         };
-        return expect(parser.createIri('abc:def', activeTag, false))
+        return expect(parser.createIri('abc:def', activeTag, false, true))
           .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
       });
 
       it('should handle explicit blank nodes', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('[_:b]', activeTag, false))
+        return expect(parser.createIri('[_:b]', activeTag, false, true))
           .toEqual(blankNode('b'));
       });
 
       it('should handle blank nodes with no label', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('_:', activeTag, false))
+        return expect(parser.createIri('_:', activeTag, false, true))
           .toEqual(blankNode('b_identity'));
       });
 
       it('should handle explicit blank nodes with no label', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('[_:]', activeTag, false))
+        return expect(parser.createIri('[_:]', activeTag, false, true))
           .toEqual(blankNode('b_identity'));
       });
 
@@ -371,7 +383,7 @@ describe('RdfaParser', () => {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
         };
-        return expect(parser.createIri('license', activeTag, true))
+        return expect(parser.createIri('license', activeTag, true, true))
           .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
@@ -381,7 +393,7 @@ describe('RdfaParser', () => {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
         };
-        return expect(parser.createIri('LiCeNSe', activeTag, true))
+        return expect(parser.createIri('LiCeNSe', activeTag, true, true))
           .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
@@ -392,7 +404,7 @@ describe('RdfaParser', () => {
           },
           vocab: 'http://vocab.org/',
         };
-        return expect(parser.createIri('license', activeTag, true))
+        return expect(parser.createIri('license', activeTag, true, true))
           .toEqual(namedNode('http://vocab.org/license'));
       });
     });
@@ -2701,6 +2713,162 @@ foaf: http://xmlns.com/foaf/0.1/">
               'ex:next',
               'http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml'),
           ]);
+      });
+
+      it('@about that resolves to nothing', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <div about="[]" property="foaf:name">Alex Milowski</div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+          ]);
+      });
+
+      it('@about that resolves to nothing with @typeof', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <div about="[]" typeof="foaf:Person" property="foaf:name">Alex Milowski</div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+            quad('_:b',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+          ]);
+      });
+
+      it('@about that resolves to nothing in object', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Test 0298: Testing @typeof and @about=[]</title>
+</head>
+<body>
+  <div about="[]">
+    <span property="foaf:name">Alex Milowski</span>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+          ]);
+      });
+
+      it('no @about with @typeof', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Test 0298: Testing @typeof and @about=[]</title>
+</head>
+<body>
+  <div typeof="foaf:Person">
+    <span property="foaf:name">Alex Milowski</span>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+          ]);
+      });
+
+      it('@about that resolves to nothing in object with @typeof', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Test 0298: Testing @typeof and @about=[]</title>
+</head>
+<body>
+  <div about="[]" typeof="foaf:Person">
+    <span property="foaf:name">Alex Milowski</span>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+          ]);
+      });
+
+      it('@resource with nested [] property', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+prefix="dc: http://purl.org/dc/elements/1.1/">
+   <head>
+   </head>
+   <body>
+    <div>
+	<p about="https://mydomain.org/">
+		<p resource="[]">
+			<span property="dc:contributor">Shane McCarron</span>
+			contributed to this test.
+		</p>
+	</p>
+	</div>
+   </body>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/contributor',
+              '"Shane McCarron"'),
+          ]);
+      });
+
+      it('@about and @resource with []', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+prefix="dc: http://purl.org/dc/elements/1.1/">
+   <head>
+   </head>
+   <body>
+    <div>
+	<p about="https://mydomain.org/">
+		<span about="[]" property="dc:title">Test Case 0121</span>
+		checks to make sure RDFa processors resolve the empty CURIE correctly.
+		<p resource="[]">
+			<span property="dc:contributor">Shane McCarron</span>
+			contributed to this test.
+		</p>
+	</p>
+	</div>
+   </body>`))
+          .toBeRdfIsomorphic([
+            quad('https://mydomain.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Test Case 0121"'),
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/contributor',
+              '"Shane McCarron"'),
+          ]);
+      });
+
+      it('@resource with [] is not allowed and resolved to nothing', async () => {
+        return expect(await parse(parser, `<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+   </head>
+   <body>
+    <p about="http://example.org/section1.html">
+         This section is contained below <span rel="up" resource="[]">the main site</span>.
+      </p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([]);
       });
 
     });

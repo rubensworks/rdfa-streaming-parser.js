@@ -99,6 +99,7 @@ export class RdfaParser extends Transform {
       listMappingLocal: {},
       name: '',
       prefixes: INITIAL_CONTEXT['@context'],
+      skipElement: false,
       vocab: options.vocab,
     });
   }
@@ -197,8 +198,21 @@ export class RdfaParser extends Transform {
   }
 
   protected onTagOpen(name: string, attributes: {[s: string]: string}) {
-    // Determine the parent tag
-    const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+    // Determine the parent tag (ignore skipped tags)
+    let parentTagI: number = this.activeTagStack.length - 1;
+    while (parentTagI > 0 && this.activeTagStack[parentTagI].skipElement) {
+      parentTagI--;
+    }
+    let parentTag: IActiveTag = this.activeTagStack[parentTagI];
+    // If we skipped a tag, make sure we DO use the lang, prefixes and vocab of the skipped tag
+    if (parentTagI !== this.activeTagStack.length - 1) {
+      parentTag = {
+        ...parentTag,
+        language: this.activeTagStack[this.activeTagStack.length - 1].language,
+        prefixes: this.activeTagStack[this.activeTagStack.length - 1].prefixes,
+        vocab: this.activeTagStack[this.activeTagStack.length - 1].vocab,
+      };
+    }
 
     // Create a new active tag and inherit language scope and baseIRI from parent
     const activeTag: IActiveTag = {
@@ -209,6 +223,7 @@ export class RdfaParser extends Transform {
       listMappingLocal: parentTag.listMapping,
       name,
       prefixes: null,
+      skipElement: false,
     };
     this.activeTagStack.push(activeTag);
 
@@ -280,7 +295,6 @@ export class RdfaParser extends Transform {
 
     // Processing based on https://www.w3.org/TR/rdfa-core/#s_rdfaindetail
     // 1: initialize values
-    let skipElement: boolean;
     let newSubject: RDF.Term | boolean;
     let currentObjectResource: RDF.Term | boolean;
     let typedResource: RDF.Term | boolean;
@@ -321,7 +335,7 @@ export class RdfaParser extends Transform {
         // 5.1: property is present, but not content and datatype
         // Determine new subject
         if ('about' in attributes) {
-          newSubject = this.createIri(attributes.about, activeTag, false);
+          newSubject = this.createIri(attributes.about, activeTag, false, true);
         } else if (isRootTag) {
           newSubject = true;
         } else if (parentTag.object) {
@@ -331,26 +345,33 @@ export class RdfaParser extends Transform {
         // Determine type
         if ('typeof' in attributes) {
           if ('about' in attributes) {
-            typedResource = this.createIri(attributes.about, activeTag, false);
-          } else if (isRootTag) {
+            typedResource = this.createIri(attributes.about, activeTag, false, true);
+          }
+          if (!typedResource && isRootTag) {
             typedResource = true;
-          } else {
-            if ('resource' in attributes || 'href' in attributes || 'src' in attributes) {
-              typedResource = this.createIri(attributes.resource || attributes.href || attributes.src,
-                activeTag, false);
-            } else {
-              typedResource = this.dataFactory.blankNode();
-            }
+          }
+          if (!typedResource && 'resource' in attributes) {
+            typedResource = this.createIri(attributes.resource, activeTag, false, true);
+          }
+          if (!typedResource && ('href' in attributes || 'src' in attributes)) {
+            typedResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
+          }
+          if (!typedResource) {
+            typedResource = this.dataFactory.blankNode();
           }
 
           // currentObjectResource = typedResource; // Disabled to make test 0051 pass
         }
       } else {
         // 5.2
-        if ('about' in attributes || 'resource' in attributes || 'href' in attributes || 'src' in attributes) {
-          newSubject = this.createIri(attributes.about || attributes.resource || attributes.href || attributes.src,
-            activeTag, false);
-        } else {
+        if ('about' in attributes || 'resource' in attributes) {
+          newSubject = this.createIri(attributes.about || attributes.resource, activeTag, false, true);
+        }
+        if (!newSubject && ('href' in attributes || 'src' in attributes)) {
+          newSubject = this.createIri(attributes.href || attributes.src,
+            activeTag, false, false);
+        }
+        if (!newSubject) {
           if (isRootTag) {
             newSubject = true;
           } else if ('typeof' in attributes) {
@@ -358,7 +379,7 @@ export class RdfaParser extends Transform {
           } else if (parentTag.object) {
             newSubject = parentTag.object;
             if (!('property' in attributes)) {
-              skipElement = true;
+              activeTag.skipElement = true;
             }
           }
         }
@@ -373,7 +394,7 @@ export class RdfaParser extends Transform {
 
       // Define new subject
       if ('about' in attributes) {
-        newSubject = this.createIri(attributes.about, activeTag, false);
+        newSubject = this.createIri(attributes.about, activeTag, false, true);
         if ('typeof' in attributes) {
           typedResource = newSubject;
         }
@@ -384,11 +405,15 @@ export class RdfaParser extends Transform {
       }
 
       // Define object
-      if ('resource' in attributes || 'href' in attributes || 'src' in attributes) {
-        currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
-          activeTag, false);
-      } else if ('typeof' in attributes && !('about' in attributes)) {
-        currentObjectResource = this.dataFactory.blankNode();
+      if ('resource' in attributes) {
+        currentObjectResource = this.createIri(attributes.resource, activeTag, false, true);
+      }
+      if (!currentObjectResource) {
+        if ('href' in attributes || 'src' in attributes) {
+          currentObjectResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
+        } else if ('typeof' in attributes && !('about' in attributes)) {
+          currentObjectResource = this.dataFactory.blankNode();
+        }
       }
 
       // Set typed resource
@@ -480,7 +505,7 @@ export class RdfaParser extends Transform {
 
       // Save datatype attribute value in active tag
       if (attributes.datatype) {
-        activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true);
+        activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true, true);
         if (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
           || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML')) {
           activeTag.collectChildTags = true;
@@ -491,7 +516,7 @@ export class RdfaParser extends Transform {
       if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)
         && ('resource' in attributes || 'href' in attributes || 'src' in attributes)) {
         currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
-          activeTag, false);
+          activeTag, false, 'resource' in attributes);
       } else if ('typeof' in attributes && !('about' in attributes)) {
         currentObjectResource = typedResource;
       }
@@ -550,7 +575,7 @@ export class RdfaParser extends Transform {
 
     // 12: Complete incomplete triples
     let incompleteTriplesCompleted = false;
-    if (!skipElement && newSubject && parentTag.incompleteTriples.length > 0) {
+    if (!activeTag.skipElement && newSubject && parentTag.incompleteTriples.length > 0) {
       incompleteTriplesCompleted = true;
       const subject = this.getResourceOrBaseIri(parentTag.subject, activeTag);
       const object = this.getResourceOrBaseIri(newSubject, activeTag);
@@ -581,7 +606,7 @@ export class RdfaParser extends Transform {
     }
 
     // 13: Save evaluation context into active tag
-    activeTag.subject = newSubject;
+    activeTag.subject = newSubject || parentTag.subject;
     activeTag.object = currentObjectResource || newSubject;
   }
 
@@ -760,7 +785,8 @@ export class RdfaParser extends Transform {
    */
   protected createVocabIris(terms: string, activeTag: IActiveTag): RDF.Term[] {
     return terms.split(/[ \n\t]+/)
-      .map((property) => this.createIri(property, activeTag, true));
+      .map((property) => this.createIri(property, activeTag, true, true))
+      .filter((term) => term != null);
   }
 
   /**
@@ -784,18 +810,33 @@ export class RdfaParser extends Transform {
   /**
    * Create a named node for the given term.
    * This will take care of prefix detection.
-   * @param {string} term A term string.
+   * @param {string} term A term string (CURIE or IRI, aka safe-CURIE in RDFa spec).
    * @param {IActiveTag} activeTag The current active tag.
    * @param {boolean} vocab If creating an IRI in vocab-mode (based on vocab IRI),
    *                        or in base-mode (based on base IRI).
-   * @return {Term} An RDF term.
+   * @param {boolean} allowSafeCurie If safe CURIEs are allowed
+   *                                 (invalid CURIEs between square brackets will return null)
+   *                                 Otherwise, only IRIs are allowed.
+   * @return {Term} An RDF term or null.
    */
-  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean): RDF.Term {
+  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean): RDF.Term {
     term = term || '';
 
-    // Handle explicit blank nodes
+    if (!allowSafeCurie) {
+      if (!vocab) {
+        term = resolve(term, this.baseIRI.value);
+      }
+      return this.dataFactory.namedNode(term);
+    }
+
+    // Handle strict CURIEs
     if (term.length > 0 && term[0] === '[' && term[term.length - 1] === ']') {
       term = term.substr(1, term.length - 2);
+
+      // Strict CURIEs MUST have a prefix separator
+      if (term.indexOf(':') < 0) {
+        return null;
+      }
     }
 
     // Handle blank nodes
@@ -923,6 +964,7 @@ export interface IActiveTag {
   inlist: boolean;
   listMapping: {[predicate: string]: (RDF.Term|boolean)[]};
   listMappingLocal: {[predicate: string]: (RDF.Term|boolean)[]};
+  skipElement: boolean;
 }
 
 export interface IRdfaParserOptions {
