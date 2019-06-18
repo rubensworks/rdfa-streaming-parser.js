@@ -248,6 +248,16 @@ export class RdfaParser extends Transform {
     };
     this.activeTagStack.push(activeTag);
 
+    if (this.features.onlyAllowUriRelRevIfProperty) {
+      // Ignore illegal rel/rev values when property is present
+      if ('property' in attributes && 'rel' in attributes && attributes.rel.indexOf(':') < 0) {
+        delete attributes.rel;
+      }
+      if ('property' in attributes && 'rev' in attributes && attributes.rev.indexOf(':') < 0) {
+        delete attributes.rev;
+      }
+    }
+
     if (this.features.copyRdfaPatterns) {
       // Save the tag if needed
       if (parentTag.collectedPatternTag) {
@@ -384,7 +394,7 @@ export class RdfaParser extends Transform {
             typedResource = this.dataFactory.blankNode();
           }
 
-          // currentObjectResource = typedResource; // Disabled to make test 0051 pass
+          currentObjectResource = typedResource;
         }
       } else {
         // 5.2
@@ -479,8 +489,7 @@ export class RdfaParser extends Transform {
 
       // Determine predicates using rel or rev (unless rel and inlist are present)
       if (!('rel' in attributes && 'inlist' in attributes)) {
-        if ('rel' in attributes && (!this.features.onlyAllowUriRelRevIfProperty
-          || (!('property' in attributes) || attributes.rel.indexOf(':') >= 0))) {
+        if ('rel' in attributes) {
           for (const predicate of this.createVocabIris(attributes.rel, activeTag)) {
             this.emitTriple(
               this.getResourceOrBaseIri(newSubject, activeTag),
@@ -489,8 +498,7 @@ export class RdfaParser extends Transform {
             );
           }
         }
-        if ('rev' in attributes && (!this.features.onlyAllowUriRelRevIfProperty
-          || !('property' in attributes) || attributes.rev.indexOf(':') >= 0)) {
+        if ('rev' in attributes) {
           for (const predicate of this.createVocabIris(attributes.rev, activeTag)) {
             this.emitTriple(
               this.getResourceOrBaseIri(currentObjectResource, activeTag),
@@ -534,6 +542,7 @@ export class RdfaParser extends Transform {
       activeTag.predicates = this.createVocabIris(attributes.property, activeTag);
 
       // Save datatype attribute value in active tag
+      let localObjectResource: RDF.Term | boolean;
       if ('datatype' in attributes) {
         activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true, true);
         if (activeTag.datatype
@@ -545,10 +554,10 @@ export class RdfaParser extends Transform {
         // Try to determine resource
         if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)
           && ('resource' in attributes || 'href' in attributes || 'src' in attributes)) {
-          currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
+          localObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
             activeTag, false, 'resource' in attributes);
         } else if ('typeof' in attributes && !('about' in attributes)) {
-          currentObjectResource = typedResource;
+          localObjectResource = typedResource;
         }
       }
 
@@ -585,9 +594,9 @@ export class RdfaParser extends Transform {
 
         // Unset predicate to avoid text contents to produce new triples
         activeTag.predicates = null;
-      } else if (currentObjectResource) {
+      } else if (localObjectResource) {
         // Emit triples for all resource objects
-        const object = this.getResourceOrBaseIri(currentObjectResource, activeTag);
+        const object = this.getResourceOrBaseIri(localObjectResource, activeTag);
         if ('inlist' in attributes) {
           for (const predicate of activeTag.predicates) {
             this.addListMapping(activeTag, predicate, object);

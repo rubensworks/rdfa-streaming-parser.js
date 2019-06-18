@@ -1727,7 +1727,7 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://schema.org/'),
             quad('http://example.org/',
               'http://schema.org/homepage',
-              'http://homepage.org/'),
+              '"Some Body"'),
             quad('http://example.org/',
               'http://schema.org/follow',
               'http://homepage.org/'),
@@ -1773,7 +1773,7 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://homepage.org/'),
             quad('http://example.org/',
               'http://schema.org/homepage',
-              'http://homepage.org/'),
+              '"Some Body"'),
           ]);
       });
 
@@ -1796,7 +1796,7 @@ foaf: http://xmlns.com/foaf/0.1/">
               'http://homepage.org/'),
             quad('http://example.org/',
               'http://schema.org/homepage',
-              'http://homepage.org/'),
+              '"Some Body"'),
           ]);
       });
 
@@ -3594,6 +3594,60 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
             quad('http://example.org/',
               'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
               '"value"'),
+          ]);
+      });
+
+      it('@property does not set parent object without @typeof', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0296</title>
+</head>
+<body>
+  <div vocab="http://xmlns.com/foaf/0.1/" resource="http://example.com/gregg/#me" typeof="Person">
+    <a property="homepage" href="http://example.com/gregg/"><span property="name">Gregg</span></a>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://xmlns.com/foaf/0.1/'),
+            quad('http://example.com/gregg/#me',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+            quad('http://example.com/gregg/#me',
+              'http://xmlns.com/foaf/0.1/homepage',
+              'http://example.com/gregg/'),
+            quad('http://example.com/gregg/#me',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Gregg"'),
+          ]);
+      });
+
+      it('@property does set parent object with @typeof', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0296</title>
+</head>
+<body>
+  <div vocab="http://xmlns.com/foaf/0.1/" resource="http://example.com/gregg/#me">
+    <a property="homepage" href="http://example.com/gregg/" typeof="Person"><span property="name">Gregg</span></a>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://xmlns.com/foaf/0.1/'),
+            quad('http://example.com/gregg/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Person'),
+            quad('http://example.com/gregg/#me',
+              'http://xmlns.com/foaf/0.1/homepage',
+              'http://example.com/gregg/'),
+            quad('http://example.com/gregg/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Gregg"'),
           ]);
       });
 
