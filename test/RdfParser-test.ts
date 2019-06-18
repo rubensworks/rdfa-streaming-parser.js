@@ -2466,6 +2466,152 @@ foaf: http://xmlns.com/foaf/0.1/">
           ]);
       });
 
+      it('typeof with a single property and resource', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p typeof="foaf:Document" property="foaf:topic" resource="http://example.org/res">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/res',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              'http://example.org/res'),
+          ]);
+      });
+
+      it('typeof with a single property and compact resource', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p typeof="foaf:Document" property="foaf:topic" resource="foaf:res">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://xmlns.com/foaf/0.1/res',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              'http://xmlns.com/foaf/0.1/res'),
+          ]);
+      });
+
+      it('typeof with a single property and href', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p typeof="foaf:Document" property="foaf:topic" href="http://example.org/href">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/href',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              'http://example.org/href'),
+          ]);
+      });
+
+      it('typeof with a single property and compact href', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p typeof="foaf:Document" property="foaf:topic" href="foaf:href">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('foaf:href',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              'foaf:href'),
+          ]);
+      });
+
+      it('typeof with a single property and src', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p typeof="foaf:Document" property="foaf:topic" src="http://example.org/src">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/src',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              'http://example.org/src'),
+          ]);
+      });
+
+      it('typeof with a single property and compact src', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+		<title>Test 0051</title>
+  </head>
+  <body>
+  	<p typeof="foaf:Document" property="foaf:topic" src="foaf:src">John Doe</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('foaf:src',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/topic',
+              'foaf:src'),
+          ]);
+      });
+
+      it('typeof on root tag without property and about', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/" typeof="foaf:Document">
+  <head>
+  </head>
+  <body>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+          ]);
+      });
+
+      it('typeof on root tag with property and without about', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/"
+property="foaf:name" typeof="foaf:Document">
+  <head>
+  </head>
+  <body>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              'http://example.org/'),
+          ]);
+      });
+
       it('properties with inlist', async () => {
         return expect(await parse(parser, `<html>
   <head>
