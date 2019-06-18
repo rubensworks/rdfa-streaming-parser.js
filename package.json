@@ -99,12 +99,12 @@
     "spec-html5-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -i '{ \"profile\": \"html\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-html5.ttl",
     "spec-xhtml5": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml5/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -e -c .rdf-test-suite-cache/",
     "spec-xhtml5-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml5/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-xhtml5.ttl",
-    "spec-svg": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/svg/manifest.ttl -i '{ \"profile\": \"core\" }' -e -c .rdf-test-suite-cache/",
-    "spec-svg-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/svg/manifest.ttl -i '{ \"profile\": \"core\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-svg.ttl",
+    "spec-svg": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/svg/manifest.ttl -i '{ \"profile\": \"xml\" }' -e -c .rdf-test-suite-cache/",
+    "spec-svg-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/svg/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-svg.ttl",
     "spec-xhtml1": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -e -c .rdf-test-suite-cache/",
     "spec-xhtml1-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-xhtml1.ttl",
-    "spec-xml": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xml/manifest.ttl -i '{ \"profile\": \"core\" }' -e -c .rdf-test-suite-cache/",
-    "spec-xml-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xml/manifest.ttl -i '{ \"profile\": \"core\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-xml.ttl",
+    "spec-xml": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xml/manifest.ttl -i '{ \"profile\": \"xml\" }' -e -c .rdf-test-suite-cache/",
+    "spec-xml-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xml/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfa-xml.ttl",
     "spec-clean": "rm -r .rdf-test-suite-cache/"
   }
 }

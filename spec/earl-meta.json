@@ -17,6 +17,7 @@
   "specificationUris": [
     "https://www.w3.org/TR/rdfa-core/",
     "https://www.w3.org/TR/rdfa-in-html/",
-    "https://www.w3.org/TR/xhtml-rdfa/"
+    "https://www.w3.org/TR/xhtml-rdfa/",
+    "https://www.w3.org/TR/2008/REC-SVGTiny12-20081222/metadata.html#MetadataAttributes"
   ]
 }

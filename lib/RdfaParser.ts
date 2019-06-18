@@ -18,6 +18,7 @@ export class RdfaParser extends Transform {
   public static readonly RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     '': {
       baseTag: true,
+      xmlBase: true,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
       inheritSubjectInHeadBody: true,
@@ -29,6 +30,7 @@ export class RdfaParser extends Transform {
     },
     'core': {
       baseTag: false,
+      xmlBase: false,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
       inheritSubjectInHeadBody: false,
@@ -40,6 +42,7 @@ export class RdfaParser extends Transform {
     },
     'html': {
       baseTag: true,
+      xmlBase: false,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
       inheritSubjectInHeadBody: true,
@@ -51,6 +54,7 @@ export class RdfaParser extends Transform {
     },
     'xhtml': {
       baseTag: true,
+      xmlBase: false,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
       inheritSubjectInHeadBody: true,
@@ -58,6 +62,18 @@ export class RdfaParser extends Transform {
       timeTag: true,
       htmlDatatype: true,
       copyRdfaPatterns: true,
+      xmlnsPrefixMappings: true,
+    },
+    'xml': {
+      baseTag: false,
+      xmlBase: true,
+      langAttribute: false,
+      onlyAllowUriRelRevIfProperty: false,
+      inheritSubjectInHeadBody: false,
+      datetimeAttribute: false,
+      timeTag: false,
+      htmlDatatype: false,
+      copyRdfaPatterns: false,
       xmlnsPrefixMappings: true,
     },
   };
@@ -320,12 +336,11 @@ export class RdfaParser extends Transform {
 
     // <base> tags override the baseIRI
     if (this.features.baseTag && name === 'base' && attributes.href) {
-      let href: string = attributes.href;
-      const fragmentIndex = href.indexOf('#');
-      if (fragmentIndex >= 0) {
-        href = href.substr(0, fragmentIndex);
-      }
-      this.baseIRI = this.dataFactory.namedNode(href);
+      this.setBaseIRI(attributes.href);
+    }
+    // xml:base attributes override the baseIRI
+    if (this.features.xmlBase && attributes['xml:base']) {
+      this.setBaseIRI(attributes['xml:base']);
     }
 
     // <time> tags set an initial datatype
@@ -818,6 +833,19 @@ export class RdfaParser extends Transform {
   }
 
   /**
+   * Set the base IRI.
+   * @param {string} baseIriValue A base IRI value.
+   */
+  protected setBaseIRI(baseIriValue: string) {
+    let href: string = baseIriValue;
+    const fragmentIndex = href.indexOf('#');
+    if (fragmentIndex >= 0) {
+      href = href.substr(0, fragmentIndex);
+    }
+    this.baseIRI = this.dataFactory.namedNode(href);
+  }
+
+  /**
    * If the new subject can be inherited from the parent object
    * if the resource defines no new subject.
    * @param {string} name The current tag name.
@@ -1089,6 +1117,10 @@ export interface IRdfaFeatures {
    * If the baseIRI can be set via the <base> tag.
    */
   baseTag?: boolean;
+  /**
+   * If the baseIRI can be set via the xml:base attribute.
+   */
+  xmlBase?: boolean;
   /**
    * If the language can be set via the language attribute.
    */
