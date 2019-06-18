@@ -3041,6 +3041,26 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
+      it('@typeof and @rel in <body> when features.inheritSubjectInHeadBody is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head>
+      <title>Test 0066</title>
+   </head>
+   <body typeof="foaf:Document" rel="foaf:name">
+      <p>This is test #66.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '_:b'),
+          ]);
+      });
+
       it('should ignore invalid datatypes', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/terms/">
 <head>
