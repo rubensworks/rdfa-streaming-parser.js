@@ -1800,6 +1800,52 @@ foaf: http://xmlns.com/foaf/0.1/">
           ]);
       });
 
+      it('and not ignore rev if there is a property and rev is a CURIE', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rev="schema:followedBy">Some Body</a>
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://homepage.org/',
+              'http://schema.org/followedBy',
+              'http://example.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              '"Some Body"'),
+          ]);
+      });
+
+      it('and not ignore rev if there is a property and rev is a URI', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+</head>
+<body>
+  <p vocab="http://schema.org/">
+    The homepage of <a href="http://homepage.org/" property="homepage" rev="http://example.org/followedBy">Some Body</a>
+  </p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://homepage.org/',
+              'http://example.org/followedBy',
+              'http://example.org/'),
+            quad('http://example.org/',
+              'http://schema.org/homepage',
+              '"Some Body"'),
+          ]);
+      });
+
       it('unsetting vocab', async () => {
         return expect(await parse(parser, `<html>
 <head>
@@ -3706,6 +3752,32 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
             quad('http://www.example.org/',
               'http://www.w3.org/1999/xhtml/vocab#license',
               'http://www.example.org/license.xhtml'),
+          ]);
+      });
+
+      it('@rel should not do vocab expansion when another valid value is present', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0334: @resource changes the current subject for the nested elements</title>
+</head>
+<body>
+  <div vocab="http://schema.org/" resource="http://example.org/base">
+    <div resource="http://greggkellogg.net/#me">
+      <p property="name" rel="homepage foaf:homepage" href="http://greggkellogg.net/">Gregg Kellogg</p>
+    </div>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
+            quad('http://greggkellogg.net/#me',
+              'http://schema.org/name',
+              '"Gregg Kellogg"'),
+            quad('http://greggkellogg.net/#me',
+              'http://xmlns.com/foaf/0.1/homepage',
+              'http://greggkellogg.net/'),
           ]);
       });
 
