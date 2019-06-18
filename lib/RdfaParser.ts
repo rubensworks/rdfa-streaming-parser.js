@@ -415,7 +415,7 @@ export class RdfaParser extends Transform {
           typedResource = newSubject;
         }
       }
-    } else if ('rel' in attributes || 'rev' in attributes) {
+    } else { // either rel or rev will be present
       // 6: Determine the new subject when rel or rev are present
 
       // Define new subject
@@ -621,9 +621,8 @@ export class RdfaParser extends Transform {
                 break;
               }
             }
-            if (firstInListTag) {
-              this.addListMapping(firstInListTag, incompleteTriple.predicate, object);
-            }
+            // firstInListTag is guaranteed to be non-null
+            this.addListMapping(firstInListTag, incompleteTriple.predicate, object);
           } else {
             this.emitTriple(subject, incompleteTriple.predicate, object);
           }
@@ -660,8 +659,7 @@ export class RdfaParser extends Transform {
   protected onTagClose() {
     // Get the active tag
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
-    const parentTag: IActiveTag = this.activeTagStack.length > 1
-      ? this.activeTagStack[this.activeTagStack.length - 2] : null;
+    const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 2];
 
     // If we detect a finalized rdfa:Pattern tag, store it
     if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag && activeTag.collectedPatternTag.rootPattern) {

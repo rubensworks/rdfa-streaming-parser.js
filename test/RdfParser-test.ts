@@ -2129,7 +2129,7 @@ foaf: http://xmlns.com/foaf/0.1/">
           ]);
       });
 
-      it('rdfa:Pattern with one rdfa:copy', async () => {
+      it('rdfa:Pattern with one rdfa:copy with href', async () => {
         return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
@@ -2144,6 +2144,88 @@ foaf: http://xmlns.com/foaf/0.1/">
 
     <p typeof="schema:MusicEvent">
       <link property="rdfa:copy" href="#muse"/>
+      <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse1.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse2.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse3.jpg'),
+            quad('_:b1',
+              'http://schema.org/name',
+              '"Muse"'),
+            quad('_:b1',
+              'http://schema.org/location',
+              'http://example.org/#united'),
+          ]);
+      });
+
+      it('rdfa:Pattern with one rdfa:copy with resource', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div>
+	  <div resource="#muse" typeof="rdfa:Pattern">
+      <link property="schema:image" href="Muse1.jpg"/>
+      <link property="schema:image" href="Muse2.jpg"/>
+      <link property="schema:image" href="Muse3.jpg"/>
+      <span property="schema:name">Muse</span>
+    </div>
+
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" resource="#muse"/>
+      <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse1.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse2.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse3.jpg'),
+            quad('_:b1',
+              'http://schema.org/name',
+              '"Muse"'),
+            quad('_:b1',
+              'http://schema.org/location',
+              'http://example.org/#united'),
+          ]);
+      });
+
+      it('rdfa:Pattern with one rdfa:copy with src', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div>
+	  <div resource="#muse" typeof="rdfa:Pattern">
+      <link property="schema:image" href="Muse1.jpg"/>
+      <link property="schema:image" href="Muse2.jpg"/>
+      <link property="schema:image" href="Muse3.jpg"/>
+      <span property="schema:name">Muse</span>
+    </div>
+
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" src="#muse"/>
       <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
     </p>
   </body>
@@ -2256,6 +2338,113 @@ foaf: http://xmlns.com/foaf/0.1/">
             quad('_:b2',
               'http://schema.org/location',
               'http://example.org/#united2'),
+          ]);
+      });
+
+      it('rdfa:Pattern with two rdfa:copy\'s before the pattern definition', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div>
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" href="#muse"/>
+      <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
+    </p>
+
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" href="#muse"/>
+      <a property="schema:location" href="#united2">United Center, Chicago, Illinois 2</a>
+    </p>
+
+    <div resource="#muse" typeof="rdfa:Pattern">
+      <link property="schema:image" href="Muse1.jpg"/>
+      <link property="schema:image" href="Muse2.jpg"/>
+      <link property="schema:image" href="Muse3.jpg"/>
+      <span property="schema:name">Muse</span>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse1.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse2.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse3.jpg'),
+            quad('_:b1',
+              'http://schema.org/name',
+              '"Muse"'),
+            quad('_:b1',
+              'http://schema.org/location',
+              'http://example.org/#united'),
+
+            quad('_:b2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b2',
+              'http://schema.org/image',
+              'http://example.org/Muse1.jpg'),
+            quad('_:b2',
+              'http://schema.org/image',
+              'http://example.org/Muse2.jpg'),
+            quad('_:b2',
+              'http://schema.org/image',
+              'http://example.org/Muse3.jpg'),
+            quad('_:b2',
+              'http://schema.org/name',
+              '"Muse"'),
+            quad('_:b2',
+              'http://schema.org/location',
+              'http://example.org/#united2'),
+          ]);
+      });
+
+      it('rdfa:Pattern with two rdfa:copy\'s next to each other', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div>
+	  <div resource="#muse" typeof="rdfa:Pattern">
+      <link property="schema:image" href="Muse1.jpg"/>
+      <link property="schema:image" href="Muse2.jpg"/>
+      <link property="schema:image" href="Muse3.jpg"/>
+      <span property="schema:name">Muse</span>
+    </div>
+
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" href="#muse"/>
+      <link property="rdfa:copy" href="#muse"/>
+      <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse1.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse2.jpg'),
+            quad('_:b1',
+              'http://schema.org/image',
+              'http://example.org/Muse3.jpg'),
+            quad('_:b1',
+              'http://schema.org/name',
+              '"Muse"'),
+            quad('_:b1',
+              'http://schema.org/location',
+              'http://example.org/#united'),
           ]);
       });
 
@@ -3059,6 +3248,54 @@ property="foaf:name" typeof="foaf:Document">
           ]);
       });
 
+      it('@about that resolves to nothing with child rel', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <div about="[]" property="foaf:name"><p rel="foaf:bla">Alex Milowski</p></div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+          ]);
+      });
+
+      it('@about that resolves to nothing with child tag', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <div about="[]" property="foaf:name"><p>Alex Milowski</p></div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+          ]);
+      });
+
+      it('@about that resolves to nothing with child tag with property', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <div about="[]" property="foaf:name"><p property="foaf:firstName">Alex</p> Milowski</div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Alex Milowski"'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/firstName',
+              '"Alex"'),
+          ]);
+      });
+
       it('no @about with @typeof', async () => {
         return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -3099,6 +3336,28 @@ property="foaf:name" typeof="foaf:Document">
               'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
               'http://xmlns.com/foaf/0.1/Person'),
           ]);
+      });
+
+      it('standalone @href', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <a href="http://example.org/alex">Alex Milowski</a>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([]);
+      });
+
+      it('standalone @src', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+  <img src="http://example.org/img" />
+</body>
+</html>`))
+          .toBeRdfIsomorphic([]);
       });
 
       it('@resource with nested [] property', async () => {
