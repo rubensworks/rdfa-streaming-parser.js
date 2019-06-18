@@ -557,6 +557,36 @@ describe('RdfaParser', () => {
       });
     });
 
+    describe('#emitTriple', () => {
+      it('should emit on invalid terms', async () => {
+        const spy = jest.spyOn(parser, 'push');
+        parser.emitTriple(namedNode('http://s'), namedNode('http://p'), namedNode('http://o'));
+        expect(spy).toHaveBeenCalledWith(quad(
+          'http://s',
+          'http://p',
+          'http://o',
+        ));
+      });
+
+      it('should not emit on invalid subject', async () => {
+        const spy = jest.spyOn(parser, 'push');
+        parser.emitTriple(namedNode('s'), namedNode('http://p'), namedNode('http://o'));
+        expect(spy).not.toHaveBeenCalled();
+      });
+
+      it('should not emit on invalid predicate', async () => {
+        const spy = jest.spyOn(parser, 'push');
+        parser.emitTriple(namedNode('http://s'), namedNode('p'), namedNode('http://o'));
+        expect(spy).not.toHaveBeenCalled();
+      });
+
+      it('should not emit on invalid object', async () => {
+        const spy = jest.spyOn(parser, 'push');
+        parser.emitTriple(namedNode('http://s'), namedNode('http://p'), namedNode('o'));
+        expect(spy).not.toHaveBeenCalled();
+      });
+    });
+
     describe('should error', () => {
       // TODO
     });
