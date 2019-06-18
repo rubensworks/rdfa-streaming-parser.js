@@ -2975,6 +2975,22 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
+      it('@property with no children should make empty literal', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/">
+  <head>
+    <title>Test 0257</title>
+  </head>
+  <body>
+    <span about="#a" property="dc:title"></span>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#a',
+              'http://purl.org/dc/elements/1.1/title',
+              '""'),
+          ]);
+      });
+
     });
 
   });

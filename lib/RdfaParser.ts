@@ -694,9 +694,9 @@ export class RdfaParser extends Transform {
     }
 
     // Emit all triples that were determined in the active tag
-    if (activeTag.predicates && activeTag.text) {
+    if (activeTag.predicates) {
       const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
-      const object = this.createLiteral(activeTag.text.join(''), activeTag);
+      const object = this.createLiteral((activeTag.text || []).join(''), activeTag);
       if (activeTag.inlist) {
         for (const predicate of activeTag.predicates) {
           this.addListMapping(activeTag, predicate, object);
