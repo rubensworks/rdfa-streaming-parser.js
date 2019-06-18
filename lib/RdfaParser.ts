@@ -708,7 +708,7 @@ export class RdfaParser extends Transform {
       }
 
       // Reset text, unless the parent is also collecting text
-      if (!parentTag.text) {
+      if (!parentTag.predicates) {
         activeTag.text = null;
       }
     }

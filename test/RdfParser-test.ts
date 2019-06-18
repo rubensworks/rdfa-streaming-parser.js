@@ -1044,6 +1044,29 @@ foaf: http://xmlns.com/foaf/0.1/">
           ]);
       });
 
+      it('inline nested text content', async () => {
+        // tslint:disable:max-line-length
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+<head>
+</head>
+<body>
+  <div about="http://example.org/foaf#me" property="foaf:name"><span property="foaf:givenName">John</span> <span property="foaf:familyName">Doe</span></div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/foaf#me',
+              'http://xmlns.com/foaf/0.1/familyName',
+              '"Doe"'),
+            quad('http://example.org/foaf#me',
+              'http://xmlns.com/foaf/0.1/givenName',
+              '"John"'),
+            quad('http://example.org/foaf#me',
+              'http://xmlns.com/foaf/0.1/name',
+              '"John Doe"'),
+          ]);
+        // tslint:enable:max-line-length
+      });
+
       it('datatype to set the object literal datatype', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
