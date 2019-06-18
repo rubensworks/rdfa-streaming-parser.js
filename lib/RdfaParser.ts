@@ -20,19 +20,29 @@ export class RdfaParser extends Transform {
       baseTag: true,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
-      onlyAllowSubjectInheritanceInHeadBody: true,
+      inheritSubjectInHeadBody: true,
       datetimeAttribute: true,
       timeTag: true,
       htmlDatatype: true,
       copyRdfaPatterns: true,
       xmlnsPrefixMappings: true,
     },
-    'core': {},
+    'core': {
+      baseTag: false,
+      langAttribute: true,
+      onlyAllowUriRelRevIfProperty: true,
+      inheritSubjectInHeadBody: false,
+      datetimeAttribute: false,
+      timeTag: false,
+      htmlDatatype: false,
+      copyRdfaPatterns: true,
+      xmlnsPrefixMappings: true,
+    },
     'html': {
       baseTag: true,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
-      onlyAllowSubjectInheritanceInHeadBody: true,
+      inheritSubjectInHeadBody: true,
       datetimeAttribute: true,
       timeTag: true,
       htmlDatatype: true,
@@ -43,7 +53,7 @@ export class RdfaParser extends Transform {
       baseTag: true,
       langAttribute: true,
       onlyAllowUriRelRevIfProperty: true,
-      onlyAllowSubjectInheritanceInHeadBody: true,
+      inheritSubjectInHeadBody: true,
       datetimeAttribute: true,
       timeTag: true,
       htmlDatatype: true,
@@ -356,6 +366,9 @@ export class RdfaParser extends Transform {
           if (!typedResource && ('href' in attributes || 'src' in attributes)) {
             typedResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
           }
+          if (!typedResource && this.isInheritSubjectInHeadBody(name)) {
+            typedResource = newSubject;
+          }
           if (!typedResource) {
             typedResource = this.dataFactory.blankNode();
           }
@@ -374,6 +387,8 @@ export class RdfaParser extends Transform {
         if (!newSubject) {
           if (isRootTag) {
             newSubject = true;
+          } else if (this.isInheritSubjectInHeadBody(name)) {
+            newSubject = parentTag.object;
           } else if ('typeof' in attributes) {
             newSubject = this.dataFactory.blankNode();
           } else if (parentTag.object) {
@@ -411,14 +426,18 @@ export class RdfaParser extends Transform {
       if (!currentObjectResource) {
         if ('href' in attributes || 'src' in attributes) {
           currentObjectResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
-        } else if ('typeof' in attributes && !('about' in attributes)) {
+        } else if ('typeof' in attributes && !('about' in attributes) && !this.isInheritSubjectInHeadBody(name)) {
           currentObjectResource = this.dataFactory.blankNode();
         }
       }
 
       // Set typed resource
       if ('typeof' in attributes && !('about' in attributes)) {
-        typedResource = currentObjectResource;
+        if (this.isInheritSubjectInHeadBody(name)) {
+          typedResource = newSubject;
+        } else {
+          typedResource = currentObjectResource;
+        }
       }
     }
 
@@ -763,6 +782,16 @@ export class RdfaParser extends Transform {
     }
   }
 
+  /**
+   * If the new subject can be inherited from the parent object
+   * if the resource defines no new subject.
+   * @param {string} name The current tag name.
+   * @returns {boolean} If the subject can be inherited.
+   */
+  protected isInheritSubjectInHeadBody(name: string) {
+    return this.features.inheritSubjectInHeadBody && (name === 'head' || name === 'body');
+  }
+
   // TODO: doc
   protected getResourceOrBaseIri(term: RDF.Term | boolean, activeTag: IActiveTag): RDF.Term {
     return term === true ? this.getBaseIriTerm(activeTag) : <RDF.Term> term;
@@ -998,10 +1027,10 @@ export interface IRdfaFeatures {
    */
   onlyAllowUriRelRevIfProperty?: boolean;
   /**
-   * If subject can only be inherited from parent objects if we're inside <head> or <body>
+   * If the new subject can be inherited from the parent object if we're inside <head> or <body>
    * if the resource defines no new subject.
    */
-  onlyAllowSubjectInheritanceInHeadBody?: boolean;
+  inheritSubjectInHeadBody?: boolean;
   /**
    * If the datetime attribute must be interpreted as datetimes.
    */

@@ -2871,6 +2871,94 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           .toBeRdfIsomorphic([]);
       });
 
+      it('@typeof in <head>, and inherit parent object', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head typeof="foaf:Document">
+      <title>Test 0066</title>
+   </head>
+   <body>
+      <p>This is test #66.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+          ]);
+      });
+
+      it('@typeof in <body>, and inherit parent object', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head>
+      <title>Test 0066</title>
+   </head>
+   <body typeof="foaf:Document">
+      <p>This is test #66.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+          ]);
+      });
+
+      it('@typeof and @property in <body>, and inherit parent object', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head>
+      <title>Test 0066</title>
+   </head>
+   <body typeof="foaf:Document" property="foaf:name">
+      <p>This is test #66.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              'http://example.org/'),
+          ]);
+      });
+
+      it('@typeof and @property in <body>, and not inherit parent object ' +
+        'if features.inheritSubjectInHeadBody is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head>
+      <title>Test 0066</title>
+   </head>
+   <body typeof="foaf:Document" property="foaf:name">
+      <p>This is test #66.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/name',
+              '_:b'),
+            quad('_:b',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+          ]);
+      });
+
+      it('@typeof and @rel in <body>', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head>
+      <title>Test 0066</title>
+   </head>
+   <body typeof="foaf:Document" rel="foaf:name">
+      <p>This is test #66.</p>
+   </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://xmlns.com/foaf/0.1/Document'),
+          ]);
+      });
+
     });
 
   });
