@@ -300,6 +300,12 @@ describe('RdfaParser', () => {
           .toEqualRdfTerm(namedNode('http://example.org/abc'));
       });
 
+      it('should not create invalid IRIs when CURIEs are not allowed in vocab mode', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('abc', activeTag, true, false))
+          .toBeFalsy();
+      });
+
       it('should create blank nodes', async () => {
         const activeTag: any = {};
         return expect(parser.createIri('_:b1', activeTag, false, true))
