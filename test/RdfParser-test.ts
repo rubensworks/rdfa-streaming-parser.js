@@ -1609,6 +1609,29 @@ foaf: http://xmlns.com/foaf/0.1/">
           ]);
       });
 
+      it('chained rev and property', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/">
+	<head>
+	</head>
+  <body>
+  	<p>
+    	This paper was written by
+    	<span rev="dc:creator">
+      		<span property="foaf:name">Ben Adida</span>.
+    	</span>
+	</p>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b',
+              'http://purl.org/dc/elements/1.1/creator',
+              'http://example.org/'),
+            quad('_:b',
+              'http://xmlns.com/foaf/0.1/name',
+              '"Ben Adida"'),
+          ]);
+      });
+
       it('multiple chained rel and property', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
