@@ -594,7 +594,11 @@ describe('RdfaParser', () => {
     });
 
     describe('should error', () => {
-      // TODO
+      it('when writing after closed', async () => {
+        parser.end();
+        return expect(() => parser.write('abc'))
+          .toThrow(new Error('write after end'));
+      });
     });
 
     describe('should parse', () => {
