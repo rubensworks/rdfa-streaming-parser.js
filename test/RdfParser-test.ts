@@ -3651,6 +3651,22 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
+      it('@resource that resolves to nothing should fallback to @href or @src', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0300: Testing @resource=[]</title>
+</head>
+<body about="http://www.example.org/">
+  <a href="http://www.example.org/license.xhtml" property="xhv:license" resource="[]">The Foo Document</a>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#license',
+              'http://www.example.org/license.xhtml'),
+          ]);
+      });
+
     });
 
   });

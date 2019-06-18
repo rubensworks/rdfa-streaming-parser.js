@@ -425,7 +425,7 @@ export class RdfaParser extends Transform {
           typedResource = newSubject;
         }
       }
-    } else { // either rel or rev will be present
+    } else { // either rel or rev is present
       // 6: Determine the new subject when rel or rev are present
 
       // Define new subject
@@ -552,11 +552,18 @@ export class RdfaParser extends Transform {
         }
       } else {
         // Try to determine resource
-        if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)
-          && ('resource' in attributes || 'href' in attributes || 'src' in attributes)) {
-          localObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
-            activeTag, false, 'resource' in attributes);
-        } else if ('typeof' in attributes && !('about' in attributes)) {
+        if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)) {
+          if ('resource' in attributes) {
+            localObjectResource = this.createIri(attributes.resource, activeTag, false, true);
+          }
+          if (!localObjectResource && 'href' in attributes) {
+            localObjectResource = this.createIri(attributes.href, activeTag, false, false);
+          }
+          if (!localObjectResource && 'src' in attributes) {
+            localObjectResource = this.createIri(attributes.src, activeTag, false, false);
+          }
+        }
+        if ('typeof' in attributes && !('about' in attributes)) {
           localObjectResource = typedResource;
         }
       }
