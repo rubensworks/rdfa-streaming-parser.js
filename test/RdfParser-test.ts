@@ -856,6 +856,33 @@ with Bob</h2>
           ]);
       });
 
+      it('rel on root tag', async () => {
+        return expect(await parse(parser, `<html rel="http://example.org/p" href="http://example.org/o">
+<head>
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://example.org/p', 'http://example.org/o'),
+          ]);
+      });
+
+      it('rel and href as resource link', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+    <link rel="http://example.org/p" href="http://example.org/o" about="http://example.org/s"
+    typeof="http://example.org/Type" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/s', 'http://example.org/p', 'http://example.org/o'),
+            quad('http://example.org/s', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://example.org/Type'),
+          ]);
+      });
+
       it('rel and resource as resource link', async () => {
         return expect(await parse(parser, `<html>
 <head>
