@@ -1062,9 +1062,27 @@ export class RdfaParser extends Transform {
   protected initializeParser(strict: boolean): HtmlParser {
     return new HtmlParser(
       <DomHandler> <any> {
-        onclosetag: () => this.onTagClose(),
-        onopentag: (name: string, attributes: {[s: string]: string}) => this.onTagOpen(name, attributes),
-        ontext: (data: string) => this.onText(data),
+        onclosetag: () => {
+          try {
+            this.onTagClose();
+          } catch (e) {
+            this.emit('error', e);
+          }
+        },
+        onopentag: (name: string, attributes: {[s: string]: string}) => {
+          try {
+            this.onTagOpen(name, attributes);
+          } catch (e) {
+            this.emit('error', e);
+          }
+        },
+        ontext: (data: string) => {
+          try {
+            this.onText(data);
+          } catch (e) {
+            this.emit('error', e);
+          }
+        },
       },
       {
         decodeEntities: true,

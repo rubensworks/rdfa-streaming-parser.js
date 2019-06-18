@@ -599,6 +599,42 @@ describe('RdfaParser', () => {
         return expect(() => parser.write('abc'))
           .toThrow(new Error('write after end'));
       });
+
+      it('when an error is thrown in onTagClose', async () => {
+        parser.onTagClose = () => {
+          throw new Error('Dummy error');
+        };
+        return expect(parse(parser, `<html>
+<head></head>
+<body>
+    <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`)).rejects.toThrow(new Error('Dummy error'));
+      });
+
+      it('when an error is thrown in onTagOpen', async () => {
+        parser.onTagOpen = () => {
+          throw new Error('Dummy error');
+        };
+        return expect(parse(parser, `<html>
+<head></head>
+<body>
+    <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`)).rejects.toThrow(new Error('Dummy error'));
+      });
+
+      it('when an error is thrown in onText', async () => {
+        parser.onText = () => {
+          throw new Error('Dummy error');
+        };
+        return expect(parse(parser, `<html>
+<head></head>
+<body>
+    <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`)).rejects.toThrow(new Error('Dummy error'));
+      });
     });
 
     describe('should parse', () => {
