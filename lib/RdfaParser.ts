@@ -534,22 +534,22 @@ export class RdfaParser extends Transform {
       activeTag.predicates = this.createVocabIris(attributes.property, activeTag);
 
       // Save datatype attribute value in active tag
-      if (attributes.datatype) {
+      if ('datatype' in attributes) {
         activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true, true);
         if (activeTag.datatype
           && (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
             || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML'))) {
           activeTag.collectChildTags = true;
         }
-      }
-
-      // Try to determine resource
-      if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)
-        && ('resource' in attributes || 'href' in attributes || 'src' in attributes)) {
-        currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
-          activeTag, false, 'resource' in attributes);
-      } else if ('typeof' in attributes && !('about' in attributes)) {
-        currentObjectResource = typedResource;
+      } else {
+        // Try to determine resource
+        if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)
+          && ('resource' in attributes || 'href' in attributes || 'src' in attributes)) {
+          currentObjectResource = this.createIri(attributes.resource || attributes.href || attributes.src,
+            activeTag, false, 'resource' in attributes);
+        } else if ('typeof' in attributes && !('about' in attributes)) {
+          currentObjectResource = typedResource;
+        }
       }
 
       if ('content' in attributes) {

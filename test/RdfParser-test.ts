@@ -3563,6 +3563,40 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
+      it('@about and empty @datatype should force string literal value', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0290</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <p about="http://example.org/" property="rdf:value" datatype="">value</p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value"'),
+          ]);
+      });
+
+      it('@href and empty @datatype should force string literal value', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0290</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <a href="http://example.org/" property="rdf:value" datatype="">value</a>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value"'),
+          ]);
+      });
+
     });
 
   });
