@@ -337,7 +337,7 @@ describe('RdfaParser', () => {
           prefixes: {},
         };
         return expect(parser.createIri('def', activeTag, true, true))
-          .toEqualRdfTerm(namedNode('def'));
+          .toBeFalsy();
       });
 
       it('should handle relative IRIs in vocab mode with active vocab', async () => {
@@ -2956,6 +2956,22 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
             quad('http://example.org/',
               'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
               'http://xmlns.com/foaf/0.1/Document'),
+          ]);
+      });
+
+      it('should ignore invalid datatypes', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/terms/">
+<head>
+	<base href="http://www.example.org/me" />
+</head>
+<body>
+  <p property="dc:language" datatype="pred/lang">JavaScript</p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://www.example.org/me',
+              'http://purl.org/dc/terms/language',
+              '"JavaScript"'),
           ]);
       });
 

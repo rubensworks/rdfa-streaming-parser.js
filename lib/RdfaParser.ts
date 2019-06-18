@@ -74,6 +74,8 @@ export class RdfaParser extends Transform {
     { regex: /^[0-9]+-[0-9][0-9]$/, type: 'gYearMonth' },
     { regex: /^[0-9]+$/, type: 'gYear' },
   ];
+  // Regex for valid IRIs
+  protected static readonly IRI_REGEX: RegExp = /^([A-Za-z][A-Za-z0-9+-.]*|_):[^ "<>{}|\\\[\]`]*$/;
 
   private readonly options: IRdfaParserOptions;
   private readonly dataFactory: RDF.DataFactory;
@@ -186,6 +188,15 @@ export class RdfaParser extends Transform {
     }
 
     return term;
+  }
+
+  /**
+   * Check if the given IRI is valid.
+   * @param {string} iri A potential IRI.
+   * @return {boolean} If the given IRI is valid.
+   */
+  public static isValidIri(iri: string): boolean {
+    return RdfaParser.IRI_REGEX.test(iri);
   }
 
   /**
@@ -525,8 +536,9 @@ export class RdfaParser extends Transform {
       // Save datatype attribute value in active tag
       if (attributes.datatype) {
         activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true, true);
-        if (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
-          || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML')) {
+        if (activeTag.datatype
+          && (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
+            || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML'))) {
           activeTag.collectChildTags = true;
         }
       }
@@ -855,6 +867,9 @@ export class RdfaParser extends Transform {
       if (!vocab) {
         term = resolve(term, this.baseIRI.value);
       }
+      if (!RdfaParser.isValidIri(term)) {
+        return null;
+      }
       return this.dataFactory.namedNode(term);
     }
 
@@ -884,6 +899,9 @@ export class RdfaParser extends Transform {
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
     if (!vocab) {
       iri = resolve(iri, this.baseIRI.value);
+    }
+    if (!RdfaParser.isValidIri(iri)) {
+      return null;
     }
     return this.dataFactory.namedNode(iri);
   }
