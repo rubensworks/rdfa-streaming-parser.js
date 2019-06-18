@@ -2088,6 +2088,7 @@ foaf: http://xmlns.com/foaf/0.1/">
                 text: [ 'Muse' ],
               },
             ],
+            constructedBlankNodes: [],
             name: 'div',
             referenced: false,
             rootPattern: true,
@@ -2338,6 +2339,47 @@ foaf: http://xmlns.com/foaf/0.1/">
             quad('_:b2',
               'http://schema.org/location',
               'http://example.org/#united2'),
+          ]);
+      });
+
+      it('rdfa:Pattern with blank node with two rdfa:copy\'s should only create a single blank node', async () => {
+        return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+	<div>
+	  <div resource="#muse" typeof="rdfa:Pattern">
+      <div property="schema:refers-to" typeof="">
+        <span property="schema:name">Muse</span>
+      </div>
+    </div>
+
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" href="#muse"/>
+    </p>
+
+    <p typeof="schema:MusicEvent">
+      <link property="rdfa:copy" href="#muse"/>
+    </p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b1',
+              'http://schema.org/refers-to',
+              '_:b_shared'),
+            quad('_:b_shared',
+              'http://schema.org/name',
+              '"Muse"'),
+
+            quad('_:b2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://schema.org/MusicEvent'),
+            quad('_:b2',
+              'http://schema.org/refers-to',
+              '_:b_shared'),
           ]);
       });
 

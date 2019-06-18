@@ -88,6 +88,7 @@ export class RdfaParser extends Transform {
   private readonly activeTagStack: IActiveTag[] = [];
 
   private baseIRI: RDF.NamedNode;
+  private blankNodeFactory: () => RDF.BlankNode;
 
   constructor(options?: IRdfaParserOptions) {
     super({ objectMode: true });
@@ -391,7 +392,7 @@ export class RdfaParser extends Transform {
             typedResource = newSubject;
           }
           if (!typedResource) {
-            typedResource = this.dataFactory.blankNode();
+            typedResource = this.createBlankNode();
           }
 
           currentObjectResource = typedResource;
@@ -411,7 +412,7 @@ export class RdfaParser extends Transform {
           } else if (this.isInheritSubjectInHeadBody(name)) {
             newSubject = parentTag.object;
           } else if ('typeof' in attributes) {
-            newSubject = this.dataFactory.blankNode();
+            newSubject = this.createBlankNode();
           } else if (parentTag.object) {
             newSubject = parentTag.object;
             if (!('property' in attributes)) {
@@ -448,7 +449,7 @@ export class RdfaParser extends Transform {
         if ('href' in attributes || 'src' in attributes) {
           currentObjectResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
         } else if ('typeof' in attributes && !('about' in attributes) && !this.isInheritSubjectInHeadBody(name)) {
-          currentObjectResource = this.dataFactory.blankNode();
+          currentObjectResource = this.createBlankNode();
         }
       }
 
@@ -532,7 +533,7 @@ export class RdfaParser extends Transform {
 
       // Set a blank node object, so the children can make use of this when completing the triples
       if (activeTag.incompleteTriples.length > 0) {
-        currentObjectResource = this.dataFactory.blankNode();
+        currentObjectResource = this.createBlankNode();
       }
     }
 
@@ -736,7 +737,7 @@ export class RdfaParser extends Transform {
 
         if (values.length > 0) {
           // Non-empty list, emit linked list of rdf:first and rdf:rest chains
-          const bnodes = values.map(() => this.dataFactory.blankNode());
+          const bnodes = values.map(() => this.createBlankNode());
           for (let i = 0; i < values.length; i++) {
             const object = this.getResourceOrBaseIri(values[i], activeTag);
             this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'first'),
@@ -863,6 +864,17 @@ export class RdfaParser extends Transform {
   }
 
   /**
+   * Create a blank node.
+   * @returns {BlankNode} A new blank node.
+   */
+  protected createBlankNode(): RDF.BlankNode {
+    if (this.blankNodeFactory) {
+      return this.blankNodeFactory();
+    }
+    return this.dataFactory.blankNode();
+  }
+
+  /**
    * Create a named node for the given term.
    * This will take care of prefix detection.
    * @param {string} term A term string (CURIE or IRI, aka safe-CURIE in RDFa spec).
@@ -961,7 +973,25 @@ export class RdfaParser extends Transform {
   protected emitPatternCopy(parentTag: IActiveTag, pattern: IRdfaPattern, rootPatternId: string) {
     this.activeTagStack.push(parentTag);
     pattern.referenced = true;
+
+    // Ensure that blank nodes within patterns are instantiated only once.
+    // All next pattern copies will reuse the instantiated blank nodes from the first pattern.
+    if (!pattern.constructedBlankNodes) {
+      pattern.constructedBlankNodes = [];
+      this.blankNodeFactory = () => {
+        const bNode = this.dataFactory.blankNode();
+        pattern.constructedBlankNodes.push(bNode);
+        return bNode;
+      };
+    } else {
+      let blankNodeIndex = 0;
+      this.blankNodeFactory = () => pattern.constructedBlankNodes[blankNodeIndex++];
+    }
+
+    // Apply everything within the pattern
     this.emitPatternCopyAbsolute(pattern, true, rootPatternId);
+
+    this.blankNodeFactory = null;
     this.activeTagStack.pop();
   }
 
@@ -1092,4 +1122,5 @@ export interface IRdfaPattern {
   children: IRdfaPattern[];
   referenced: boolean;
   parentTag?: IActiveTag;
+  constructedBlankNodes?: RDF.BlankNode[];
 }
