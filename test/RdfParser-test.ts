@@ -2999,42 +2999,43 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
     let parser;
 
     beforeAll(() => {
-      parser = new RdfaParser();
+      parser = new RdfaParser({ baseIRI: 'http://example.org/' });
     });
 
-    // TODO
-    /*it('should parse a stream', async () => {
-      const stream = streamifyString(`<?xml version="1.0"?>
-<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-  <rdf:Description rdf:about="http://example.org/resource/"
-                   rdf:type="http://example.org/class/"/>
-</rdf:RDF>`);
+    it('should parse a stream', async () => {
+      const stream = streamifyString(`<html prefix="dc: http://purl.org/dc/elements/1.1/">
+  <head>
+    <title>Test 0257</title>
+  </head>
+  <body>
+    <span about="#a" property="dc:title"></span>
+  </body>
+</html>`);
       return expect(await arrayifyStream(parser.import(stream))).toBeRdfIsomorphic([
-        quad('http://example.org/resource/', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
-          'http://example.org/class/'),
+        quad('http://example.org/#a',
+          'http://purl.org/dc/elements/1.1/title',
+          '""'),
       ]);
     });
 
     it('should parse another stream', async () => {
-      const stream = streamifyString(`<?xml version="1.0"?>
-<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:eg="http://example.org/"
-         xml:base="http://example.org/triples">
-  <rdf:Description>
-    <eg:prop1 eg:prop2="val" rdf:ID="reify"></eg:prop1>
-  </rdf:Description>
-</rdf:RDF>`);
+      const stream = streamifyString(`<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+   <head>
+      <title>Test 0066</title>
+   </head>
+   <body typeof="foaf:Document" property="foaf:name">
+      <p>This is test #66.</p>
+   </body>
+</html>`);
       return expect(await arrayifyStream(parser.import(stream))).toBeRdfIsomorphic([
-        quad('_:b0', 'http://example.org/prop1', '_:b1'),
-        quad('http://example.org/triples#reify', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
-          'http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement'),
-        quad('http://example.org/triples#reify', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#subject', '_:b0'),
-        quad('http://example.org/triples#reify', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate',
-          'http://example.org/prop1'),
-        quad('http://example.org/triples#reify', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#object', '_:b1'),
-        quad('_:b1', 'http://example.org/prop2', '"val"'),
+        quad('http://example.org/',
+          'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+          'http://xmlns.com/foaf/0.1/Document'),
+        quad('http://example.org/',
+          'http://xmlns.com/foaf/0.1/name',
+          'http://example.org/'),
       ]);
-    });*/
+    });
 
     it('should forward error events', async () => {
       const stream = new PassThrough();
