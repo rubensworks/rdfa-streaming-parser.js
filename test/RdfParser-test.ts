@@ -2091,6 +2091,40 @@ foaf: http://xmlns.com/foaf/0.1/">
         });
       });
 
+      it('rdfa:Pattern on root without rdfa:copy', async () => {
+        expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/"
+                                                resource="#muse" typeof="rdfa:Pattern">
+  <head>
+  </head>
+  <body>
+	<div>
+	  <div>
+      <link property="schema:image" href="Muse1.jpg"/>
+      <link property="schema:image" href="Muse2.jpg"/>
+      <link property="schema:image" href="Muse3.jpg"/>
+      <span property="schema:name">Muse</span>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#muse',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+              'http://www.w3.org/ns/rdfa#Pattern'),
+            quad('http://example.org/#muse',
+              'http://schema.org/image',
+              'http://example.org/Muse1.jpg'),
+            quad('http://example.org/#muse',
+              'http://schema.org/image',
+              'http://example.org/Muse2.jpg'),
+            quad('http://example.org/#muse',
+              'http://schema.org/image',
+              'http://example.org/Muse3.jpg'),
+            quad('http://example.org/#muse',
+              'http://schema.org/name',
+              '"Muse"'),
+          ]);
+      });
+
       it('rdfa:Pattern with one rdfa:copy', async () => {
         return expect(await parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
