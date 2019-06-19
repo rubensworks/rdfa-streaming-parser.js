@@ -393,6 +393,7 @@ export class RdfaParser extends Transform {
         // Determine new subject
         if ('about' in attributes) {
           newSubject = this.createIri(attributes.about, activeTag, false, true);
+          activeTag.explicitNewSubject = !!newSubject;
         } else if (isRootTag) {
           newSubject = true;
         } else if (parentTag.object) {
@@ -426,10 +427,12 @@ export class RdfaParser extends Transform {
         // 5.2
         if ('about' in attributes || 'resource' in attributes) {
           newSubject = this.createIri(attributes.about || attributes.resource, activeTag, false, true);
+          activeTag.explicitNewSubject = !!newSubject;
         }
         if (!newSubject && ('href' in attributes || 'src' in attributes)) {
           newSubject = this.createIri(attributes.href || attributes.src,
             activeTag, false, false);
+          activeTag.explicitNewSubject = !!newSubject;
         }
         if (!newSubject) {
           if (isRootTag) {
@@ -438,6 +441,7 @@ export class RdfaParser extends Transform {
             newSubject = parentTag.object;
           } else if ('typeof' in attributes) {
             newSubject = this.createBlankNode();
+            activeTag.explicitNewSubject = true;
           } else if (parentTag.object) {
             newSubject = parentTag.object;
             if (!('property' in attributes)) {
@@ -457,6 +461,7 @@ export class RdfaParser extends Transform {
       // Define new subject
       if ('about' in attributes) {
         newSubject = this.createIri(attributes.about, activeTag, false, true);
+        activeTag.explicitNewSubject = !!newSubject;
         if ('typeof' in attributes) {
           typedResource = newSubject;
         }
@@ -509,7 +514,7 @@ export class RdfaParser extends Transform {
       // Handle list mapping
       if ('rel' in attributes && 'inlist' in attributes) {
         for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates)) {
-          this.addListMapping(activeTag, predicate, currentObjectResource);
+          this.addListMapping(activeTag, newSubject, predicate, currentObjectResource);
         }
       }
 
@@ -541,7 +546,7 @@ export class RdfaParser extends Transform {
       if ('rel' in attributes) {
         if ('inlist' in attributes) {
           for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates)) {
-            this.addListMapping(activeTag, predicate, null);
+            this.addListMapping(activeTag, newSubject, predicate, null);
             activeTag.incompleteTriples.push({ predicate, reverse: false, list: true });
           }
         } else {
@@ -599,7 +604,7 @@ export class RdfaParser extends Transform {
         const object = this.createLiteral(attributes.content, activeTag);
         if ('inlist' in attributes) {
           for (const predicate of activeTag.predicates) {
-            this.addListMapping(activeTag, predicate, object);
+            this.addListMapping(activeTag, newSubject, predicate, object);
           }
         } else {
           const subject = this.getResourceOrBaseIri(newSubject, activeTag);
@@ -616,7 +621,7 @@ export class RdfaParser extends Transform {
         const object = this.createLiteral(attributes.datetime, activeTag);
         if ('inlist' in attributes) {
           for (const predicate of activeTag.predicates) {
-            this.addListMapping(activeTag, predicate, object);
+            this.addListMapping(activeTag, newSubject, predicate, object);
           }
         } else {
           const subject = this.getResourceOrBaseIri(newSubject, activeTag);
@@ -632,7 +637,7 @@ export class RdfaParser extends Transform {
         const object = this.getResourceOrBaseIri(localObjectResource, activeTag);
         if ('inlist' in attributes) {
           for (const predicate of activeTag.predicates) {
-            this.addListMapping(activeTag, predicate, object);
+            this.addListMapping(activeTag, newSubject, predicate, object);
           }
         } else {
           const subject = this.getResourceOrBaseIri(newSubject, activeTag);
@@ -664,7 +669,7 @@ export class RdfaParser extends Transform {
               }
             }
             // firstInListTag is guaranteed to be non-null
-            this.addListMapping(firstInListTag, incompleteTriple.predicate, object);
+            this.addListMapping(firstInListTag, newSubject, incompleteTriple.predicate, object);
           } else {
             this.emitTriple(subject, incompleteTriple.predicate, object);
           }
@@ -742,7 +747,7 @@ export class RdfaParser extends Transform {
         const object = this.createLiteral((activeTag.text || []).join(''), activeTag);
         if (activeTag.inlist) {
           for (const predicate of activeTag.predicates) {
-            this.addListMapping(activeTag, predicate, object);
+            this.addListMapping(activeTag, subject, predicate, object);
           }
         } else {
           for (const predicate of activeTag.predicates) {
@@ -982,16 +987,28 @@ export class RdfaParser extends Transform {
   /**
    * Add a list mapping for the given predicate and object in the active tag.
    * @param {IActiveTag} activeTag The active tag.
+   * @param {Term | boolean} subject A subject term, this will only be used to create a separate list
+   *                                 if activeTag.explicitNewSubject is true.
    * @param {Term} predicate A predicate term.
    * @param {Term | boolean} currentObjectResource The current object resource.
    */
-  protected addListMapping(activeTag: IActiveTag, predicate: RDF.Term, currentObjectResource: RDF.Term | boolean) {
-    let predicateList = activeTag.listMappingLocal[predicate.value];
-    if (!predicateList) {
-      activeTag.listMappingLocal[predicate.value] = predicateList = [];
-    }
-    if (currentObjectResource) {
-      predicateList.push(currentObjectResource);
+  protected addListMapping(activeTag: IActiveTag, subject: RDF.Term | boolean, predicate: RDF.Term,
+                           currentObjectResource: RDF.Term | boolean) {
+    if (activeTag.explicitNewSubject) {
+      const bNode = this.createBlankNode();
+      this.emitTriple(this.getResourceOrBaseIri(subject, activeTag), predicate, bNode);
+      this.emitTriple(bNode, this.dataFactory.namedNode(RdfaParser.RDF + 'first'),
+        this.getResourceOrBaseIri(currentObjectResource, activeTag));
+      this.emitTriple(bNode, this.dataFactory.namedNode(RdfaParser.RDF + 'rest'),
+        this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+    } else {
+      let predicateList = activeTag.listMappingLocal[predicate.value];
+      if (!predicateList) {
+        activeTag.listMappingLocal[predicate.value] = predicateList = [];
+      }
+      if (currentObjectResource) {
+        predicateList.push(currentObjectResource);
+      }
     }
   }
 
@@ -1106,6 +1123,7 @@ export interface IActiveTag {
   name: string;
   prefixes: {[prefix: string]: string};
   subject?: RDF.Term | boolean;
+  explicitNewSubject?: boolean;
   predicates?: RDF.Term[];
   object?: RDF.Term | boolean;
   text?: string[];

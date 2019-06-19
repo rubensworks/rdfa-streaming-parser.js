@@ -3335,6 +3335,58 @@ property="foaf:name" typeof="foaf:Document">
           ]);
       });
 
+      it('@about and @inlist creates a separate list', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p about="res" property="rdf:value" inlist="">Bar</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/res',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Bar"'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('@about and @inlist create a separate lists', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+  	<p about="res" property="rdf:value" inlist="">Bar</p>
+  	<p about="res" property="rdf:value" inlist="">Foo</p>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/res',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '_:b_l1'),
+            quad('http://example.org/res',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '_:b_l2'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Bar"'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Foo"'),
+            quad('_:b_l2',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
       it('xmlns definition', async () => {
         return expect(await parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
    <head>
