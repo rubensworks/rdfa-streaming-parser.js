@@ -104,6 +104,7 @@ export class RdfaParser extends Transform {
   private readonly activeTagStack: IActiveTag[] = [];
 
   private baseIRI: RDF.NamedNode;
+  private readonly baseIRIDocument: RDF.NamedNode;
   private blankNodeFactory: () => RDF.BlankNode;
 
   constructor(options?: IRdfaParserOptions) {
@@ -113,6 +114,7 @@ export class RdfaParser extends Transform {
 
     this.dataFactory = options.dataFactory || require('@rdfjs/data-model');
     this.baseIRI = this.dataFactory.namedNode(options.baseIRI || '');
+    this.baseIRIDocument = this.baseIRI;
     this.defaultGraph = options.defaultGraph || this.dataFactory.defaultGraph();
     this.features = options.features || RdfaParser.RDFA_FEATURES[options.profile] || RdfaParser.RDFA_FEATURES[''];
     this.rdfaPatterns = this.features.copyRdfaPatterns ? {} : null;
@@ -975,8 +977,10 @@ export class RdfaParser extends Transform {
     // Handle prefixed IRIs
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
     // Resolve against baseIRI if in base-mode, or if the term was a prefixed relative IRI
-    if (!vocab || term !== iri) {
+    if (!vocab) {
       iri = resolve(iri, this.getBaseIriTerm(activeTag).value);
+    } else if (term !== iri) {
+      iri = resolve(iri, this.baseIRIDocument.value);
     }
     if (!RdfaParser.isValidIri(iri)) {
       return null;

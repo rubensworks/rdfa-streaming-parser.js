@@ -4060,6 +4060,27 @@ xmlns="http://www.w3.org/2000/svg">
           ]);
       });
 
+      it('should be able to ignore base tag and resolve relative IRIs against baseIRI in HTML-mode', async () => {
+        return expect(await parse(parser, `<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <base href="http://example.com/"/>
+  <title>Test 0319</title>
+</head>
+<body prefix="pr: relative/iri#" xmlns:xpr="relative/uri#">
+  <p property="pr:prop xpr:prop">value</p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.com/',
+              'http://example.org/relative/iri#prop',
+              '"value"'),
+            quad('http://example.com/',
+              'http://example.org/relative/uri#prop',
+              '"value"'),
+          ]);
+      });
+
     });
 
   });
