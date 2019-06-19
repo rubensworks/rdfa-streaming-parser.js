@@ -413,6 +413,26 @@ describe('RdfaParser', () => {
         return expect(parser.createIri('license', activeTag, true, true))
           .toEqual(namedNode('http://vocab.org/license'));
       });
+
+      it('should resolve relative prefixes against baseIRI in base-mode', async () => {
+        const activeTag: any = {
+          prefixes: {
+            pre: 'relative/prefix#',
+          },
+        };
+        return expect(parser.createIri('pre:suffix', activeTag, false, true))
+          .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
+      });
+
+      it('should resolve relative prefixes against baseIRI in vocab-mode', async () => {
+        const activeTag: any = {
+          prefixes: {
+            pre: 'relative/prefix#',
+          },
+        };
+        return expect(parser.createIri('pre:suffix', activeTag, true, true))
+          .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
+      });
     });
 
     describe('#createLiteral', () => {
@@ -3859,6 +3879,29 @@ xmlns="http://www.w3.org/2000/svg">
             quad('http://example.org/',
               'http://purl.org/dc/terms/description',
               '"A yellow rectangle with sharp corners."'),
+          ]);
+      });
+
+      it('should be able to ignore base tag and resolve relative IRIs against baseIRI', async () => {
+        const features = { baseTag: false, xmlBase: true, xmlnsPrefixMappings: true };
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features });
+        return expect(await parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<head>
+  <base href="http://example.com/"/>
+  <title>Test 0319</title>
+</head>
+<body prefix="pr: relative/iri#" xmlns:xpr="relative/uri#">
+  <p property="pr:prop xpr:prop">value</p>
+</body>
+</root>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://example.org/relative/iri#prop',
+              '"value"'),
+            quad('http://example.org/',
+              'http://example.org/relative/uri#prop',
+              '"value"'),
           ]);
       });
 

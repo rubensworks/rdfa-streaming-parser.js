@@ -961,7 +961,8 @@ export class RdfaParser extends Transform {
 
     // Handle prefixed IRIs
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
-    if (!vocab) {
+    // Resolve against baseIRI if in base-mode, or if the term was a prefixed relative IRI
+    if (!vocab || term !== iri) {
       iri = resolve(iri, this.baseIRI.value);
     }
     if (!RdfaParser.isValidIri(iri)) {
