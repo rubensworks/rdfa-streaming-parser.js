@@ -548,6 +548,15 @@ describe('RdfaParser', () => {
             namedNode('http://www.w3.org/2001/XMLSchema#date')));
       });
 
+      it('should give interpret dates with Z', async () => {
+        const activeTag: any = {
+          interpretObjectAsTime: true,
+        };
+        return expect(parser.createLiteral('2012-03-18Z', activeTag))
+          .toEqualRdfTerm(literal('2012-03-18Z',
+            namedNode('http://www.w3.org/2001/XMLSchema#date')));
+      });
+
       it('should give interpret years', async () => {
         const activeTag: any = {
           interpretObjectAsTime: true,
