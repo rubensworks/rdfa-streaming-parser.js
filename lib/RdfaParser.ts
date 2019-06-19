@@ -266,6 +266,13 @@ export class RdfaParser extends Transform {
     };
     this.activeTagStack.push(activeTag);
 
+    // Save the tag contents if needed
+    if (activeTag.collectChildTags) {
+      const attributesSerialized = Object.keys(attributes).map((key) => `${key}="${attributes[key]}"`).join(' ');
+      activeTag.text = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
+      return;
+    }
+
     let allowTermsInRelPredicates: boolean = true;
     let allowTermsInRevPredicates: boolean = true;
     if (this.features.onlyAllowUriRelRevIfProperty) {
@@ -327,12 +334,6 @@ export class RdfaParser extends Transform {
         }
         return;
       }
-    }
-
-    // Save the tag contents if needed
-    if (activeTag.collectChildTags) {
-      const attributesSerialized = Object.keys(attributes).map((key) => `${key}="${attributes[key]}"`).join(' ');
-      activeTag.text = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
     }
 
     // <base> tags override the baseIRI of the whole document
@@ -702,81 +703,86 @@ export class RdfaParser extends Transform {
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
     const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 2];
 
-    // If we detect a finalized rdfa:Pattern tag, store it
-    if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag && activeTag.collectedPatternTag.rootPattern) {
-      const patternId = activeTag.collectedPatternTag.attributes.resource;
+    if (!(activeTag.collectChildTags && parentTag.collectChildTags)) {
 
-      // Remove resource and typeof attributes to avoid it being seen as a new pattern
-      delete activeTag.collectedPatternTag.attributes.resource;
-      delete activeTag.collectedPatternTag.attributes.typeof;
+      // If we detect a finalized rdfa:Pattern tag, store it
+      if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag
+        && activeTag.collectedPatternTag.rootPattern) {
+        const patternId = activeTag.collectedPatternTag.attributes.resource;
 
-      // Store the pattern
-      this.rdfaPatterns[patternId] = activeTag.collectedPatternTag;
+        // Remove resource and typeof attributes to avoid it being seen as a new pattern
+        delete activeTag.collectedPatternTag.attributes.resource;
+        delete activeTag.collectedPatternTag.attributes.typeof;
 
-      // Apply all pending copies for this pattern
-      if (this.pendingRdfaPatternCopies[patternId]) {
-        for (const tag of this.pendingRdfaPatternCopies[patternId]) {
-          this.emitPatternCopy(tag, activeTag.collectedPatternTag, patternId);
-        }
-        delete this.pendingRdfaPatternCopies[patternId];
-      }
+        // Store the pattern
+        this.rdfaPatterns[patternId] = activeTag.collectedPatternTag;
 
-      // Remove the active tag from the stack
-      this.activeTagStack.pop();
-
-      // Call end method if our last tag has been popped
-      if (this.activeTagStack.length === 1) {
-        this.onEnd();
-      }
-
-      return;
-    }
-
-    // Emit all triples that were determined in the active tag
-    if (activeTag.predicates) {
-      const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
-      const object = this.createLiteral((activeTag.text || []).join(''), activeTag);
-      if (activeTag.inlist) {
-        for (const predicate of activeTag.predicates) {
-          this.addListMapping(activeTag, predicate, object);
-        }
-      } else {
-        for (const predicate of activeTag.predicates) {
-          this.emitTriple(subject, predicate, object);
-        }
-      }
-
-      // Reset text, unless the parent is also collecting text
-      if (!parentTag.predicates) {
-        activeTag.text = null;
-      }
-    }
-
-    // 14: Handle local list mapping
-    if (activeTag.subject && Object.keys(activeTag.listMapping).length > 0) {
-      const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
-      for (const predicateValue in activeTag.listMapping) {
-        const predicate = this.dataFactory.namedNode(predicateValue);
-        const values = activeTag.listMapping[predicateValue];
-
-        if (values.length > 0) {
-          // Non-empty list, emit linked list of rdf:first and rdf:rest chains
-          const bnodes = values.map(() => this.createBlankNode());
-          for (let i = 0; i < values.length; i++) {
-            const object = this.getResourceOrBaseIri(values[i], activeTag);
-            this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'first'),
-              object);
-            this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'rest'),
-              (i < values.length - 1) ? bnodes[i + 1] : this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+        // Apply all pending copies for this pattern
+        if (this.pendingRdfaPatternCopies[patternId]) {
+          for (const tag of this.pendingRdfaPatternCopies[patternId]) {
+            this.emitPatternCopy(tag, activeTag.collectedPatternTag, patternId);
           }
+          delete this.pendingRdfaPatternCopies[patternId];
+        }
 
-          // Emit triple for the first linked list chain
-          this.emitTriple(subject, predicate, bnodes[0]);
+        // Remove the active tag from the stack
+        this.activeTagStack.pop();
+
+        // Call end method if our last tag has been popped
+        if (this.activeTagStack.length === 1) {
+          this.onEnd();
+        }
+
+        return;
+      }
+
+      // Emit all triples that were determined in the active tag
+      if (activeTag.predicates) {
+        const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
+        const object = this.createLiteral((activeTag.text || []).join(''), activeTag);
+        if (activeTag.inlist) {
+          for (const predicate of activeTag.predicates) {
+            this.addListMapping(activeTag, predicate, object);
+          }
         } else {
-          // Empty list, just emit rdf:nil
-          this.emitTriple(subject, predicate, this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+          for (const predicate of activeTag.predicates) {
+            this.emitTriple(subject, predicate, object);
+          }
+        }
+
+        // Reset text, unless the parent is also collecting text
+        if (!parentTag.predicates) {
+          activeTag.text = null;
         }
       }
+
+      // 14: Handle local list mapping
+      if (activeTag.subject && Object.keys(activeTag.listMapping).length > 0) {
+        const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
+        for (const predicateValue in activeTag.listMapping) {
+          const predicate = this.dataFactory.namedNode(predicateValue);
+          const values = activeTag.listMapping[predicateValue];
+
+          if (values.length > 0) {
+            // Non-empty list, emit linked list of rdf:first and rdf:rest chains
+            const bnodes = values.map(() => this.createBlankNode());
+            for (let i = 0; i < values.length; i++) {
+              const object = this.getResourceOrBaseIri(values[i], activeTag);
+              this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'first'),
+                object);
+              this.emitTriple(bnodes[i], this.dataFactory.namedNode(RdfaParser.RDF + 'rest'),
+                (i < values.length - 1) ? bnodes[i + 1] : this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+            }
+
+            // Emit triple for the first linked list chain
+            this.emitTriple(subject, predicate, bnodes[0]);
+          } else {
+            // Empty list, just emit rdf:nil
+            this.emitTriple(subject, predicate, this.dataFactory.namedNode(RdfaParser.RDF + 'nil'));
+          }
+        }
+      }
+
     }
 
     // Remove the active tag from the stack
