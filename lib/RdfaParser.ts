@@ -762,8 +762,8 @@ export class RdfaParser extends Transform {
       }
 
       // 14: Handle local list mapping
-      if (activeTag.subject && Object.keys(activeTag.listMapping).length > 0) {
-        const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
+      if (activeTag.object && Object.keys(activeTag.listMapping).length > 0) {
+        const subject = this.getResourceOrBaseIri(activeTag.object, activeTag);
         for (const predicateValue in activeTag.listMapping) {
           const predicate = this.dataFactory.namedNode(predicateValue);
           const values = activeTag.listMapping[predicateValue];

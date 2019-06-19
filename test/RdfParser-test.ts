@@ -3387,6 +3387,60 @@ property="foaf:name" typeof="foaf:Document">
           ]);
       });
 
+      it('@property and @resource with child @inlist', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0226</title>
+</head>
+<body prefix="ex: http://www.example.org/">
+  <span property="ex:inlist" resource="res">
+    <p property="rdf:value" inlist="">Bar</p>
+  </span>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.example.org/inlist',
+              'http://example.org/res'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Bar"'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
+      it('@rel and @resource with child @inlist', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0226</title>
+</head>
+<body prefix="ex: http://www.example.org/">
+  <span rel="ex:inlist" resource="res">
+    <p property="rdf:value" inlist="">Bar</p>
+  </span>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.example.org/inlist',
+              'http://example.org/res'),
+            quad('http://example.org/res',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '_:b_l1'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+              '"Bar"'),
+            quad('_:b_l1',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+          ]);
+      });
+
       it('xmlns definition', async () => {
         return expect(await parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
    <head>
