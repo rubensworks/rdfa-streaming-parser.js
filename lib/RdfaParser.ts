@@ -259,6 +259,7 @@ export class RdfaParser extends Transform {
       inlist: 'inlist' in attributes,
       listMapping: <{[predicate: string]: (RDF.Term|boolean)[]}> <any> [],
       listMappingLocal: parentTag.listMapping,
+      localBaseIRI: parentTag.localBaseIRI,
       name,
       prefixes: null,
       skipElement: false,
@@ -334,13 +335,13 @@ export class RdfaParser extends Transform {
       activeTag.text = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
     }
 
-    // <base> tags override the baseIRI
+    // <base> tags override the baseIRI of the whole document
     if (this.features.baseTag && name === 'base' && attributes.href) {
-      this.setBaseIRI(attributes.href);
+      this.baseIRI = this.getBaseIRI(attributes.href);
     }
-    // xml:base attributes override the baseIRI
+    // xml:base attributes override the baseIRI of the current tag and children
     if (this.features.xmlBase && attributes['xml:base']) {
-      this.setBaseIRI(attributes['xml:base']);
+      activeTag.localBaseIRI = this.getBaseIRI(attributes['xml:base']);
     }
 
     // <time> tags set an initial datatype
@@ -360,7 +361,7 @@ export class RdfaParser extends Transform {
       if (attributes.vocab) {
         activeTag.vocab = attributes.vocab;
         this.emitTriple(
-          this.baseIRI,
+          this.getBaseIriTerm(activeTag),
           this.dataFactory.namedNode(RdfaParser.RDFA + 'usesVocabulary'),
           this.dataFactory.namedNode(activeTag.vocab),
         );
@@ -835,14 +836,15 @@ export class RdfaParser extends Transform {
   /**
    * Set the base IRI.
    * @param {string} baseIriValue A base IRI value.
+   * @return A base IRI named node.
    */
-  protected setBaseIRI(baseIriValue: string) {
+  protected getBaseIRI(baseIriValue: string): RDF.NamedNode {
     let href: string = baseIriValue;
     const fragmentIndex = href.indexOf('#');
     if (fragmentIndex >= 0) {
       href = href.substr(0, fragmentIndex);
     }
-    this.baseIRI = this.dataFactory.namedNode(href);
+    return this.dataFactory.namedNode(href);
   }
 
   /**
@@ -866,7 +868,7 @@ export class RdfaParser extends Transform {
    * @return {NamedNode} The base IRI term.
    */
   protected getBaseIriTerm(activeTag: IActiveTag): RDF.NamedNode {
-    return this.baseIRI;
+    return activeTag.localBaseIRI || this.baseIRI;
   }
 
   /**
@@ -929,7 +931,7 @@ export class RdfaParser extends Transform {
 
     if (!allowSafeCurie) {
       if (!vocab) {
-        term = resolve(term, this.baseIRI.value);
+        term = resolve(term, this.getBaseIriTerm(activeTag).value);
       }
       if (!RdfaParser.isValidIri(term)) {
         return null;
@@ -963,7 +965,7 @@ export class RdfaParser extends Transform {
     let iri: string = RdfaParser.expandPrefixedTerm(term, activeTag);
     // Resolve against baseIRI if in base-mode, or if the term was a prefixed relative IRI
     if (!vocab || term !== iri) {
-      iri = resolve(iri, this.baseIRI.value);
+      iri = resolve(iri, this.getBaseIriTerm(activeTag).value);
     }
     if (!RdfaParser.isValidIri(iri)) {
       return null;
@@ -1112,6 +1114,7 @@ export interface IActiveTag {
   listMapping: {[predicate: string]: (RDF.Term|boolean)[]};
   listMappingLocal: {[predicate: string]: (RDF.Term|boolean)[]};
   skipElement: boolean;
+  localBaseIRI?: RDF.NamedNode;
 }
 
 export interface IRdfaParserOptions {

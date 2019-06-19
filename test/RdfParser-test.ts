@@ -3837,7 +3837,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
-      it('xml:base to set the baseIRI', async () => {
+      it('xml:base to set the baseIRI within the current scope', async () => {
         return expect(await parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
 <root width="12cm" height="4cm" viewBox="0 0 1200 400"
 xml:base="http://example.com/"
@@ -3854,6 +3854,28 @@ xmlns="http://www.w3.org/2000/svg">
 </root>`))
           .toBeRdfIsomorphic([
             quad('http://example.com/',
+              'http://purl.org/dc/terms/description',
+              '"A yellow rectangle with sharp corners."'),
+          ]);
+      });
+
+      it('xml:base shoud not set the baseIRI outside the current scope', async () => {
+        return expect(await parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
+<root width="12cm" height="4cm" viewBox="0 0 1200 400"
+xmlns:dc="http://purl.org/dc/terms/"
+xmlns="http://www.w3.org/2000/svg">
+     version="1.2"
+     baseProfile="tiny"
+  <p xml:base="http://example.com/">abc</p>
+  <desc property="dc:description">A yellow rectangle with sharp corners.</desc>
+  <!-- Show outline of canvas using 'rect' element -->
+  <rect x="1" y="1" width="1198" height="398"
+        fill="none" stroke="blue" stroke-width="2"/>
+  <rect x="400" y="100" width="400" height="200"
+        fill="yellow" stroke="navy" stroke-width="10"  />
+</root>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
               'http://purl.org/dc/terms/description',
               '"A yellow rectangle with sharp corners."'),
           ]);
