@@ -4,6 +4,7 @@ import {Parser as HtmlParser} from "htmlparser2";
 import * as RDF from "rdf-js";
 import {resolve} from "relative-to-absolute-iri";
 import {PassThrough, Transform, TransformCallback} from "stream";
+import * as INITIAL_CONTEXT_XHTML from "./initial-context-xhtml.json";
 import * as INITIAL_CONTEXT from "./initial-context.json";
 
 /**
@@ -27,6 +28,7 @@ export class RdfaParser extends Transform {
       htmlDatatype: true,
       copyRdfaPatterns: true,
       xmlnsPrefixMappings: true,
+      xhtmlInitialContext: true,
     },
     'core': {
       baseTag: false,
@@ -39,6 +41,7 @@ export class RdfaParser extends Transform {
       htmlDatatype: false,
       copyRdfaPatterns: true,
       xmlnsPrefixMappings: true,
+      xhtmlInitialContext: false,
     },
     'html': {
       baseTag: true,
@@ -51,6 +54,7 @@ export class RdfaParser extends Transform {
       htmlDatatype: true,
       copyRdfaPatterns: true,
       xmlnsPrefixMappings: true,
+      xhtmlInitialContext: false,
     },
     'xhtml': {
       baseTag: true,
@@ -63,6 +67,7 @@ export class RdfaParser extends Transform {
       htmlDatatype: true,
       copyRdfaPatterns: true,
       xmlnsPrefixMappings: true,
+      xhtmlInitialContext: true,
     },
     'xml': {
       baseTag: false,
@@ -75,6 +80,7 @@ export class RdfaParser extends Transform {
       htmlDatatype: false,
       copyRdfaPatterns: false,
       xmlnsPrefixMappings: true,
+      xhtmlInitialContext: false,
     },
   };
   // tslint:enable:object-literal-sort-keys
@@ -129,7 +135,10 @@ export class RdfaParser extends Transform {
       listMapping: {},
       listMappingLocal: {},
       name: '',
-      prefixes: INITIAL_CONTEXT['@context'],
+      prefixes: {
+        ...INITIAL_CONTEXT['@context'],
+        ...this.features.xhtmlInitialContext ? INITIAL_CONTEXT_XHTML['@context'] : {},
+      },
       skipElement: false,
       vocab: options.vocab,
     });
@@ -1216,6 +1225,11 @@ export interface IRdfaFeatures {
    * This is not part of the RDFa spec.
    */
   skipHandlingXmlLiteralChildren?: boolean;
+  /**
+   * If the XHTML initial context should be included in the initial prefixes.
+   * see https://www.w3.org/2011/rdfa-context/xhtml-rdfa-1.1
+   */
+  xhtmlInitialContext?: boolean;
 }
 
 export interface IRdfaPattern {

@@ -4226,6 +4226,50 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
           ]);
       });
 
+      it('should handle terms from the XHTML initial context', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1">
+<head>
+  <title>Test 0259</title>
+</head>
+<body>
+  <div>
+    Vocabulary Terms
+    <span property="alternate">alternate</span>
+    <span property="appendix">appendix</span>
+    <span property="cite">cite</span>
+  </div>
+</body></html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#alternate',
+              '"alternate"'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#appendix',
+              '"appendix"'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#cite',
+              '"cite"'),
+          ]);
+      });
+
+      it('should handle terms from the XHTML initial context ' +
+        'unless features.xhtmlInitialContext is disabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {} });
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1">
+<head>
+  <title>Test 0259</title>
+</head>
+<body>
+  <div>
+    Vocabulary Terms
+    <span property="alternate">alternate</span>
+    <span property="appendix">appendix</span>
+    <span property="cite">cite</span>
+  </div>
+</body></html>`))
+          .toBeRdfIsomorphic([]);
+      });
+
     });
 
   });
