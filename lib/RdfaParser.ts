@@ -272,7 +272,9 @@ export class RdfaParser extends Transform {
     if (activeTag.collectChildTags) {
       const attributesSerialized = Object.keys(attributes).map((key) => `${key}="${attributes[key]}"`).join(' ');
       activeTag.text = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
-      return;
+      if (this.features.skipHandlingXmlLiteralChildren) {
+        return;
+      }
     }
 
     let allowTermsInRelPredicates: boolean = true;
@@ -710,7 +712,7 @@ export class RdfaParser extends Transform {
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
     const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 2];
 
-    if (!(activeTag.collectChildTags && parentTag.collectChildTags)) {
+    if (!(activeTag.collectChildTags && parentTag.collectChildTags && this.features.skipHandlingXmlLiteralChildren)) {
 
       // If we detect a finalized rdfa:Pattern tag, store it
       if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag
@@ -746,7 +748,12 @@ export class RdfaParser extends Transform {
       // Emit all triples that were determined in the active tag
       if (activeTag.predicates) {
         const subject = this.getResourceOrBaseIri(activeTag.subject, activeTag);
-        const object = this.createLiteral((activeTag.text || []).join(''), activeTag);
+        let textSegments: string[] = activeTag.text || [];
+        if (activeTag.collectChildTags && parentTag.collectChildTags) {
+          // If we are inside an XMLLiteral child that also has RDFa content, ignore the tag name that was collected.
+          textSegments = textSegments.slice(1);
+        }
+        const object = this.createLiteral(textSegments.join(''), activeTag);
         if (activeTag.inlist) {
           for (const predicate of activeTag.predicates) {
             this.addListMapping(activeTag, subject, predicate, object);
@@ -1204,6 +1211,11 @@ export interface IRdfaFeatures {
    * If prefixes should be extracted from xmlnsPrefixMappings.
    */
   xmlnsPrefixMappings?: boolean;
+  /**
+   * If children of rdf:XMLLiteral should not be handled as RDFa anymore.
+   * This is not part of the RDFa spec.
+   */
+  skipHandlingXmlLiteralChildren?: boolean;
 }
 
 export interface IRdfaPattern {

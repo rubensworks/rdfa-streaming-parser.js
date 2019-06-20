@@ -1249,7 +1249,30 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
           ]);
       });
 
-      it('rdf:XMLLiteral datatype to preserve all nested tags and ignore RDFa in children', async () => {
+      it('rdf:XMLLiteral datatype to preserve all nested tags and not ignore RDFa in children', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:XMLLiteral"><b property="foaf:firstName">Mark</b></p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"<b property="foaf:firstName">Mark</b>"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+            quad('http://example.org/',
+              'http://xmlns.com/foaf/0.1/firstName',
+              '"Mark"'),
+          ]);
+      });
+
+      it('rdf:XMLLiteral datatype to preserve all nested tags and ignore RDFa in children ' +
+        'if features.skipHandlingXmlLiteralChildren is enabled', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', features: { skipHandlingXmlLiteralChildren: true } });
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
