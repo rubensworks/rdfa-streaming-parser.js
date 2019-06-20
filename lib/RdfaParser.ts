@@ -79,7 +79,7 @@ export class RdfaParser extends Transform {
   };
   // tslint:enable:object-literal-sort-keys
 
-  protected static readonly PREFIX_REGEX: RegExp = /[ \n\t]*([^ :\n\t]*)*:[ \n\t]*([^ \n\t]*)*[ \n\t]*/g;
+  protected static readonly PREFIX_REGEX: RegExp = /\s*([^:\s]*)*:\s*([^\s]*)*\s*/g;
   protected static readonly TIME_REGEXES: { regex: RegExp, type: string }[] = [
     {
       regex: /^[0-9]+-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]((Z?)|([\+-][0-9][0-9]:[0-9][0-9]))$/,
@@ -899,7 +899,7 @@ export class RdfaParser extends Transform {
    * @return {Term[]} The IRI terms.
    */
   protected createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean): RDF.Term[] {
-    return terms.split(/[ \n\t]+/)
+    return terms.split(/\s+/)
       .filter((term) => allowTerms || term.indexOf(':') >= 0)
       .map((property) => this.createIri(property, activeTag, true, true))
       .filter((term) => term != null);

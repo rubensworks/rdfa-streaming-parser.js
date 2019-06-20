@@ -592,6 +592,98 @@ describe('RdfaParser', () => {
       });
     });
 
+    describe('#createVocabIris', () => {
+      it('should handle a single IRI', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('ex:abc', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+          ]);
+      });
+
+      it('should handle a two IRIs with whitespace', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('ex:abc ex:def', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+            namedNode('http://example.org/def'),
+          ]);
+      });
+
+      it('should handle a two IRIs with tab', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('ex:abc\tex:def', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+            namedNode('http://example.org/def'),
+          ]);
+      });
+
+      it('should handle a two IRIs with whitespace and tab', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('ex:abc \tex:def', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+            namedNode('http://example.org/def'),
+          ]);
+      });
+
+      it('should handle a two IRIs with whitespaces and tabs', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('ex:abc\t    \t\t\t   ex:def', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+            namedNode('http://example.org/def'),
+          ]);
+      });
+
+      it('should handle a two IRIs with whitespaces in prefix and suffix', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('  \t\t  ex:abc ex:def  \t   \t', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+            namedNode('http://example.org/def'),
+          ]);
+      });
+
+      it('should handle a two IRIs with newline', async () => {
+        const activeTag: any = {
+          prefixes: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('ex:abc\nex:def', activeTag, true))
+          .toEqualRdfTermArray([
+            namedNode('http://example.org/abc'),
+            namedNode('http://example.org/def'),
+          ]);
+      });
+    });
+
     describe('#emitTriple', () => {
       it('should emit on invalid terms', async () => {
         const spy = jest.spyOn(parser, 'push');
@@ -4101,6 +4193,36 @@ xmlns="http://www.w3.org/2000/svg">
             quad('http://example.com/',
               'http://example.org/relative/uri#prop',
               '"value"'),
+          ]);
+      });
+
+      it('should handle whitespace alternatives', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1"
+prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
+<head>
+  <title>Test</title>
+  <link rel="xhv:next&#x20;xhv:prev&#x09;xhv:first&#x0a;xhv:last&#x0d;xhv:subsection"
+  href="http://example.org/test.css" />
+</head>
+<body>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#first',
+              'http://example.org/test.css'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#last',
+              'http://example.org/test.css'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#next',
+              'http://example.org/test.css'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#prev',
+              'http://example.org/test.css'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/xhtml/vocab#subsection',
+              'http://example.org/test.css'),
           ]);
       });
 
