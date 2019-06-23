@@ -409,7 +409,7 @@ export class RdfaParser extends Transform {
         // 5.1: property is present, but not content and datatype
         // Determine new subject
         if ('about' in attributes) {
-          newSubject = this.createIri(attributes.about, activeTag, false, true);
+          newSubject = this.createIri(attributes.about, activeTag, false, true, true);
           activeTag.explicitNewSubject = !!newSubject;
         } else if (isRootTag) {
           newSubject = true;
@@ -420,16 +420,16 @@ export class RdfaParser extends Transform {
         // Determine type
         if ('typeof' in attributes) {
           if ('about' in attributes) {
-            typedResource = this.createIri(attributes.about, activeTag, false, true);
+            typedResource = this.createIri(attributes.about, activeTag, false, true, true);
           }
           if (!typedResource && isRootTag) {
             typedResource = true;
           }
           if (!typedResource && 'resource' in attributes) {
-            typedResource = this.createIri(attributes.resource, activeTag, false, true);
+            typedResource = this.createIri(attributes.resource, activeTag, false, true, true);
           }
           if (!typedResource && ('href' in attributes || 'src' in attributes)) {
-            typedResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
+            typedResource = this.createIri(attributes.href || attributes.src, activeTag, false, false, true);
           }
           if (!typedResource && this.isInheritSubjectInHeadBody(name)) {
             typedResource = newSubject;
@@ -443,12 +443,12 @@ export class RdfaParser extends Transform {
       } else {
         // 5.2
         if ('about' in attributes || 'resource' in attributes) {
-          newSubject = this.createIri(attributes.about || attributes.resource, activeTag, false, true);
+          newSubject = this.createIri(attributes.about || attributes.resource, activeTag, false, true, true);
           activeTag.explicitNewSubject = !!newSubject;
         }
         if (!newSubject && ('href' in attributes || 'src' in attributes)) {
           newSubject = this.createIri(attributes.href || attributes.src,
-            activeTag, false, false);
+            activeTag, false, false, true);
           activeTag.explicitNewSubject = !!newSubject;
         }
         if (!newSubject) {
@@ -477,7 +477,7 @@ export class RdfaParser extends Transform {
 
       // Define new subject
       if ('about' in attributes) {
-        newSubject = this.createIri(attributes.about, activeTag, false, true);
+        newSubject = this.createIri(attributes.about, activeTag, false, true, true);
         activeTag.explicitNewSubject = !!newSubject;
         if ('typeof' in attributes) {
           typedResource = newSubject;
@@ -490,11 +490,11 @@ export class RdfaParser extends Transform {
 
       // Define object
       if ('resource' in attributes) {
-        currentObjectResource = this.createIri(attributes.resource, activeTag, false, true);
+        currentObjectResource = this.createIri(attributes.resource, activeTag, false, true, true);
       }
       if (!currentObjectResource) {
         if ('href' in attributes || 'src' in attributes) {
-          currentObjectResource = this.createIri(attributes.href || attributes.src, activeTag, false, false);
+          currentObjectResource = this.createIri(attributes.href || attributes.src, activeTag, false, false, true);
         } else if ('typeof' in attributes && !('about' in attributes) && !this.isInheritSubjectInHeadBody(name)) {
           currentObjectResource = this.createBlankNode();
         }
@@ -512,7 +512,7 @@ export class RdfaParser extends Transform {
 
     // 7: If a typed resource was defined, emit it as a triple
     if (typedResource) {
-      for (const type of this.createVocabIris(attributes.typeof, activeTag, true)) {
+      for (const type of this.createVocabIris(attributes.typeof, activeTag, true, true)) {
         this.emitTriple(
           this.getResourceOrBaseIri(typedResource, activeTag),
           this.dataFactory.namedNode(RdfaParser.RDF + 'type'),
@@ -530,7 +530,7 @@ export class RdfaParser extends Transform {
     if (currentObjectResource) {
       // Handle list mapping
       if ('rel' in attributes && 'inlist' in attributes) {
-        for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates)) {
+        for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
           this.addListMapping(activeTag, newSubject, predicate, currentObjectResource);
         }
       }
@@ -538,7 +538,7 @@ export class RdfaParser extends Transform {
       // Determine predicates using rel or rev (unless rel and inlist are present)
       if (!('rel' in attributes && 'inlist' in attributes)) {
         if ('rel' in attributes) {
-          for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates)) {
+          for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
             this.emitTriple(
               this.getResourceOrBaseIri(newSubject, activeTag),
               predicate,
@@ -547,7 +547,7 @@ export class RdfaParser extends Transform {
           }
         }
         if ('rev' in attributes) {
-          for (const predicate of this.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates)) {
+          for (const predicate of this.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates, false)) {
             this.emitTriple(
               this.getResourceOrBaseIri(currentObjectResource, activeTag),
               predicate,
@@ -562,18 +562,18 @@ export class RdfaParser extends Transform {
     if (!currentObjectResource) {
       if ('rel' in attributes) {
         if ('inlist' in attributes) {
-          for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates)) {
+          for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
             this.addListMapping(activeTag, newSubject, predicate, null);
             activeTag.incompleteTriples.push({ predicate, reverse: false, list: true });
           }
         } else {
-          for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates)) {
+          for (const predicate of this.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
             activeTag.incompleteTriples.push({ predicate, reverse: false });
           }
         }
       }
       if ('rev' in attributes) {
-        for (const predicate of this.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates)) {
+        for (const predicate of this.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates, false)) {
           activeTag.incompleteTriples.push({ predicate, reverse: true });
         }
       }
@@ -587,12 +587,12 @@ export class RdfaParser extends Transform {
     // 11: Determine current property value
     if ('property' in attributes) {
       // Create predicates
-      activeTag.predicates = this.createVocabIris(attributes.property, activeTag, true);
+      activeTag.predicates = this.createVocabIris(attributes.property, activeTag, true, false);
 
       // Save datatype attribute value in active tag
       let localObjectResource: RDF.Term | boolean;
       if ('datatype' in attributes) {
-        activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true, true);
+        activeTag.datatype = <RDF.NamedNode> this.createIri(attributes.datatype, activeTag, true, true, false);
         if (activeTag.datatype
           && (activeTag.datatype.value === RdfaParser.RDF + 'XMLLiteral'
             || (this.features.htmlDatatype && activeTag.datatype.value === RdfaParser.RDF + 'HTML'))) {
@@ -602,13 +602,13 @@ export class RdfaParser extends Transform {
         // Try to determine resource
         if (!('rev' in attributes) && !('rel' in attributes) && !('content' in attributes)) {
           if ('resource' in attributes) {
-            localObjectResource = this.createIri(attributes.resource, activeTag, false, true);
+            localObjectResource = this.createIri(attributes.resource, activeTag, false, true, true);
           }
           if (!localObjectResource && 'href' in attributes) {
-            localObjectResource = this.createIri(attributes.href, activeTag, false, false);
+            localObjectResource = this.createIri(attributes.href, activeTag, false, false, true);
           }
           if (!localObjectResource && 'src' in attributes) {
-            localObjectResource = this.createIri(attributes.src, activeTag, false, false);
+            localObjectResource = this.createIri(attributes.src, activeTag, false, false, true);
           }
         }
         if ('typeof' in attributes && !('about' in attributes)) {
@@ -909,12 +909,14 @@ export class RdfaParser extends Transform {
    * @param {string} terms An attribute value.
    * @param {IActiveTag} activeTag The current active tag.
    * @param {boolean} allowTerms If terms are allowed (strings without ':')
+   * @param {boolean} allowBlankNode If blank nodes are allowed.
    * @return {Term[]} The IRI terms.
    */
-  protected createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean): RDF.Term[] {
+  protected createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean,
+                            allowBlankNode: boolean): RDF.Term[] {
     return terms.split(/\s+/)
       .filter((term) => allowTerms || term.indexOf(':') >= 0)
-      .map((property) => this.createIri(property, activeTag, true, true))
+      .map((property) => this.createIri(property, activeTag, true, true, allowBlankNode))
       .filter((term) => term != null);
   }
 
@@ -957,9 +959,11 @@ export class RdfaParser extends Transform {
    * @param {boolean} allowSafeCurie If safe CURIEs are allowed
    *                                 (invalid CURIEs between square brackets will return null)
    *                                 Otherwise, only IRIs are allowed.
+   * @param {boolean} allowBlankNode If blank nodes are allowed. Otherwise null will be returned.
    * @return {Term} An RDF term or null.
    */
-  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean): RDF.Term {
+  protected createIri(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
+                      allowBlankNode: boolean): RDF.Term {
     term = term || '';
 
     if (!allowSafeCurie) {
@@ -984,7 +988,7 @@ export class RdfaParser extends Transform {
 
     // Handle blank nodes
     if (term.startsWith('_:')) {
-      return this.dataFactory.blankNode(term.substr(2) || 'b_identity');
+      return allowBlankNode ? this.dataFactory.blankNode(term.substr(2) || 'b_identity') : null;
     }
 
     // Handle vocab IRIs

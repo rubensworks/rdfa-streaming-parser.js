@@ -290,26 +290,32 @@ describe('RdfaParser', () => {
     describe('#createIri', () => {
       it('should create relative IRIs when CURIEs are not allowed', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('http://ex.org/abc', activeTag, false, false))
+        return expect(parser.createIri('http://ex.org/abc', activeTag, false, false, true))
           .toEqualRdfTerm(namedNode('http://ex.org/abc'));
       });
 
       it('should create absolute IRIs when CURIEs are not allowed', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('abc', activeTag, false, false))
+        return expect(parser.createIri('abc', activeTag, false, false, true))
           .toEqualRdfTerm(namedNode('http://example.org/abc'));
       });
 
       it('should not create invalid IRIs when CURIEs are not allowed in vocab mode', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('abc', activeTag, true, false))
+        return expect(parser.createIri('abc', activeTag, true, false, true))
           .toBeFalsy();
       });
 
-      it('should create blank nodes', async () => {
+      it('should create blank nodes if allowBlankNode is true', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('_:b1', activeTag, false, true))
+        return expect(parser.createIri('_:b1', activeTag, false, true, true))
           .toEqualRdfTerm(blankNode('b1'));
+      });
+
+      it('should create blank nodes unless allowBlankNode is false', async () => {
+        const activeTag: any = {};
+        return expect(parser.createIri('_:b1', activeTag, false, true, false))
+          .toBeFalsy();
       });
 
       it('should handle prefixed IRIs', async () => {
@@ -318,7 +324,7 @@ describe('RdfaParser', () => {
             ex: 'http://example.org/',
           },
         };
-        return expect(parser.createIri('ex:def', activeTag, false, true))
+        return expect(parser.createIri('ex:def', activeTag, false, true, true))
           .toEqualRdfTerm(namedNode('http://example.org/def'));
       });
 
@@ -326,7 +332,7 @@ describe('RdfaParser', () => {
         const activeTag: any = {
           prefixes: {},
         };
-        return expect(parser.createIri('ex:def', activeTag, false, true))
+        return expect(parser.createIri('ex:def', activeTag, false, true, true))
           .toEqualRdfTerm(namedNode('ex:def'));
       });
 
@@ -334,7 +340,7 @@ describe('RdfaParser', () => {
         const activeTag: any = {
           prefixes: {},
         };
-        return expect(parser.createIri('def', activeTag, false, true))
+        return expect(parser.createIri('def', activeTag, false, true, true))
           .toEqualRdfTerm(namedNode('http://example.org/def'));
       });
 
@@ -342,7 +348,7 @@ describe('RdfaParser', () => {
         const activeTag: any = {
           prefixes: {},
         };
-        return expect(parser.createIri('def', activeTag, true, true))
+        return expect(parser.createIri('def', activeTag, true, true, true))
           .toBeFalsy();
       });
 
@@ -351,7 +357,7 @@ describe('RdfaParser', () => {
           prefixes: {},
           vocab: 'http://vocab.org/',
         };
-        return expect(parser.createIri('def', activeTag, true, true))
+        return expect(parser.createIri('def', activeTag, true, true, true))
           .toEqualRdfTerm(namedNode('http://vocab.org/def'));
       });
 
@@ -361,25 +367,25 @@ describe('RdfaParser', () => {
             abc: 'abc/',
           },
         };
-        return expect(parser.createIri('abc:def', activeTag, false, true))
+        return expect(parser.createIri('abc:def', activeTag, false, true, true))
           .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
       });
 
       it('should handle explicit blank nodes', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('[_:b]', activeTag, false, true))
+        return expect(parser.createIri('[_:b]', activeTag, false, true, true))
           .toEqual(blankNode('b'));
       });
 
       it('should handle blank nodes with no label', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('_:', activeTag, false, true))
+        return expect(parser.createIri('_:', activeTag, false, true, true))
           .toEqual(blankNode('b_identity'));
       });
 
       it('should handle explicit blank nodes with no label', async () => {
         const activeTag: any = {};
-        return expect(parser.createIri('[_:]', activeTag, false, true))
+        return expect(parser.createIri('[_:]', activeTag, false, true, true))
           .toEqual(blankNode('b_identity'));
       });
 
@@ -389,7 +395,7 @@ describe('RdfaParser', () => {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
         };
-        return expect(parser.createIri('license', activeTag, true, true))
+        return expect(parser.createIri('license', activeTag, true, true, true))
           .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
@@ -399,7 +405,7 @@ describe('RdfaParser', () => {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
         };
-        return expect(parser.createIri('LiCeNSe', activeTag, true, true))
+        return expect(parser.createIri('LiCeNSe', activeTag, true, true, true))
           .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
@@ -410,7 +416,7 @@ describe('RdfaParser', () => {
           },
           vocab: 'http://vocab.org/',
         };
-        return expect(parser.createIri('license', activeTag, true, true))
+        return expect(parser.createIri('license', activeTag, true, true, true))
           .toEqual(namedNode('http://vocab.org/license'));
       });
 
@@ -420,7 +426,7 @@ describe('RdfaParser', () => {
             pre: 'relative/prefix#',
           },
         };
-        return expect(parser.createIri('pre:suffix', activeTag, false, true))
+        return expect(parser.createIri('pre:suffix', activeTag, false, true, true))
           .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
       });
 
@@ -430,7 +436,7 @@ describe('RdfaParser', () => {
             pre: 'relative/prefix#',
           },
         };
-        return expect(parser.createIri('pre:suffix', activeTag, true, true))
+        return expect(parser.createIri('pre:suffix', activeTag, true, true, true))
           .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
       });
     });
@@ -4427,6 +4433,17 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
     <span property="cite">cite</span>
   </div>
 </body></html>`))
+          .toBeRdfIsomorphic([]);
+      });
+
+      it('property with blank node values should be ignored', async () => {
+        return expect(await parse(parser, `<html>
+	<head>
+	</head>
+	<body>
+	  <p property="_:b">Value ignored</p>
+	</body>
+</html>`))
           .toBeRdfIsomorphic([]);
       });
 
