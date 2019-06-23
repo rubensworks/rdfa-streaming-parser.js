@@ -1685,6 +1685,166 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
           ]);
       });
 
+      it('time tags with full durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P2Y6M5DT12H35M30S">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P2Y6M5DT12H35M30S"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with day and hour durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P1DT2H">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P1DT2H"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with month durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P20M">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P20M"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with minute durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="PT20M">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"PT20M"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with durations with optional 0s in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P0Y20M0D">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P0Y20M0D"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with 0 year durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P0Y">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P0Y"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with minus 60 days durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="-P60D">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"-P60D"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with decimal second durations in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="PT1M30.5S">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"PT1M30.5S"^^http://www.w3.org/2001/XMLSchema#duration'),
+          ]);
+      });
+
+      it('time tags with invalid durations without T for time in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P1M30.5S">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P1M30.5S"'),
+          ]);
+      });
+
+      it('time tags with invalid durations with unknown character in datetime', async () => {
+        return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
+	<head>
+	</head>
+	<body>
+	  <time property="dc:title" datetime="P2X6M5DT12H35M30S">Long</time>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"P2X6M5DT12H35M30S"'),
+          ]);
+      });
+
       it('vocab emits an rdfa:usesVocabulary triple', async () => {
         return expect(await parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
 	<head>
