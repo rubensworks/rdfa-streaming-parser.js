@@ -139,10 +139,11 @@ export class RdfaParser extends Transform {
       listMapping: {},
       listMappingLocal: {},
       name: '',
-      prefixes: {
+      prefixesAll: {
         ...INITIAL_CONTEXT['@context'],
         ...this.features.xhtmlInitialContext ? INITIAL_CONTEXT_XHTML['@context'] : {},
       },
+      prefixesCustom : {},
       skipElement: false,
       vocab: options.vocab,
     });
@@ -161,7 +162,7 @@ export class RdfaParser extends Transform {
     const additionalPrefixes: {[prefix: string]: string} = {};
     if (xmlnsPrefixMappings) {
       for (const attribute in attributes) {
-        if (attribute.startsWith('xmlns:')) {
+        if (attribute.startsWith('xmlns')) {
           additionalPrefixes[attribute.substr(6)] = attributes[attribute];
         }
       }
@@ -207,16 +208,18 @@ export class RdfaParser extends Transform {
 
     // Try to expand the prefix
     if (prefix) {
-      const prefixElement = activeTag.prefixes[prefix];
+      const prefixElement = activeTag.prefixesAll[prefix];
       if (prefixElement) {
         return prefixElement + local;
       }
     }
 
     // Try to expand the term
-    const expandedTerm = activeTag.prefixes[term.toLocaleLowerCase()];
-    if (expandedTerm) {
-      return expandedTerm;
+    if (term) {
+      const expandedTerm = activeTag.prefixesAll[term.toLocaleLowerCase()];
+      if (expandedTerm) {
+        return expandedTerm;
+      }
     }
 
     return term;
@@ -262,7 +265,8 @@ export class RdfaParser extends Transform {
       parentTag = {
         ...parentTag,
         language: this.activeTagStack[this.activeTagStack.length - 1].language,
-        prefixes: this.activeTagStack[this.activeTagStack.length - 1].prefixes,
+        prefixesAll: this.activeTagStack[this.activeTagStack.length - 1].prefixesAll,
+        prefixesCustom: this.activeTagStack[this.activeTagStack.length - 1].prefixesCustom,
         vocab: this.activeTagStack[this.activeTagStack.length - 1].vocab,
       };
     }
@@ -276,13 +280,24 @@ export class RdfaParser extends Transform {
       listMappingLocal: parentTag.listMapping,
       localBaseIRI: parentTag.localBaseIRI,
       name,
-      prefixes: null,
+      prefixesAll: null,
+      prefixesCustom: null,
       skipElement: false,
     };
     this.activeTagStack.push(activeTag);
 
     // Save the tag contents if needed
     if (activeTag.collectChildTags) {
+      // Add explicitly defined xmlns, xmlns:* and prefixes to attributes, as required by the spec (Step 11, note)
+      // Sort prefixes alphabetically for deterministic namespace declaration order
+      for (const prefix of Object.keys(parentTag.prefixesCustom).sort()) {
+        const suffix = parentTag.prefixesCustom[prefix];
+        const attributeKey = prefix === '' ? 'xmlns' : 'xmlns:' + prefix;
+        if (!(attributeKey in attributes)) {
+          attributes[attributeKey] = suffix;
+        }
+      }
+
       const attributesSerialized = Object.keys(attributes).map((key) => `${key}="${attributes[key]}"`).join(' ');
       activeTag.text = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
       if (this.features.skipHandlingXmlLiteralChildren) {
@@ -392,7 +407,10 @@ export class RdfaParser extends Transform {
     }
 
     // 3: handle prefixes
-    activeTag.prefixes = RdfaParser.parsePrefixes(attributes, parentTag.prefixes, this.features.xmlnsPrefixMappings);
+    activeTag.prefixesCustom = RdfaParser.parsePrefixes(attributes, parentTag.prefixesCustom,
+      this.features.xmlnsPrefixMappings);
+    activeTag.prefixesAll = Object.keys(activeTag.prefixesCustom).length > 0
+      ? { ...parentTag.prefixesAll, ...activeTag.prefixesCustom } : parentTag.prefixesAll;
 
     // 4: handle language
     // Save language attribute value in active tag
@@ -1149,7 +1167,8 @@ export class RdfaParser extends Transform {
 
 export interface IActiveTag {
   name: string;
-  prefixes: {[prefix: string]: string};
+  prefixesAll: {[prefix: string]: string};
+  prefixesCustom: {[prefix: string]: string};
   subject?: RDF.Term | boolean;
   explicitNewSubject?: boolean;
   predicates?: RDF.Term[];

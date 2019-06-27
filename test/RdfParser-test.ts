@@ -231,7 +231,7 @@ describe('RdfaParser', () => {
   describe('#expandPrefixedTerm', () => {
     it('should expand a valid prefixed term', () => {
       const activeTag: any = {
-        prefixes: {
+        prefixesAll: {
           dc: 'http://purl.org/dc/terms/',
         },
       };
@@ -241,7 +241,7 @@ describe('RdfaParser', () => {
 
     it('should expand a valid term', () => {
       const activeTag: any = {
-        prefixes: {
+        prefixesAll: {
           term: 'http://purl.org/dc/terms/term',
         },
       };
@@ -251,7 +251,7 @@ describe('RdfaParser', () => {
 
     it('should not expand an unknown prefix', () => {
       const activeTag: any = {
-        prefixes: {
+        prefixesAll: {
           dc: 'http://purl.org/dc/terms/',
         },
       };
@@ -261,7 +261,7 @@ describe('RdfaParser', () => {
 
     it('should not expand an url', () => {
       const activeTag: any = {
-        prefixes: {
+        prefixesAll: {
           dc: 'http://purl.org/dc/terms/',
         },
       };
@@ -271,11 +271,20 @@ describe('RdfaParser', () => {
 
     it('should not expand a term', () => {
       const activeTag: any = {
-        prefixes: {
+        prefixesAll: {
           dc: 'http://purl.org/dc/terms/',
         },
       };
       return expect(RdfaParser.expandPrefixedTerm('bla', activeTag)).toEqual('bla');
+    });
+
+    it('should not expand an empty term', () => {
+      const activeTag: any = {
+        prefixesAll: {
+          '': 'http://purl.org/dc/terms/',
+        },
+      };
+      return expect(RdfaParser.expandPrefixedTerm('', activeTag)).toEqual('');
     });
   });
 
@@ -320,7 +329,7 @@ describe('RdfaParser', () => {
 
       it('should handle prefixed IRIs', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -330,7 +339,7 @@ describe('RdfaParser', () => {
 
       it('should handle prefixed IRIs with unknown prefixes', async () => {
         const activeTag: any = {
-          prefixes: {},
+          prefixesAll: {},
         };
         return expect(parser.createIri('ex:def', activeTag, false, true, true))
           .toEqualRdfTerm(namedNode('ex:def'));
@@ -338,7 +347,7 @@ describe('RdfaParser', () => {
 
       it('should handle relative IRIs', async () => {
         const activeTag: any = {
-          prefixes: {},
+          prefixesAll: {},
         };
         return expect(parser.createIri('def', activeTag, false, true, true))
           .toEqualRdfTerm(namedNode('http://example.org/def'));
@@ -346,7 +355,7 @@ describe('RdfaParser', () => {
 
       it('should not handle relative IRIs in vocab mode without active vocab', async () => {
         const activeTag: any = {
-          prefixes: {},
+          prefixesAll: {},
         };
         return expect(parser.createIri('def', activeTag, true, true, true))
           .toBeFalsy();
@@ -354,7 +363,7 @@ describe('RdfaParser', () => {
 
       it('should handle relative IRIs in vocab mode with active vocab', async () => {
         const activeTag: any = {
-          prefixes: {},
+          prefixesAll: {},
           vocab: 'http://vocab.org/',
         };
         return expect(parser.createIri('def', activeTag, true, true, true))
@@ -363,7 +372,7 @@ describe('RdfaParser', () => {
 
       it('should handle prefixed relative IRIs', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             abc: 'abc/',
           },
         };
@@ -391,7 +400,7 @@ describe('RdfaParser', () => {
 
       it('should do term expansion', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
         };
@@ -401,7 +410,7 @@ describe('RdfaParser', () => {
 
       it('should do case-insensitive term expansion', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
         };
@@ -411,7 +420,7 @@ describe('RdfaParser', () => {
 
       it('should make term expansion give priority to vocab', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             license: 'http://www.w3.org/1999/xhtml/vocab#license',
           },
           vocab: 'http://vocab.org/',
@@ -422,7 +431,7 @@ describe('RdfaParser', () => {
 
       it('should resolve relative prefixes against baseIRI in base-mode', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             pre: 'relative/prefix#',
           },
         };
@@ -432,7 +441,7 @@ describe('RdfaParser', () => {
 
       it('should resolve relative prefixes against baseIRI in vocab-mode', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             pre: 'relative/prefix#',
           },
         };
@@ -601,7 +610,7 @@ describe('RdfaParser', () => {
     describe('#createVocabIris', () => {
       it('should handle a single IRI', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -613,7 +622,7 @@ describe('RdfaParser', () => {
 
       it('should handle a two IRIs with whitespace', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -626,7 +635,7 @@ describe('RdfaParser', () => {
 
       it('should handle a two IRIs with tab', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -639,7 +648,7 @@ describe('RdfaParser', () => {
 
       it('should handle a two IRIs with whitespace and tab', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -652,7 +661,7 @@ describe('RdfaParser', () => {
 
       it('should handle a two IRIs with whitespaces and tabs', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -665,7 +674,7 @@ describe('RdfaParser', () => {
 
       it('should handle a two IRIs with whitespaces in prefix and suffix', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -678,7 +687,7 @@ describe('RdfaParser', () => {
 
       it('should handle a two IRIs with newline', async () => {
         const activeTag: any = {
-          prefixes: {
+          prefixesAll: {
             ex: 'http://example.org/',
           },
         };
@@ -1331,7 +1340,7 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
 
       it('rdf:XMLLiteral datatype to preserve all nested tags', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
-foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 	<head>
 		<title>Test 0006</title>
@@ -1343,13 +1352,81 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
+              '"<b some="attribute" xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+              ' xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+              ' xmlns:xsd="http://www.w3.org/2001/XMLSchema#">M</b>ark' +
+              ' <b xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+              ' xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+              ' xmlns:xsd="http://www.w3.org/2001/XMLSchema#">' +
+              'B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+          ]);
+      });
+
+      it('rdf:XMLLiteral datatype to preserve all nested tags without xmlns and prefixes', async () => {
+        return expect(await parse(parser, `<html>
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/terms/title',
               '"<b some="attribute">M</b>ark <b>B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+          ]);
+      });
+
+      it('rdf:XMLLiteral datatype to inherit all xmlns and prefixes', async () => {
+        const attrs = 'xmlns="http://www.w3.org/1999/xhtml" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+          'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#"';
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+xmlns:dc="http://purl.org/dc/elements/1.1/"
+prefix="xsd: http://www.w3.org/2001/XMLSchema#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              `"<b some="attribute" ${attrs}>M</b>ark <b ${attrs}>B</b>irbeck"`
+              + '^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+          ]);
+      });
+
+      it('rdf:XMLLiteral datatype to inherit all xmlns and prefixes an properly merge with xmlns', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+xmlns:dc="http://purl.org/dc/elements/1.1/"
+prefix="xsd: http://www.w3.org/2001/XMLSchema#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<head>
+		<title>Test 0006</title>
+	</head>
+	<body>
+		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute" xmlns="XMLNS">M</b>ark
+<b xmlns:dc="DC">B</b>irbeck</p>
+	</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"<b some="attribute" xmlns="XMLNS" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+              'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#">' +
+              'M</b>ark\n<b xmlns:dc="DC" xmlns="http://www.w3.org/1999/xhtml" ' +
+              'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#">' +
+              'B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
           ]);
       });
 
       it('rdf:XMLLiteral datatype to preserve all nested tags and not ignore RDFa in children', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
-foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 	<head>
 		<title>Test 0006</title>
@@ -1361,7 +1438,10 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
-              '"<b property="foaf:firstName">Mark</b>"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+              '"<b property="foaf:firstName" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+              'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ' +
+              'xmlns:xsd="http://www.w3.org/2001/XMLSchema#">Mark' +
+              '</b>"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
             quad('http://example.org/',
               'http://xmlns.com/foaf/0.1/firstName',
               '"Mark"'),
@@ -1372,7 +1452,7 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
         'if features.skipHandlingXmlLiteralChildren is enabled', async () => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: { skipHandlingXmlLiteralChildren: true } });
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
-foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 	<head>
 		<title>Test 0006</title>
@@ -1384,13 +1464,16 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
-              '"<b property="foaf:firstName">Mark</b>"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
+              '"<b property="foaf:firstName" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+              'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ' +
+              'xmlns:xsd="http://www.w3.org/2001/XMLSchema#">Mark' +
+              '</b>"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
           ]);
       });
 
       it('rdf:HTML datatype to preserve all nested tags when features.htmlDatatype is enabled', async () => {
         return expect(await parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
-foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
+xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 	<head>
 		<title>Test 0006</title>
@@ -1402,7 +1485,12 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
           .toBeRdfIsomorphic([
             quad('http://example.org/',
               'http://purl.org/dc/elements/1.1/title',
-              '"<b some="attribute">M</b>ark <b>B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
+              '"<b some="attribute" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+              'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ' +
+              'xmlns:xsd="http://www.w3.org/2001/XMLSchema#">M</b>ark ' +
+              '<b xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+              'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#">' +
+              'B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
           ]);
       });
 
@@ -4123,6 +4211,23 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
 
       it('@about and empty @datatype should force string literal value', async () => {
         return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0290</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <p about="http://example.org/" property="rdf:value" datatype="">value</p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value"'),
+          ]);
+      });
+
+      it('@about and empty @datatype should force string literal value even with xmlns', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Test 0290</title>
 </head>
