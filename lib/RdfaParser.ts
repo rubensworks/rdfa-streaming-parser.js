@@ -933,7 +933,7 @@ export class RdfaParser extends Transform {
   protected createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean,
                             allowBlankNode: boolean): RDF.Term[] {
     return terms.split(/\s+/)
-      .filter((term) => allowTerms || term.indexOf(':') >= 0)
+      .filter((term) => term && (allowTerms || term.indexOf(':') >= 0))
       .map((property) => this.createIri(property, activeTag, true, true, allowBlankNode))
       .filter((term) => term != null);
   }

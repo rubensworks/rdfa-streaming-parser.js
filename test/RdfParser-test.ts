@@ -697,6 +697,17 @@ describe('RdfaParser', () => {
             namedNode('http://example.org/def'),
           ]);
       });
+
+      it('should create an empty list for an empty string', async () => {
+        parser.vocab = 'http://vocab.org/';
+        const activeTag: any = {
+          prefixesAll: {
+            ex: 'http://example.org/',
+          },
+        };
+        return expect(parser.createVocabIris('', activeTag, true))
+          .toEqualRdfTermArray([]);
+      });
     });
 
     describe('#emitTriple', () => {
@@ -945,6 +956,19 @@ with Bob</h2>
           .toBeRdfIsomorphic([
             quad('http://example.org/#myDoc', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
               'http://schema.org/Document'),
+          ]);
+      });
+
+      it('empty typeof with defined vocab', async () => {
+        return expect(await parse(parser, `<html>
+<head></head>
+<body vocab="http://schema.org/">
+    <h2 about="#myDoc" typeof="">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/', 'http://www.w3.org/ns/rdfa#usesVocabulary',
+              'http://schema.org/'),
           ]);
       });
 
