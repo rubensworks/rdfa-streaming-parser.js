@@ -130,7 +130,7 @@ export class RdfaParser extends Transform {
     this.rdfaPatterns = this.features.copyRdfaPatterns ? {} : null;
     this.pendingRdfaPatternCopies = this.features.copyRdfaPatterns ? {} : null;
 
-    this.parser = this.initializeParser(options.strict);
+    this.parser = this.initializeParser(options.profile === 'xml');
 
     this.activeTagStack.push({
       incompleteTriples: [],
@@ -1131,7 +1131,7 @@ export class RdfaParser extends Transform {
     this.onTagClose();
   }
 
-  protected initializeParser(strict: boolean): HtmlParser {
+  protected initializeParser(xmlMode: boolean): HtmlParser {
     return new HtmlParser(
       <DomHandler> <any> {
         onclosetag: () => {
@@ -1159,7 +1159,7 @@ export class RdfaParser extends Transform {
       {
         decodeEntities: true,
         recognizeSelfClosing: true,
-        xmlMode: strict,
+        xmlMode,
       });
   }
 
@@ -1194,7 +1194,6 @@ export interface IRdfaParserOptions {
   language?: string;
   vocab?: string;
   defaultGraph?: RDF.Term;
-  strict?: boolean;
   features?: IRdfaFeatures;
   profile?: RdfaProfile;
 }
@@ -1203,7 +1202,8 @@ export type RdfaProfile =
   '' | // All possible RDFa features
   'core' | // https://www.w3.org/TR/rdfa-core/
   'html' | // https://www.w3.org/TR/html-rdfa/
-  'xhtml'; // https://www.w3.org/TR/xhtml-rdfa/
+  'xhtml' | // https://www.w3.org/TR/xhtml-rdfa/
+  'xml';
 
 export interface IRdfaFeatures {
   /**

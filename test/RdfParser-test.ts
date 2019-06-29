@@ -16,7 +16,6 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(require('@rdfjs/data-model'));
     expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
-    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with empty args', () => {
@@ -25,7 +24,6 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(DataFactory);
     expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
-    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom data factory', () => {
@@ -35,7 +33,6 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(dataFactory);
     expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe('abc');
-    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom base IRI', () => {
@@ -44,7 +41,6 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(DataFactory);
     expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('myBaseIRI'));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
-    expect((<any> instance).options.strict).toBeFalsy();
   });
 
   it('should be constructable with args with a custom default graph', () => {
@@ -54,27 +50,16 @@ describe('RdfaParser', () => {
     expect((<any> instance).dataFactory).toBe(DataFactory);
     expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
-    expect((<any> instance).options.strict).toBeFalsy();
   });
 
-  it('should be constructable with args with strict', () => {
-    const instance = new RdfaParser({ strict: true });
-    expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
-    expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
-    expect((<any> instance).options.strict).toEqual(true);
-  });
-
-  it('should be constructable with args with a custom data factory, base IRI, strict and default graph', () => {
+  it('should be constructable with args with a custom data factory, base IRI and default graph', () => {
     const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
     const defaultGraph = DataFactory.namedNode('abc');
-    const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph, strict: true });
+    const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph });
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).dataFactory).toBe(dataFactory);
     expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
-    expect((<any> instance).options.strict).toEqual(true);
   });
 
   describe('#parseNamespace', () => {
@@ -4074,6 +4059,57 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
               'http://purl.org/dc/elements/1.1/title',
               '"Test Case 0121"'),
             quad('http://example.org/',
+              'http://purl.org/dc/elements/1.1/contributor',
+              '"Shane McCarron"'),
+          ]);
+      });
+
+      it('@resource with nested [] property in XML mode', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', profile: 'xml' });
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+prefix="dc: http://purl.org/dc/elements/1.1/">
+   <head>
+   </head>
+   <body>
+    <div>
+	<p about="https://mydomain.org/">
+		<p resource="[]">
+			<span property="dc:contributor">Shane McCarron</span>
+			contributed to this test.
+		</p>
+	</p>
+	</div>
+   </body>`))
+          .toBeRdfIsomorphic([
+            quad('https://mydomain.org/',
+              'http://purl.org/dc/elements/1.1/contributor',
+              '"Shane McCarron"'),
+          ]);
+      });
+
+      it('@about and @resource with [] in XML mode', async () => {
+        parser = new RdfaParser({ baseIRI: 'http://example.org/', profile: 'xml' });
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+prefix="dc: http://purl.org/dc/elements/1.1/">
+   <head>
+   </head>
+   <body>
+    <div>
+	<p about="https://mydomain.org/">
+		<span about="[]" property="dc:title">Test Case 0121</span>
+		checks to make sure RDFa processors resolve the empty CURIE correctly.
+		<p resource="[]">
+			<span property="dc:contributor">Shane McCarron</span>
+			contributed to this test.
+		</p>
+	</p>
+	</div>
+   </body>`))
+          .toBeRdfIsomorphic([
+            quad('https://mydomain.org/',
+              'http://purl.org/dc/elements/1.1/title',
+              '"Test Case 0121"'),
+            quad('https://mydomain.org/',
               'http://purl.org/dc/elements/1.1/contributor',
               '"Shane McCarron"'),
           ]);
