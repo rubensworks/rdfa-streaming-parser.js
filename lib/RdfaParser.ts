@@ -924,6 +924,9 @@ export class RdfaParser extends Transform {
 
 }
 
+/**
+ * Data holder for the RDFa state in XML tags.
+ */
 export interface IActiveTag {
   name: string;
   prefixesAll: {[prefix: string]: string};
@@ -945,6 +948,20 @@ export interface IActiveTag {
   listMappingLocal: {[predicate: string]: (RDF.Term|boolean)[]};
   skipElement: boolean;
   localBaseIRI?: RDF.NamedNode;
+}
+
+/**
+ * A datastructure for storing an rdfa:Pattern.
+ */
+export interface IRdfaPattern {
+  rootPattern: boolean;
+  name: string;
+  attributes: {[s: string]: string};
+  text: string[];
+  children: IRdfaPattern[];
+  referenced: boolean;
+  parentTag?: IActiveTag;
+  constructedBlankNodes?: RDF.BlankNode[];
 }
 
 export interface IRdfaParserOptions {
@@ -1039,15 +1056,4 @@ export interface IRdfaFeatures {
    * see https://www.w3.org/2011/rdfa-context/xhtml-rdfa-1.1
    */
   xhtmlInitialContext?: boolean;
-}
-
-export interface IRdfaPattern {
-  rootPattern: boolean;
-  name: string;
-  attributes: {[s: string]: string};
-  text: string[];
-  children: IRdfaPattern[];
-  referenced: boolean;
-  parentTag?: IActiveTag;
-  constructedBlankNodes?: RDF.BlankNode[];
 }
