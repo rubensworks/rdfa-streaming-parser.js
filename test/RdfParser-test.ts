@@ -1,4 +1,4 @@
-import {blankNode, literal, namedNode} from "@rdfjs/data-model";
+import {namedNode} from "@rdfjs/data-model";
 import "jest-rdf";
 import * as RDF from "rdf-js";
 import {PassThrough} from "stream";
@@ -13,16 +13,16 @@ describe('RdfaParser', () => {
   it('should be constructable without args', () => {
     const instance = new RdfaParser();
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(require('@rdfjs/data-model'));
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
+    expect((<any> instance).util.dataFactory).toBe(require('@rdfjs/data-model'));
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
   });
 
   it('should be constructable with empty args', () => {
     const instance = new RdfaParser({});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
+    expect((<any> instance).util.dataFactory).toBe(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
   });
 
@@ -30,16 +30,16 @@ describe('RdfaParser', () => {
     const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
     const instance = new RdfaParser({dataFactory});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(dataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
+    expect((<any> instance).util.dataFactory).toBe(dataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe('abc');
   });
 
   it('should be constructable with args with a custom base IRI', () => {
     const instance = new RdfaParser({baseIRI: 'myBaseIRI'});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('myBaseIRI'));
+    expect((<any> instance).util.dataFactory).toBe(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('myBaseIRI'));
     expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
   });
 
@@ -47,8 +47,8 @@ describe('RdfaParser', () => {
     const defaultGraph = DataFactory.namedNode('abc');
     const instance = new RdfaParser({defaultGraph});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(DataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
+    expect((<any> instance).util.dataFactory).toBe(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode(''));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
   });
 
@@ -57,220 +57,9 @@ describe('RdfaParser', () => {
     const defaultGraph = DataFactory.namedNode('abc');
     const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph });
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).dataFactory).toBe(dataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
+    expect((<any> instance).util.dataFactory).toBe(dataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
-  });
-
-  describe('#parseNamespace', () => {
-    it('should parse a tag without prefix attribute', () => {
-      const attributes = {};
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({});
-    });
-
-    it('should parse a tag with empty prefix attribute', () => {
-      const attributes = {
-        prefix: '',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({});
-    });
-
-    it('should parse a tag with one prefix', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
-        dc: 'http://purl.org/dc/terms/',
-      });
-    });
-
-    it('should parse a tag with two prefixes', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/ abc: http://example.org',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
-        abc: 'http://example.org',
-        dc: 'http://purl.org/dc/terms/',
-      });
-    });
-
-    it('should parse a tag with one prefix and silently ignore invalid prefixes (1)', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/ abc',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
-        dc: 'http://purl.org/dc/terms/',
-      });
-    });
-
-    it('should parse a tag with one prefix and silently ignore invalid prefixes (2)', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/ abc:',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
-        dc: 'http://purl.org/dc/terms/',
-      });
-    });
-
-    it('should parse a tag without prefix attribute that inherits parent prefixes', () => {
-      const attributes = {};
-      return expect(RdfaParser.parsePrefixes(attributes, {
-        ex: 'http://example.org',
-      }, false)).toEqual({
-        ex: 'http://example.org',
-      });
-    });
-
-    it('should parse a tag without prefixes that inherits parent prefixes', () => {
-      const attributes = {
-        prefix: '',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {
-        ex: 'http://example.org',
-      }, false)).toEqual({
-        ex: 'http://example.org',
-      });
-    });
-
-    it('should parse a tag with one prefix that combines parent prefixes', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {
-        ex: 'http://example.org',
-      }, false)).toEqual({
-        dc: 'http://purl.org/dc/terms/',
-        ex: 'http://example.org',
-      });
-    });
-
-    it('should parse a tag with one prefix that overrides a parent prefix', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {
-        dc: 'http://example.org',
-      }, false)).toEqual({
-        dc: 'http://purl.org/dc/terms/',
-      });
-    });
-
-    it('should parse a tag with one prefix with newlines', () => {
-      const attributes = {
-        prefix: 'dc: http://purl.org/dc/terms/\nex: \nhttp://example.org/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({
-        dc: 'http://purl.org/dc/terms/',
-        ex: 'http://example.org/',
-      });
-    });
-
-    it('should not parse an xmlns attribute if xmlnsPrefixMappings is false', () => {
-      const attributes = {
-        'xmlns:ex': 'http://example.org/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, false)).toEqual({});
-    });
-
-    it('should parse an xmlns attribute if xmlnsPrefixMappings is true', () => {
-      const attributes = {
-        'xmlns:ex': 'http://example.org/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, true)).toEqual({
-        ex: 'http://example.org/',
-      });
-    });
-
-    it('should parse an xmlns attribute if xmlnsPrefixMappings is true and inherit from parent', () => {
-      const attributes = {
-        'xmlns:ex': 'http://example.org/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
-        abc: 'def',
-        ex: 'http://example.org/',
-      });
-    });
-
-    it('should parse an xmlns attribute but give @prefix preference if xmlnsPrefixMappings is true', () => {
-      const attributes = {
-        'prefix': 'ex: http://example.org/',
-        'xmlns:ex': 'http://exampleignored.org/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, {}, true)).toEqual({
-        ex: 'http://example.org/',
-      });
-    });
-
-    it('should parse an xmlns attribute but give @prefix preference and inherit if xmlnsPrefixMappings is true', () => {
-      const attributes = {
-        'prefix': 'ex: http://example.org/',
-        'xmlns:ex': 'http://exampleignored.org/',
-      };
-      return expect(RdfaParser.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
-        abc: 'def',
-        ex: 'http://example.org/',
-      });
-    });
-  });
-
-  describe('#expandPrefixedTerm', () => {
-    it('should expand a valid prefixed term', () => {
-      const activeTag: any = {
-        prefixesAll: {
-          dc: 'http://purl.org/dc/terms/',
-        },
-      };
-      return expect(RdfaParser.expandPrefixedTerm('dc:bla', activeTag))
-        .toEqual('http://purl.org/dc/terms/bla');
-    });
-
-    it('should expand a valid term', () => {
-      const activeTag: any = {
-        prefixesAll: {
-          term: 'http://purl.org/dc/terms/term',
-        },
-      };
-      return expect(RdfaParser.expandPrefixedTerm('term', activeTag))
-        .toEqual('http://purl.org/dc/terms/term');
-    });
-
-    it('should not expand an unknown prefix', () => {
-      const activeTag: any = {
-        prefixesAll: {
-          dc: 'http://purl.org/dc/terms/',
-        },
-      };
-      return expect(RdfaParser.expandPrefixedTerm('bla:bla', activeTag))
-        .toEqual('bla:bla');
-    });
-
-    it('should not expand an url', () => {
-      const activeTag: any = {
-        prefixesAll: {
-          dc: 'http://purl.org/dc/terms/',
-        },
-      };
-      return expect(RdfaParser.expandPrefixedTerm('http://example.org/bla', activeTag))
-        .toEqual('http://example.org/bla');
-    });
-
-    it('should not expand a term', () => {
-      const activeTag: any = {
-        prefixesAll: {
-          dc: 'http://purl.org/dc/terms/',
-        },
-      };
-      return expect(RdfaParser.expandPrefixedTerm('bla', activeTag)).toEqual('bla');
-    });
-
-    it('should not expand an empty term', () => {
-      const activeTag: any = {
-        prefixesAll: {
-          '': 'http://purl.org/dc/terms/',
-        },
-      };
-      return expect(RdfaParser.expandPrefixedTerm('', activeTag)).toEqual('');
-    });
   });
 
   describe('a default instance', () => {
@@ -279,420 +68,6 @@ describe('RdfaParser', () => {
 
     beforeEach(() => {
       parser = new RdfaParser({ baseIRI: 'http://example.org/' });
-    });
-
-    describe('#createIri', () => {
-      it('should create relative IRIs when CURIEs are not allowed', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('http://ex.org/abc', activeTag, false, false, true))
-          .toEqualRdfTerm(namedNode('http://ex.org/abc'));
-      });
-
-      it('should create absolute IRIs when CURIEs are not allowed', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('abc', activeTag, false, false, true))
-          .toEqualRdfTerm(namedNode('http://example.org/abc'));
-      });
-
-      it('should not create invalid IRIs when CURIEs are not allowed in vocab mode', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('abc', activeTag, true, false, true))
-          .toBeFalsy();
-      });
-
-      it('should create blank nodes if allowBlankNode is true', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('_:b1', activeTag, false, true, true))
-          .toEqualRdfTerm(blankNode('b1'));
-      });
-
-      it('should create blank nodes unless allowBlankNode is false', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('_:b1', activeTag, false, true, false))
-          .toBeFalsy();
-      });
-
-      it('should handle prefixed IRIs', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createIri('ex:def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('http://example.org/def'));
-      });
-
-      it('should handle prefixed IRIs with unknown prefixes', async () => {
-        const activeTag: any = {
-          prefixesAll: {},
-        };
-        return expect(parser.createIri('ex:def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('ex:def'));
-      });
-
-      it('should handle relative IRIs', async () => {
-        const activeTag: any = {
-          prefixesAll: {},
-        };
-        return expect(parser.createIri('def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('http://example.org/def'));
-      });
-
-      it('should not handle relative IRIs in vocab mode without active vocab', async () => {
-        const activeTag: any = {
-          prefixesAll: {},
-        };
-        return expect(parser.createIri('def', activeTag, true, true, true))
-          .toBeFalsy();
-      });
-
-      it('should handle relative IRIs in vocab mode with active vocab', async () => {
-        const activeTag: any = {
-          prefixesAll: {},
-          vocab: 'http://vocab.org/',
-        };
-        return expect(parser.createIri('def', activeTag, true, true, true))
-          .toEqualRdfTerm(namedNode('http://vocab.org/def'));
-      });
-
-      it('should handle prefixed relative IRIs', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            abc: 'abc/',
-          },
-        };
-        return expect(parser.createIri('abc:def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
-      });
-
-      it('should handle explicit blank nodes', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('[_:b]', activeTag, false, true, true))
-          .toEqual(blankNode('b'));
-      });
-
-      it('should handle blank nodes with no label', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('_:', activeTag, false, true, true))
-          .toEqual(blankNode('b_identity'));
-      });
-
-      it('should handle explicit blank nodes with no label', async () => {
-        const activeTag: any = {};
-        return expect(parser.createIri('[_:]', activeTag, false, true, true))
-          .toEqual(blankNode('b_identity'));
-      });
-
-      it('should do term expansion', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            license: 'http://www.w3.org/1999/xhtml/vocab#license',
-          },
-        };
-        return expect(parser.createIri('license', activeTag, true, true, true))
-          .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
-      });
-
-      it('should do case-insensitive term expansion', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            license: 'http://www.w3.org/1999/xhtml/vocab#license',
-          },
-        };
-        return expect(parser.createIri('LiCeNSe', activeTag, true, true, true))
-          .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
-      });
-
-      it('should make term expansion give priority to vocab', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            license: 'http://www.w3.org/1999/xhtml/vocab#license',
-          },
-          vocab: 'http://vocab.org/',
-        };
-        return expect(parser.createIri('license', activeTag, true, true, true))
-          .toEqual(namedNode('http://vocab.org/license'));
-      });
-
-      it('should resolve relative prefixes against baseIRI in base-mode', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            pre: 'relative/prefix#',
-          },
-        };
-        return expect(parser.createIri('pre:suffix', activeTag, false, true, true))
-          .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
-      });
-
-      it('should resolve relative prefixes against baseIRI in vocab-mode', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            pre: 'relative/prefix#',
-          },
-        };
-        return expect(parser.createIri('pre:suffix', activeTag, true, true, true))
-          .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
-      });
-    });
-
-    describe('#createLiteral', () => {
-      it('should create string literals', async () => {
-        const activeTag: any = {};
-        return expect(parser.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc'));
-      });
-
-      it('should create datatyped literals', async () => {
-        const activeTag: any = {
-          datatype: namedNode('http://example.org/datatype'),
-        };
-        return expect(parser.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
-      });
-
-      it('should create language literals', async () => {
-        const activeTag: any = {
-          language: 'en-us',
-        };
-        return expect(parser.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc', 'en-us'));
-      });
-
-      it('should give preference to datatype literals over language literals', async () => {
-        const activeTag: any = {
-          datatype: namedNode('http://example.org/datatype'),
-          language: 'en-us',
-        };
-        return expect(parser.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
-      });
-
-      it('should give interpret datetimes without Z', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-18T00:00:00', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
-      });
-
-      it('should give interpret datetimes with Z', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-18T00:00:00Z', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00Z',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
-      });
-
-      it('should give interpret datetimes with negative offset', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-18T00:00:00-10:00', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00-10:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
-      });
-
-      it('should give interpret datetimes with positive offset', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-18T00:00:00+10:00', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00+10:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
-      });
-
-      it('should give interpret times without Z', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('00:00:00', activeTag))
-          .toEqualRdfTerm(literal('00:00:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
-      });
-
-      it('should give interpret times with positive offset', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('00:00:00+01:10', activeTag))
-          .toEqualRdfTerm(literal('00:00:00+01:10',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
-      });
-
-      it('should give interpret times with negative offset', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('00:00:00-01:10', activeTag))
-          .toEqualRdfTerm(literal('00:00:00-01:10',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
-      });
-
-      it('should give interpret times with Z', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('00:00:00Z', activeTag))
-          .toEqualRdfTerm(literal('00:00:00Z',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
-      });
-
-      it('should give interpret dates', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-18', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18',
-            namedNode('http://www.w3.org/2001/XMLSchema#date')));
-      });
-
-      it('should give interpret dates with Z', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-18Z', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18Z',
-            namedNode('http://www.w3.org/2001/XMLSchema#date')));
-      });
-
-      it('should give interpret years', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012', activeTag))
-          .toEqualRdfTerm(literal('2012',
-            namedNode('http://www.w3.org/2001/XMLSchema#gYear')));
-      });
-
-      it('should give interpret years', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03', activeTag))
-          .toEqualRdfTerm(literal('2012-03',
-            namedNode('http://www.w3.org/2001/XMLSchema#gYearMonth')));
-      });
-
-      it('should give not interpret invalid dates (1)', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral(' 2012-03-12', activeTag))
-          .toEqualRdfTerm(literal(' 2012-03-12'));
-      });
-
-      it('should give not interpret invalid dates (2)', async () => {
-        const activeTag: any = {
-          interpretObjectAsTime: true,
-        };
-        return expect(parser.createLiteral('2012-03-12 ', activeTag))
-          .toEqualRdfTerm(literal('2012-03-12 '));
-      });
-    });
-
-    describe('#createVocabIris', () => {
-      it('should handle a single IRI', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('ex:abc', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-          ]);
-      });
-
-      it('should handle a two IRIs with whitespace', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('ex:abc ex:def', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
-          ]);
-      });
-
-      it('should handle a two IRIs with tab', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('ex:abc\tex:def', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
-          ]);
-      });
-
-      it('should handle a two IRIs with whitespace and tab', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('ex:abc \tex:def', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
-          ]);
-      });
-
-      it('should handle a two IRIs with whitespaces and tabs', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('ex:abc\t    \t\t\t   ex:def', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
-          ]);
-      });
-
-      it('should handle a two IRIs with whitespaces in prefix and suffix', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('  \t\t  ex:abc ex:def  \t   \t', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
-          ]);
-      });
-
-      it('should handle a two IRIs with newline', async () => {
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('ex:abc\nex:def', activeTag, true))
-          .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
-          ]);
-      });
-
-      it('should create an empty list for an empty string', async () => {
-        parser.vocab = 'http://vocab.org/';
-        const activeTag: any = {
-          prefixesAll: {
-            ex: 'http://example.org/',
-          },
-        };
-        return expect(parser.createVocabIris('', activeTag, true))
-          .toEqualRdfTermArray([]);
-      });
     });
 
     describe('#emitTriple', () => {
@@ -885,7 +260,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
         ]);
-        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
       });
 
       it('base tags are ignored when features.baseTag is disabled', async () => {
@@ -901,7 +276,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
         ]);
-        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
       });
 
       it('base tags with fragment and set the baseIRI', async () => {
@@ -916,7 +291,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
         ]);
-        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
       });
 
       it('base tags without href and not set the baseIRI', async () => {
@@ -928,7 +303,7 @@ with Bob</h2>
     <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`);
-        return expect(parser.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
       });
 
       it('typeof with about', async () => {
