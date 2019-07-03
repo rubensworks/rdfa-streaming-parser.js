@@ -144,7 +144,7 @@ export class RdfaParser extends Transform {
     callback();
   }
 
-  protected onTagOpen(name: string, attributes: {[s: string]: string}) {
+  public onTagOpen(name: string, attributes: {[s: string]: string}) {
     // Determine the parent tag (ignore skipped tags)
     let parentTagI: number = this.activeTagStack.length - 1;
     while (parentTagI > 0 && this.activeTagStack[parentTagI].skipElement) {
@@ -619,7 +619,7 @@ export class RdfaParser extends Transform {
     activeTag.object = currentObjectResource || newSubject;
   }
 
-  protected onText(data: string) {
+  public onText(data: string) {
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
 
     // Collect text in pattern tag if needed
@@ -635,7 +635,7 @@ export class RdfaParser extends Transform {
     activeTag.text.push(data);
   }
 
-  protected onTagClose() {
+  public onTagClose() {
     // Get the active tag
     const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
     const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 2];
