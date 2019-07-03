@@ -88,6 +88,7 @@ export class RdfaParser extends Transform {
   private readonly defaultGraph?: RDF.Term;
   private readonly parser: HtmlParser;
   private readonly features: IRdfaFeatures;
+  private readonly htmlParseListener?: IHtmlParseListener;
   private readonly rdfaPatterns: {[patternId: string]: IRdfaPattern};
   private readonly pendingRdfaPatternCopies: {[copyTargetPatternId: string]: IActiveTag[]};
 
@@ -101,6 +102,7 @@ export class RdfaParser extends Transform {
     this.util = new Util(options.dataFactory, options.baseIRI);
     this.defaultGraph = options.defaultGraph || this.util.dataFactory.defaultGraph();
     this.features = options.features || RdfaParser.RDFA_FEATURES[options.profile] || RdfaParser.RDFA_FEATURES[''];
+    this.htmlParseListener = options.htmlParseListener;
     this.rdfaPatterns = this.features.copyRdfaPatterns ? {} : null;
     this.pendingRdfaPatternCopies = this.features.copyRdfaPatterns ? {} : null;
 
@@ -899,6 +901,9 @@ export class RdfaParser extends Transform {
           } catch (e) {
             this.emit('error', e);
           }
+          if (this.htmlParseListener) {
+            this.htmlParseListener.onTagClose();
+          }
         },
         onopentag: (name: string, attributes: {[s: string]: string}) => {
           try {
@@ -906,12 +911,18 @@ export class RdfaParser extends Transform {
           } catch (e) {
             this.emit('error', e);
           }
+          if (this.htmlParseListener) {
+            this.htmlParseListener.onTagOpen(name, attributes);
+          }
         },
         ontext: (data: string) => {
           try {
             this.onText(data);
           } catch (e) {
             this.emit('error', e);
+          }
+          if (this.htmlParseListener) {
+            this.htmlParseListener.onText(data);
           }
         },
       },
@@ -995,6 +1006,10 @@ export interface IRdfaParserOptions {
    * Defaults to a profile with all possible features enabled.
    */
   profile?: RdfaProfile;
+  /**
+   * An optional listener for the internal HTML parse events.
+   */
+  htmlParseListener?: IHtmlParseListener;
 }
 
 export type RdfaProfile =
@@ -1056,4 +1071,29 @@ export interface IRdfaFeatures {
    * see https://www.w3.org/2011/rdfa-context/xhtml-rdfa-1.1
    */
   xhtmlInitialContext?: boolean;
+}
+
+/**
+ * An HTML parsing listener.
+ */
+export interface IHtmlParseListener {
+  /**
+   * Called when a tag is opened.
+   * @param {string} name The tag name.
+   * @param {{[p: string]: string}} attributes A hash of attributes.
+   */
+  onTagOpen(name: string, attributes: {[s: string]: string}): void;
+
+  /**
+   * Called when a tag is closed.
+   */
+  onTagClose(): void;
+
+  /**
+   * Called when text contents are parsed.
+   * Note that this can be called multiple times per tag,
+   * when for example the string is spread over multiple chunks.
+   * @param {string} data A string.
+   */
+  onText(data: string): void;
 }

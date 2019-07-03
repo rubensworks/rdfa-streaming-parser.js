@@ -3991,6 +3991,52 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
 
   });
 
+  describe('a default instance with an HTML listener', () => {
+
+    let parser;
+    let htmlParseListener;
+
+    beforeEach(() => {
+      htmlParseListener = {
+        onTagClose: jest.fn(),
+        onTagOpen: jest.fn(),
+        onText: jest.fn(),
+      };
+      parser = new RdfaParser({ baseIRI: 'http://example.org/', htmlParseListener });
+    });
+
+    describe('should parse', () => {
+      it('absolute about attributes to subjects', async () => {
+        expect(await parse(parser, `<html>
+<head></head>
+<body>
+    <h2 about="http://example2.org/" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example2.org/', 'http://purl.org/dc/terms/title', '"The Trouble with Bob"'),
+          ]);
+        expect(htmlParseListener.onTagOpen).toHaveBeenCalledTimes(4);
+        expect(htmlParseListener.onTagOpen).toHaveBeenCalledWith('html', {});
+        expect(htmlParseListener.onTagOpen).toHaveBeenCalledWith('head', {});
+        expect(htmlParseListener.onTagOpen).toHaveBeenCalledWith('body', {});
+        expect(htmlParseListener.onTagOpen).toHaveBeenCalledWith('h2', {
+          about: 'http://example2.org/',
+          property: 'http://purl.org/dc/terms/title',
+        });
+
+        expect(htmlParseListener.onTagClose).toHaveBeenCalledTimes(4);
+
+        expect(htmlParseListener.onText).toHaveBeenCalledTimes(6);
+        expect(htmlParseListener.onText).toHaveBeenCalledWith('\n');
+        expect(htmlParseListener.onText).toHaveBeenCalledWith('\n    ');
+        expect(htmlParseListener.onText).toHaveBeenCalledWith('The Trouble with Bob');
+        expect(htmlParseListener.onText).toHaveBeenCalledWith('\n');
+      });
+    });
+
+  });
+
   describe('#import', () => {
     let parser;
 
