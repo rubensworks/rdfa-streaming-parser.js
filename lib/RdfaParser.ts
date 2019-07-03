@@ -948,12 +948,35 @@ export interface IActiveTag {
 }
 
 export interface IRdfaParserOptions {
+  /**
+   * A custom RDFJS DataFactory to construct terms and triples.
+   */
   dataFactory?: RDF.DataFactory;
+  /**
+   * An initital default base IRI.
+   */
   baseIRI?: string;
+  /**
+   * A default language for string literals.
+   */
   language?: string;
+  /**
+   * The initial vocabulary.
+   */
   vocab?: string;
+  /**
+   * The default graph for constructing quads.
+   */
   defaultGraph?: RDF.Term;
+  /**
+   * A hash of features that should be enabled.
+   * Defaults to the features defined by the profile.
+   */
   features?: IRdfaFeatures;
+  /**
+   * The RDFa profile to use.
+   * Defaults to a profile with all possible features enabled.
+   */
   profile?: RdfaProfile;
 }
 
