@@ -62,6 +62,9 @@ export interface IRdfaFeatures {
   xhtmlInitialContext?: boolean;
 }
 
+/**
+ * A mapping of RDFa profile to a features object.
+ */
 // tslint:disable:object-literal-sort-keys
 export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
   '': {
@@ -129,5 +132,20 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     xmlnsPrefixMappings: true,
     xhtmlInitialContext: false,
   },
+};
+// tslint:enable:object-literal-sort-keys
+
+// tslint:disable:object-literal-sort-keys
+export const RDFA_CONTENTTYPES: {[contentType: string]: RdfaProfile} = {
+  // HTML
+  'text/html': 'html',
+
+  // XHTML
+  'application/xhtml+xml': 'xhtml',
+
+  // XML
+  'application/xml': 'xml',
+  'text/xml': 'xml',
+  'image/svg+xml': 'xml',
 };
 // tslint:enable:object-literal-sort-keys

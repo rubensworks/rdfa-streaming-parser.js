@@ -3,6 +3,7 @@ import "jest-rdf";
 import * as RDF from "rdf-js";
 import {PassThrough} from "stream";
 import {RdfaParser} from "../lib/RdfaParser";
+import {RDFA_FEATURES} from "../lib/RdfaProfile";
 const DataFactory = require('@rdfjs/data-model');
 const streamifyString = require('streamify-string');
 const arrayifyStream = require('arrayify-stream');
@@ -60,6 +61,27 @@ describe('RdfaParser', () => {
     expect((<any> instance).util.dataFactory).toBe(dataFactory);
     expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
+  });
+
+  it('should default to the empty profile when no content type, profile or features was set', () => {
+    const instance = new RdfaParser({});
+    expect((<any> instance).features).toBe(RDFA_FEATURES['']);
+  });
+
+  it('should allow custom features to be set', () => {
+    const features: any = { a: 1 };
+    const instance = new RdfaParser({ features });
+    expect((<any> instance).features).toBe(features);
+  });
+
+  it('should allow a profile to be set', () => {
+    const instance = new RdfaParser({ profile: 'core' });
+    expect((<any> instance).features).toBe(RDFA_FEATURES.core);
+  });
+
+  it('should allow a content type to be set', () => {
+    const instance = new RdfaParser({ contentType: 'application/xml' });
+    expect((<any> instance).features).toBe(RDFA_FEATURES.xml);
   });
 
   describe('a default instance', () => {

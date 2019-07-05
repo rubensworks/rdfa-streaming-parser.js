@@ -1,6 +1,7 @@
 import * as RDF from "rdf-js";
 import {resolve} from "relative-to-absolute-iri";
 import {IActiveTag} from "./IActiveTag";
+import {RDFA_CONTENTTYPES, RdfaProfile} from "./RdfaProfile";
 
 /**
  * A collection of utility functions.
@@ -122,6 +123,16 @@ export class Util {
    */
   public static isValidIri(iri: string): boolean {
     return Util.IRI_REGEX.test(iri);
+  }
+
+  /**
+   * Determine the RDFa profile from the given content type.
+   * Defaults to the default RDFa profile (all features enabled) for unknown content types.
+   * @param {string} contentType A content type.
+   * @returns {RdfaProfile} An RDFa profile.
+   */
+  public static contentTypeToProfile(contentType: string): RdfaProfile {
+    return RDFA_CONTENTTYPES[contentType] || '';
   }
 
   /**

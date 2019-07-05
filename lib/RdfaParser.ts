@@ -34,12 +34,13 @@ export class RdfaParser extends Transform {
 
     this.util = new Util(options.dataFactory, options.baseIRI);
     this.defaultGraph = options.defaultGraph || this.util.dataFactory.defaultGraph();
-    this.features = options.features || RDFA_FEATURES[options.profile] || RDFA_FEATURES[''];
+    const profile = options.contentType ? Util.contentTypeToProfile(options.contentType) : options.profile || '';
+    this.features = options.features || RDFA_FEATURES[profile];
     this.htmlParseListener = options.htmlParseListener;
     this.rdfaPatterns = this.features.copyRdfaPatterns ? {} : null;
     this.pendingRdfaPatternCopies = this.features.copyRdfaPatterns ? {} : null;
 
-    this.parser = this.initializeParser(options.profile === 'xml');
+    this.parser = this.initializeParser(profile === 'xml');
 
     this.activeTagStack.push({
       incompleteTriples: [],
@@ -899,6 +900,11 @@ export interface IRdfaParserOptions {
    * Defaults to a profile with all possible features enabled.
    */
   profile?: RdfaProfile;
+  /**
+   * The content type of the document that should be parsed.
+   * This can be used as an alternative to the 'profile' option.
+   */
+  contentType?: string;
   /**
    * An optional listener for the internal HTML parse events.
    */

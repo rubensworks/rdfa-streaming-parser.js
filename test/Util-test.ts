@@ -238,6 +238,38 @@ describe('Util', () => {
     });
   });
 
+  describe('#contentTypeToProfile', () => {
+    it('should return empty string for an unknown content type', () => {
+      return expect(Util.contentTypeToProfile('text/unknown'))
+        .toEqual('');
+    });
+
+    it('should return html for text/html', () => {
+      return expect(Util.contentTypeToProfile('text/html'))
+        .toEqual('html');
+    });
+
+    it('should return xhtml for application/xhtml+xml', () => {
+      return expect(Util.contentTypeToProfile('application/xhtml+xml'))
+        .toEqual('xhtml');
+    });
+
+    it('should return xml for application/xml', () => {
+      return expect(Util.contentTypeToProfile('application/xml'))
+        .toEqual('xml');
+    });
+
+    it('should return xml for text/xml', () => {
+      return expect(Util.contentTypeToProfile('text/xml'))
+        .toEqual('xml');
+    });
+
+    it('should return xml for image/svg+xml', () => {
+      return expect(Util.contentTypeToProfile('image/svg+xml'))
+        .toEqual('xml');
+    });
+  });
+
   describe('a default instance', () => {
 
     let util;
