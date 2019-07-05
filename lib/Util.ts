@@ -1,6 +1,6 @@
 import * as RDF from "rdf-js";
 import {resolve} from "relative-to-absolute-iri";
-import {IActiveTag} from "./RdfaParser";
+import {IActiveTag} from "./IActiveTag";
 
 /**
  * A collection of utility functions.

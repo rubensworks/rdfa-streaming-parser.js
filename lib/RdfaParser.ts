@@ -2,86 +2,19 @@ import {DomHandler} from "domhandler";
 import EventEmitter = NodeJS.EventEmitter;
 import {Parser as HtmlParser} from "htmlparser2";
 import * as RDF from "rdf-js";
-import {resolve} from "relative-to-absolute-iri";
 import {PassThrough, Transform, TransformCallback} from "stream";
+import {IActiveTag} from "./IActiveTag";
+import {IHtmlParseListener} from "./IHtmlParseListener";
 import * as INITIAL_CONTEXT_XHTML from "./initial-context-xhtml.json";
 import * as INITIAL_CONTEXT from "./initial-context.json";
+import {IRdfaPattern} from "./IRdfaPattern";
+import {IRdfaFeatures, RDFA_FEATURES, RdfaProfile} from "./RdfaProfile";
 import {Util} from "./Util";
 
 /**
  * A stream transformer that parses RDFa (text) streams to an {@link RDF.Stream}.
  */
 export class RdfaParser extends Transform {
-
-  // tslint:disable:object-literal-sort-keys
-  public static readonly RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
-    '': {
-      baseTag: true,
-      xmlBase: true,
-      langAttribute: true,
-      onlyAllowUriRelRevIfProperty: true,
-      inheritSubjectInHeadBody: true,
-      datetimeAttribute: true,
-      timeTag: true,
-      htmlDatatype: true,
-      copyRdfaPatterns: true,
-      xmlnsPrefixMappings: true,
-      xhtmlInitialContext: true,
-    },
-    'core': {
-      baseTag: false,
-      xmlBase: false,
-      langAttribute: true,
-      onlyAllowUriRelRevIfProperty: true,
-      inheritSubjectInHeadBody: false,
-      datetimeAttribute: false,
-      timeTag: false,
-      htmlDatatype: false,
-      copyRdfaPatterns: true,
-      xmlnsPrefixMappings: true,
-      xhtmlInitialContext: false,
-    },
-    'html': {
-      baseTag: true,
-      xmlBase: false,
-      langAttribute: true,
-      onlyAllowUriRelRevIfProperty: true,
-      inheritSubjectInHeadBody: true,
-      datetimeAttribute: true,
-      timeTag: true,
-      htmlDatatype: true,
-      copyRdfaPatterns: true,
-      xmlnsPrefixMappings: true,
-      xhtmlInitialContext: false,
-    },
-    'xhtml': {
-      baseTag: true,
-      xmlBase: false,
-      langAttribute: true,
-      onlyAllowUriRelRevIfProperty: true,
-      inheritSubjectInHeadBody: true,
-      datetimeAttribute: true,
-      timeTag: true,
-      htmlDatatype: true,
-      copyRdfaPatterns: true,
-      xmlnsPrefixMappings: true,
-      xhtmlInitialContext: true,
-    },
-    'xml': {
-      baseTag: false,
-      xmlBase: true,
-      langAttribute: true,
-      onlyAllowUriRelRevIfProperty: false,
-      inheritSubjectInHeadBody: false,
-      datetimeAttribute: true,
-      timeTag: true,
-      htmlDatatype: false,
-      copyRdfaPatterns: false,
-      xmlnsPrefixMappings: true,
-      xhtmlInitialContext: false,
-    },
-  };
-  // tslint:enable:object-literal-sort-keys
 
   private readonly options: IRdfaParserOptions;
   private readonly util: Util;
@@ -101,7 +34,7 @@ export class RdfaParser extends Transform {
 
     this.util = new Util(options.dataFactory, options.baseIRI);
     this.defaultGraph = options.defaultGraph || this.util.dataFactory.defaultGraph();
-    this.features = options.features || RdfaParser.RDFA_FEATURES[options.profile] || RdfaParser.RDFA_FEATURES[''];
+    this.features = options.features || RDFA_FEATURES[options.profile] || RDFA_FEATURES[''];
     this.htmlParseListener = options.htmlParseListener;
     this.rdfaPatterns = this.features.copyRdfaPatterns ? {} : null;
     this.pendingRdfaPatternCopies = this.features.copyRdfaPatterns ? {} : null;
@@ -935,46 +868,6 @@ export class RdfaParser extends Transform {
 
 }
 
-/**
- * Data holder for the RDFa state in XML tags.
- */
-export interface IActiveTag {
-  name: string;
-  prefixesAll: {[prefix: string]: string};
-  prefixesCustom: {[prefix: string]: string};
-  subject?: RDF.Term | boolean;
-  explicitNewSubject?: boolean;
-  predicates?: RDF.Term[];
-  object?: RDF.Term | boolean;
-  text?: string[];
-  vocab?: string;
-  language?: string;
-  datatype?: RDF.NamedNode;
-  collectChildTags?: boolean;
-  collectedPatternTag?: IRdfaPattern;
-  interpretObjectAsTime?: boolean;
-  incompleteTriples?: { predicate: RDF.Term, reverse: boolean, list?: boolean }[];
-  inlist: boolean;
-  listMapping: {[predicate: string]: (RDF.Term|boolean)[]};
-  listMappingLocal: {[predicate: string]: (RDF.Term|boolean)[]};
-  skipElement: boolean;
-  localBaseIRI?: RDF.NamedNode;
-}
-
-/**
- * A datastructure for storing an rdfa:Pattern.
- */
-export interface IRdfaPattern {
-  rootPattern: boolean;
-  name: string;
-  attributes: {[s: string]: string};
-  text: string[];
-  children: IRdfaPattern[];
-  referenced: boolean;
-  parentTag?: IActiveTag;
-  constructedBlankNodes?: RDF.BlankNode[];
-}
-
 export interface IRdfaParserOptions {
   /**
    * A custom RDFJS DataFactory to construct terms and triples.
@@ -1010,90 +903,4 @@ export interface IRdfaParserOptions {
    * An optional listener for the internal HTML parse events.
    */
   htmlParseListener?: IHtmlParseListener;
-}
-
-export type RdfaProfile =
-  '' | // All possible RDFa features
-  'core' | // https://www.w3.org/TR/rdfa-core/
-  'html' | // https://www.w3.org/TR/html-rdfa/
-  'xhtml' | // https://www.w3.org/TR/xhtml-rdfa/
-  'xml';
-
-export interface IRdfaFeatures {
-  /**
-   * If the baseIRI can be set via the <base> tag.
-   */
-  baseTag?: boolean;
-  /**
-   * If the baseIRI can be set via the xml:base attribute.
-   */
-  xmlBase?: boolean;
-  /**
-   * If the language can be set via the language attribute.
-   */
-  langAttribute?: boolean;
-  /**
-   * If non-CURIE and non-URI rel and rev have to be ignored if property is present.
-   */
-  onlyAllowUriRelRevIfProperty?: boolean;
-  /**
-   * If the new subject can be inherited from the parent object if we're inside <head> or <body>
-   * if the resource defines no new subject.
-   */
-  inheritSubjectInHeadBody?: boolean;
-  /**
-   * If the datetime attribute must be interpreted as datetimes.
-   */
-  datetimeAttribute?: boolean;
-  /**
-   * If the time tag contents should be interpreted as datetimes.
-   */
-  timeTag?: boolean;
-  /**
-   * If rdf:HTML as datatype should cause tag contents to be serialized to text.
-   */
-  htmlDatatype?: boolean;
-  /**
-   * If rdfa:copy property links can refer to rdfa:Pattern's for copying.
-   */
-  copyRdfaPatterns?: boolean;
-  /**
-   * If prefixes should be extracted from xmlnsPrefixMappings.
-   */
-  xmlnsPrefixMappings?: boolean;
-  /**
-   * If children of rdf:XMLLiteral should not be handled as RDFa anymore.
-   * This is not part of the RDFa spec.
-   */
-  skipHandlingXmlLiteralChildren?: boolean;
-  /**
-   * If the XHTML initial context should be included in the initial prefixes.
-   * see https://www.w3.org/2011/rdfa-context/xhtml-rdfa-1.1
-   */
-  xhtmlInitialContext?: boolean;
-}
-
-/**
- * An HTML parsing listener.
- */
-export interface IHtmlParseListener {
-  /**
-   * Called when a tag is opened.
-   * @param {string} name The tag name.
-   * @param {{[p: string]: string}} attributes A hash of attributes.
-   */
-  onTagOpen(name: string, attributes: {[s: string]: string}): void;
-
-  /**
-   * Called when a tag is closed.
-   */
-  onTagClose(): void;
-
-  /**
-   * Called when text contents are parsed.
-   * Note that this can be called multiple times per tag,
-   * when for example the string is spread over multiple chunks.
-   * @param {string} data A string.
-   */
-  onText(data: string): void;
 }
