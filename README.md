@@ -157,6 +157,7 @@ The table below lists all possible RDFa features and in what profile they are av
 | `xmlnsPrefixMappings`            | ✓    | ✓    | ✓     | ✓   | If prefixes should be extracted from xmlns.            |
 | `skipHandlingXmlLiteralChildren` |      |      |       |     | If children of rdf:XMLLiteral should not be handled as RDFa anymore. This is not part of the RDFa spec.            |
 | `xhtmlInitialContext`            |      |      | ✓     |     | If the [XHTML initial context](https://www.w3.org/2011/rdfa-context/xhtml-rdfa-1.1) should be included in the initial prefixes.            |
+| `roleAttribute`                  |      | ✓    | ✓     | ✓   | If the [role attribute](https://www.w3.org/TR/role-attribute/#using-role-in-conjunction-with-rdfa) should be handled.            |
 
 ## How it works
 
@@ -187,10 +188,13 @@ More specifically, the following manifests are explicitly tested:
 * XHTML+RDFa 1.1
 * XML+RDFa 1.1
 
+The following _optional_ features for RDFa processors are supported:
+
+* [Processing the `@role` attribute.](https://www.w3.org/TR/role-attribute/#using-role-in-conjunction-with-rdfa)
+
 The following _optional_ features for RDFa processors are _not_ supported (yet):
 
 * [Emitting the Processor Status as triples.](https://www.w3.org/TR/rdfa-core/#processor-status)
-* [Processing the `@role` attribute.](https://www.w3.org/TR/role-attribute/#using-role-in-conjunction-with-rdfa)
 * [Performing vocabulary expansion based on an OWL subset.](https://www.w3.org/TR/rdfa-core/#s_vocab_expansion)
 
 ## License

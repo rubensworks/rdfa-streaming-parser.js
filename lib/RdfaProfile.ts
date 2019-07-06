@@ -60,6 +60,11 @@ export interface IRdfaFeatures {
    * see https://www.w3.org/2011/rdfa-context/xhtml-rdfa-1.1
    */
   xhtmlInitialContext?: boolean;
+  /**
+   * If the role attribute should be handled
+   * as described in https://www.w3.org/TR/role-attribute/#using-role-in-conjunction-with-rdfa
+   */
+  roleAttribute?: boolean;
 }
 
 /**
@@ -79,6 +84,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     copyRdfaPatterns: true,
     xmlnsPrefixMappings: true,
     xhtmlInitialContext: true,
+    roleAttribute: true,
   },
   'core': {
     baseTag: false,
@@ -92,6 +98,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     copyRdfaPatterns: true,
     xmlnsPrefixMappings: true,
     xhtmlInitialContext: false,
+    roleAttribute: false,
   },
   'html': {
     baseTag: true,
@@ -105,6 +112,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     copyRdfaPatterns: true,
     xmlnsPrefixMappings: true,
     xhtmlInitialContext: false,
+    roleAttribute: true,
   },
   'xhtml': {
     baseTag: true,
@@ -118,6 +126,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     copyRdfaPatterns: true,
     xmlnsPrefixMappings: true,
     xhtmlInitialContext: true,
+    roleAttribute: true,
   },
   'xml': {
     baseTag: false,
@@ -131,6 +140,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     copyRdfaPatterns: false,
     xmlnsPrefixMappings: true,
     xhtmlInitialContext: false,
+    roleAttribute: true,
   },
 };
 // tslint:enable:object-literal-sort-keys

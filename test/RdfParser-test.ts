@@ -4009,6 +4009,81 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
           .toBeRdfIsomorphic([]);
       });
 
+      it('role attribute with id', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+		<title>Test 0305</title>
+  </head>
+  <body>
+	<div id="heading1" role="heading">
+      <p>Some contents that are a header</p>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#heading1',
+              'http://www.w3.org/1999/xhtml/vocab#role',
+              'http://www.w3.org/1999/xhtml/vocab#heading'),
+          ]);
+      });
+
+      it('role attribute without id', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+		<title>Test 0305</title>
+  </head>
+  <body>
+	<div role="heading">
+      <p>Some contents that are a header</p>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('_:b',
+              'http://www.w3.org/1999/xhtml/vocab#role',
+              'http://www.w3.org/1999/xhtml/vocab#heading'),
+          ]);
+      });
+
+      it('role attribute with multiple values', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+		<title>Test 0305</title>
+  </head>
+  <body>
+	<div id="heading1" role="heading1 heading2">
+      <p>Some contents that are a header</p>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#heading1',
+              'http://www.w3.org/1999/xhtml/vocab#role',
+              'http://www.w3.org/1999/xhtml/vocab#heading1'),
+            quad('http://example.org/#heading1',
+              'http://www.w3.org/1999/xhtml/vocab#role',
+              'http://www.w3.org/1999/xhtml/vocab#heading2'),
+          ]);
+      });
+
+      it('role attribute with absolute IRI', async () => {
+        return expect(await parse(parser, `<html>
+  <head>
+		<title>Test 0305</title>
+  </head>
+  <body>
+	<div id="heading1" role="http://ex.org/heading">
+      <p>Some contents that are a header</p>
+    </div>
+  </body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#heading1',
+              'http://www.w3.org/1999/xhtml/vocab#role',
+              'http://ex.org/heading'),
+          ]);
+      });
+
     });
 
   });

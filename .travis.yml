@@ -9,6 +9,7 @@ script:
   - npm run lint
   - npm test
   - npm run spec
+  - npm run spec-role
 after_success:
   - npm run coveralls
 cache:

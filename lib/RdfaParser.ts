@@ -237,6 +237,24 @@ export class RdfaParser extends Transform {
     activeTag.prefixesAll = Object.keys(activeTag.prefixesCustom).length > 0
       ? { ...parentTag.prefixesAll, ...activeTag.prefixesCustom } : parentTag.prefixesAll;
 
+    // Handle role attribute
+    if (this.features.roleAttribute && attributes.role) {
+      const roleSubject = attributes.id
+        ? this.util.createIri('#' + attributes.id, activeTag, false, false, false)
+        : this.util.createBlankNode();
+      // Temporarily override vocab
+      const vocabOld = activeTag.vocab;
+      activeTag.vocab = 'http://www.w3.org/1999/xhtml/vocab#';
+      for (const role of this.util.createVocabIris(attributes.role, activeTag, true, false)) {
+        this.emitTriple(
+          roleSubject,
+          this.util.dataFactory.namedNode('http://www.w3.org/1999/xhtml/vocab#role'),
+          role,
+        );
+      }
+      activeTag.vocab = vocabOld;
+    }
+
     // 4: handle language
     // Save language attribute value in active tag
     if ('xml:lang' in attributes || (this.features.langAttribute && 'lang' in attributes)) {
