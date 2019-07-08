@@ -45,7 +45,7 @@ and outputs [RDFJS](http://rdf.js.org/)-compliant quads.
 It can be used to [`pipe`](https://nodejs.org/api/stream.html#stream_readable_pipe_destination_options) streams to,
 or you can write strings into the parser directly.
 
-While not required, it is advised to specify the [profile](#Profile) of the parser
+While not required, it is advised to specify the [profile](#profiles) of the parser
 by supplying a `contentType` or `profile` constructor option.
 
 ### Print all parsed triples from a file to the console
@@ -109,7 +109,7 @@ Optionally, the following parameters can be set in the `RdfaParser` constructor:
 * `vocab`: The initial vocabulary. _(Default: `''`)_
 * `defaultGraph`: The default graph for constructing [quads](http://rdf.js.org/#dom-datafactory-quad). _(Default: `defaultGraph()`)_
 * `features`: A hash of features that should be enabled. Defaults to the features defined by the profile. _(Default: all features enabled)_
-* `profile`: The [RDFa profile](#Profiles) to use.  _(Default: profile with all features enabled)_
+* `profile`: The [RDFa profile](#profiles) to use.  _(Default: profile with all features enabled)_
 * `contentType`: The content type of the document that should be parsed. This can be used as an alternative to the 'profile' option. _(Default: profile with all features enabled)_
 * `htmlParseListener`: An optional listener for the internal HTML parse events, should implement [`IHtmlParseListener`](https://github.com/rubensworks/rdfa-streaming-parser.js/blob/master/lib/IHtmlParseListener.ts) _(Default: `null`)_
 

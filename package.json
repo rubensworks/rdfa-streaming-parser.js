@@ -3,11 +3,9 @@
   "version": "1.0.0",
   "description": "A fast and lightweight streaming RDFa parser",
   "keywords": [
-    "json",
+    "rdfa",
     "linked data",
     "semantic web",
-    "rdfa",
-    "rdfa",
     "rdf",
     "rdfjs",
     "streaming",
