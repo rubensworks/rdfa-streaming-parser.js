@@ -1,6 +1,6 @@
 {
   "name": "rdfa-streaming-parser",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A fast and lightweight streaming RDFa parser",
   "keywords": [
     "rdfa",
@@ -89,12 +89,10 @@
     "validate": "npm ls",
     "prepare": "npm run build",
     "version": "manual-git-changelog onversion",
-
     "spec": "npm run spec-html4 && npm run spec-html5 && npm run spec-xhtml5 && npm run spec-svg && npm run spec-xhtml1 && npm run spec-xml",
     "spec-earl": "npm run spec-html4-earl && npm run spec-html5-earl && npm run spec-xhtml5-earl && npm run spec-svg-earl && npm run spec-xhtml1-earl && npm run spec-xml-earl",
     "spec-role": "npm run spec-role-html5 && npm run spec-role-xhtml5 && npm run spec-role-xhtml1 && npm run spec-role-xml",
     "spec-role-earl": "npm run spec-role-html5-earl && npm run spec-role-xhtml5-earl && npm run spec-role-xhtml1-earl && npm run spec-role-xml-earl",
-
     "spec-html4": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html4/manifest.ttl -i '{ \"profile\": \"html\" }' -c .rdf-test-suite-cache/",
     "spec-html4-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html4/manifest.ttl -i '{ \"profile\": \"html\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-html4.ttl",
     "spec-html5": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/html5/manifest.ttl -i '{ \"profile\": \"html\" }' -c .rdf-test-suite-cache/",
@@ -107,7 +105,6 @@
     "spec-xhtml1-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-xhtml1.ttl",
     "spec-xml": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xml/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/",
     "spec-xml-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1/xml/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-xml.ttl",
-
     "spec-role-html5": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1-role/html5/manifest.ttl -i '{ \"profile\": \"html\" }' -c .rdf-test-suite-cache/",
     "spec-role-html5-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1-role/html5/manifest.ttl -i '{ \"profile\": \"html\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-role-html5.ttl",
     "spec-role-xhtml5": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1-role/xhtml5/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -c .rdf-test-suite-cache/",
@@ -118,7 +115,6 @@
     "spec-role-xhtml1-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1-role/xhtml1/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-role-xhtml1.ttl",
     "spec-role-xml": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1-role/xml/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/",
     "spec-role-xml-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.1-role/xml/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-role-xml.ttl",
-
     "spec-1-svg": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.0/svg/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/",
     "spec-1-svg-earl": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.0/svg/manifest.ttl -i '{ \"profile\": \"xml\" }' -c .rdf-test-suite-cache/ -o earl -p spec/earl-meta.json > spec/earl-rdfastreamingparser-1-svg.ttl",
     "spec-1-xhtml1": "rdf-test-suite spec/parser.js http://rdfa.info/test-suite/test-cases/rdfa1.0/xhtml1/manifest.ttl -i '{ \"profile\": \"xhtml\" }' -c .rdf-test-suite-cache/",
