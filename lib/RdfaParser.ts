@@ -78,6 +78,11 @@ export class RdfaParser extends Transform {
     callback();
   }
 
+  public _flush(callback: TransformCallback): void {
+    this.parser.end();
+    callback();
+  }
+
   public onTagOpen(name: string, attributes: {[s: string]: string}) {
     // Determine the parent tag (ignore skipped tags)
     let parentTagI: number = this.activeTagStack.length - 1;
@@ -617,11 +622,6 @@ export class RdfaParser extends Transform {
         // Remove the active tag from the stack
         this.activeTagStack.pop();
 
-        // Call end method if our last tag has been popped
-        if (this.activeTagStack.length === 1) {
-          this.onEnd();
-        }
-
         return;
       }
 
@@ -695,14 +695,9 @@ export class RdfaParser extends Transform {
         parentTag.text = parentTag.text.concat(activeTag.text);
       }
     }
-
-    // Call end method if our last tag has been popped
-    if (this.activeTagStack.length === 1) {
-      this.onEnd();
-    }
   }
 
-  protected onEnd() {
+  public onEnd() {
     if (this.features.copyRdfaPatterns) {
       this.features.copyRdfaPatterns = false;
 
@@ -855,6 +850,16 @@ export class RdfaParser extends Transform {
           }
           if (this.htmlParseListener) {
             this.htmlParseListener.onTagClose();
+          }
+        },
+        onend: () => {
+          try {
+            this.onEnd();
+          } catch (e) {
+            this.emit('error', e);
+          }
+          if (this.htmlParseListener) {
+            this.htmlParseListener.onEnd();
           }
         },
         onopentag: (name: string, attributes: {[s: string]: string}) => {

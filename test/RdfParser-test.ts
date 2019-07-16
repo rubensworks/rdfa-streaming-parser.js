@@ -164,6 +164,18 @@ describe('RdfaParser', () => {
 </body>
 </html>`)).rejects.toThrow(new Error('Dummy error'));
       });
+
+      it('when an error is thrown in onEnd', async () => {
+        parser.onEnd = () => {
+          throw new Error('Dummy error');
+        };
+        return expect(parse(parser, `<html>
+<head></head>
+<body>
+    <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
+</body>
+</html>`)).rejects.toThrow(new Error('Dummy error'));
+      });
     });
 
     describe('should parse', () => {
@@ -4095,6 +4107,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
 
     beforeEach(() => {
       htmlParseListener = {
+        onEnd: jest.fn(),
         onTagClose: jest.fn(),
         onTagOpen: jest.fn(),
         onText: jest.fn(),
@@ -4103,7 +4116,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
     });
 
     describe('should parse', () => {
-      it('absolute about attributes to subjects', async () => {
+      it('and call the HTML listener', async () => {
         expect(await parse(parser, `<html>
 <head></head>
 <body>
@@ -4129,6 +4142,8 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
         expect(htmlParseListener.onText).toHaveBeenCalledWith('\n    ');
         expect(htmlParseListener.onText).toHaveBeenCalledWith('The Trouble with Bob');
         expect(htmlParseListener.onText).toHaveBeenCalledWith('\n');
+
+        expect(htmlParseListener.onEnd).toHaveBeenCalledTimes(1);
       });
     });
 

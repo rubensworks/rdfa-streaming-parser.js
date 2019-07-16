@@ -21,4 +21,9 @@ export interface IHtmlParseListener {
    * @param {string} data A string.
    */
   onText(data: string): void;
+
+  /**
+   * Called when parsing has ended.
+   */
+  onEnd(): void;
 }
