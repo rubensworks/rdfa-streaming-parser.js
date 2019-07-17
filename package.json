@@ -13,12 +13,12 @@
   ],
   "main": "index.js",
   "typings": "index",
-  "repository": "git@github.com:rubensworks/streaming-rdfa-parser.js.git",
+  "repository": "git@github.com:rubensworks/rdfa-streaming-parser.js.git",
   "author": "Ruben Taelman <rubensworks@gmail.com>",
   "bugs": {
-    "url": "https://github.com/rubensworks/streaming-rdfa-parser.js/issues"
+    "url": "https://github.com/rubensworks/rdfa-streaming-parser.js/issues"
   },
-  "homepage": "https://github.com/rubensworks/streaming-rdfa-parser.js#readme",
+  "homepage": "https://github.com/rubensworks/rdfa-streaming-parser.js#readme",
   "license": "MIT",
   "files": [
     "lib/**/*.d.ts",
