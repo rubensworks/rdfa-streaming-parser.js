@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v1.2.0"></a>
+## [v1.2.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.1.1...v1.2.0) - 2020-01-27
+
+### Added
+* [Add typings for RDF.Sink implementation, Closes #9](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/ee48998a0426b41a0a88a61d523273f719c12d05)
+
+### Changed
+* [Make implementation more strongly typed](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/e0fb225419a350d8fd5cb6e759800bc673f3b327)
+
 <a name="v1.1.1"></a>
 ## [v1.1.1](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.1.0...v1.1.1) - 2019-08-07
 
