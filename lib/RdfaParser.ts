@@ -14,7 +14,7 @@ import {Util} from "./Util";
 /**
  * A stream transformer that parses RDFa (text) streams to an {@link RDF.Stream}.
  */
-export class RdfaParser extends Transform {
+export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.Stream> {
 
   private readonly options: IRdfaParserOptions;
   private readonly util: Util;
@@ -62,9 +62,9 @@ export class RdfaParser extends Transform {
   /**
    * Parses the given text stream into a quad stream.
    * @param {NodeJS.EventEmitter} stream A text stream.
-   * @return {NodeJS.EventEmitter} A quad stream.
+   * @return {RDF.Stream} A quad stream.
    */
-  public import(stream: EventEmitter): EventEmitter {
+  public import(stream: EventEmitter): RDF.Stream {
     const output = new PassThrough({ objectMode: true });
     stream.on('error', (error) => parsed.emit('error', error));
     stream.on('data', (data) => output.write(data));
