@@ -155,8 +155,8 @@ export class Util {
    * @param {IActiveTag} activeTag An active tag.
    * @returns {Term} A term.
    */
-  public getResourceOrBaseIri(term: RDF.Term | boolean, activeTag: IActiveTag): RDF.Term {
-    return term === true ? this.getBaseIriTerm(activeTag) : <RDF.Term> term;
+  public getResourceOrBaseIri(term: RDF.Term | boolean, activeTag: IActiveTag): RDF.NamedNode {
+    return term === true ? this.getBaseIriTerm(activeTag) : <RDF.NamedNode> term;
   }
 
   /**
@@ -176,8 +176,11 @@ export class Util {
    * @param {boolean} allowBlankNode If blank nodes are allowed.
    * @return {Term[]} The IRI terms.
    */
+  public createVocabIris<B extends boolean>(terms: string, activeTag: IActiveTag, allowTerms: boolean,
+                                            allowBlankNode: B): B extends true
+    ? (RDF.BlankNode | RDF.NamedNode)[] : RDF.NamedNode[];
   public createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean,
-                         allowBlankNode: boolean): RDF.Term[] {
+                         allowBlankNode: boolean): (RDF.NamedNode | RDF.BlankNode)[] {
     return terms.split(/\s+/)
       .filter((term) => term && (allowTerms || term.indexOf(':') >= 0))
       .map((property) => this.createIri(property, activeTag, true, true, allowBlankNode))
@@ -226,8 +229,11 @@ export class Util {
    * @param {boolean} allowBlankNode If blank nodes are allowed. Otherwise null will be returned.
    * @return {Term} An RDF term or null.
    */
-  public createIri(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
-                   allowBlankNode: boolean): RDF.Term {
+  public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
+                                      allowBlankNode: B): B extends true
+    ? (RDF.NamedNode | RDF.BlankNode) : RDF.NamedNode;
+  public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
+                                      allowBlankNode: B): RDF.NamedNode | RDF.BlankNode {
     term = term || '';
 
     if (!allowSafeCurie) {

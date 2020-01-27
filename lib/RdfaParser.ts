@@ -18,7 +18,7 @@ export class RdfaParser extends Transform {
 
   private readonly options: IRdfaParserOptions;
   private readonly util: Util;
-  private readonly defaultGraph?: RDF.Term;
+  private readonly defaultGraph?: RDF.Quad_Graph;
   private readonly parser: HtmlParser;
   private readonly features: IRdfaFeatures;
   private readonly htmlParseListener?: IHtmlParseListener;
@@ -214,9 +214,9 @@ export class RdfaParser extends Transform {
 
     // Processing based on https://www.w3.org/TR/rdfa-core/#s_rdfaindetail
     // 1: initialize values
-    let newSubject: RDF.Term | boolean;
-    let currentObjectResource: RDF.Term | boolean;
-    let typedResource: RDF.Term | boolean;
+    let newSubject: RDF.NamedNode | RDF.BlankNode | boolean;
+    let currentObjectResource: RDF.NamedNode | RDF.BlankNode | boolean;
+    let typedResource: RDF.NamedNode | RDF.BlankNode | boolean;
 
     // 2: handle vocab attribute to set active vocabulary
     // Vocab sets the active vocabulary
@@ -746,8 +746,8 @@ export class RdfaParser extends Transform {
    * @param {Term} predicate A predicate term.
    * @param {Term | boolean} currentObjectResource The current object resource.
    */
-  protected addListMapping(activeTag: IActiveTag, subject: RDF.Term | boolean, predicate: RDF.Term,
-                           currentObjectResource: RDF.Term | boolean) {
+  protected addListMapping(activeTag: IActiveTag, subject: RDF.Quad_Subject | boolean, predicate: RDF.Quad_Predicate,
+                           currentObjectResource: RDF.Quad_Object | boolean) {
     if (activeTag.explicitNewSubject) {
       const bNode = this.util.createBlankNode();
       this.emitTriple(this.util.getResourceOrBaseIri(subject, activeTag), predicate, bNode);
@@ -772,7 +772,7 @@ export class RdfaParser extends Transform {
    * @param {Term} predicate A predicate term.
    * @param {Term} object An object term.
    */
-  protected emitTriple(subject: RDF.Term, predicate: RDF.Term, object: RDF.Term) {
+  protected emitTriple(subject: RDF.Quad_Subject, predicate: RDF.Quad_Predicate, object: RDF.Quad_Object) {
     // Validate IRIs
     if ((subject.termType === 'NamedNode' && subject.value.indexOf(':') < 0)
       || (predicate.termType === 'NamedNode' && predicate.value.indexOf(':') < 0)
@@ -912,7 +912,7 @@ export interface IRdfaParserOptions {
   /**
    * The default graph for constructing quads.
    */
-  defaultGraph?: RDF.Term;
+  defaultGraph?: RDF.Quad_Graph;
   /**
    * A hash of features that should be enabled.
    * Defaults to the features defined by the profile.

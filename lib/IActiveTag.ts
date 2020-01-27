@@ -8,10 +8,10 @@ export interface IActiveTag {
   name: string;
   prefixesAll: {[prefix: string]: string};
   prefixesCustom: {[prefix: string]: string};
-  subject?: RDF.Term | boolean;
+  subject?: RDF.NamedNode | RDF.BlankNode | boolean;
   explicitNewSubject?: boolean;
-  predicates?: RDF.Term[];
-  object?: RDF.Term | boolean;
+  predicates?: RDF.NamedNode[];
+  object?: RDF.NamedNode | RDF.BlankNode | boolean;
   text?: string[];
   vocab?: string;
   language?: string;
@@ -19,7 +19,7 @@ export interface IActiveTag {
   collectChildTags?: boolean;
   collectedPatternTag?: IRdfaPattern;
   interpretObjectAsTime?: boolean;
-  incompleteTriples?: { predicate: RDF.Term, reverse: boolean, list?: boolean }[];
+  incompleteTriples?: { predicate: RDF.Quad_Predicate, reverse: boolean, list?: boolean }[];
   inlist: boolean;
   listMapping: {[predicate: string]: (RDF.Term|boolean)[]};
   listMappingLocal: {[predicate: string]: (RDF.Term|boolean)[]};
