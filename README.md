@@ -114,7 +114,7 @@ Optionally, the following parameters can be set in the `RdfaParser` constructor:
 * `htmlParseListener`: An optional listener for the internal HTML parse events, should implement [`IHtmlParseListener`](https://github.com/rubensworks/rdfa-streaming-parser.js/blob/master/lib/IHtmlParseListener.ts) _(Default: `null`)_
 
 ```javascript
-new JsonLdParser({
+new RdfaParser({
   dataFactory: require('@rdfjs/data-model'),
   baseIRI: 'http://example.org/',
   language: 'en-us',
