@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/rubensworks/rdfa-streaming-parser.js.svg?branch=master)](https://travis-ci.org/rubensworks/rdfa-streaming-parser.js)
 [![Coverage Status](https://coveralls.io/repos/github/rubensworks/rdfa-streaming-parser.js/badge.svg?branch=master)](https://coveralls.io/github/rubensworks/rdfa-streaming-parser.js?branch=master)
-[![npm version](https://badge.fury.io/js/rdfa-streaming-parser.svg)](https://www.npmjs.com/package/rdfa-streaming-parser) [![Greenkeeper badge](https://badges.greenkeeper.io/rubensworks/rdfa-streaming-parser.js.svg)](https://greenkeeper.io/)
+[![npm version](https://badge.fury.io/js/rdfa-streaming-parser.svg)](https://www.npmjs.com/package/rdfa-streaming-parser)
 
 A [fast](https://gist.github.com/rubensworks/9eaaee548f647be15e98dea2b7d27586) and lightweight _streaming_ and 100% _spec-compliant_ [RDFa 1.1](https://rdfa.info/) parser,
 with [RDFJS](https://github.com/rdfjs/representation-task-force/) representations of RDF terms, quads and triples.
