@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v1.2.1"></a>
+## [v1.2.1](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.2.0...v1.2.1) - 2020-03-28
+
+### Fixed
+* [Fix crash on relative base tag values](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/e564188e5fb41cbbbbfd78ff1269e1e57959ef86)
+* [Properly delegate errors from listeners to the stream](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/730201ce16bc27b80ca046da015d48ce77b8ee8d)
+
 <a name="v1.2.0"></a>
 ## [v1.2.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.1.1...v1.2.0) - 2020-01-27
 
