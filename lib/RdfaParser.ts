@@ -845,41 +845,41 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         onclosetag: () => {
           try {
             this.onTagClose();
+            if (this.htmlParseListener) {
+              this.htmlParseListener.onTagClose();
+            }
           } catch (e) {
             this.emit('error', e);
-          }
-          if (this.htmlParseListener) {
-            this.htmlParseListener.onTagClose();
           }
         },
         onend: () => {
           try {
             this.onEnd();
+            if (this.htmlParseListener) {
+              this.htmlParseListener.onEnd();
+            }
           } catch (e) {
             this.emit('error', e);
-          }
-          if (this.htmlParseListener) {
-            this.htmlParseListener.onEnd();
           }
         },
         onopentag: (name: string, attributes: {[s: string]: string}) => {
           try {
             this.onTagOpen(name, attributes);
+            if (this.htmlParseListener) {
+              this.htmlParseListener.onTagOpen(name, attributes);
+            }
           } catch (e) {
             this.emit('error', e);
-          }
-          if (this.htmlParseListener) {
-            this.htmlParseListener.onTagOpen(name, attributes);
           }
         },
         ontext: (data: string) => {
           try {
             this.onText(data);
+            if (this.htmlParseListener) {
+              this.htmlParseListener.onText(data);
+            }
           } catch (e) {
             this.emit('error', e);
-          }
-          if (this.htmlParseListener) {
-            this.htmlParseListener.onText(data);
           }
         },
       },
