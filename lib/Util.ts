@@ -146,7 +146,7 @@ export class Util {
     if (fragmentIndex >= 0) {
       href = href.substr(0, fragmentIndex);
     }
-    return this.dataFactory.namedNode(href);
+    return this.dataFactory.namedNode(resolve(href, this.baseIRI.value));
   }
 
   /**
