@@ -810,6 +810,12 @@ describe('Util', () => {
         return expect(util.getBaseIRI('http://base.org/#hash'))
           .toEqualRdfTerm(namedNode('http://base.org/'));
       });
+
+      it('should return a relative baseIRI', async () => {
+        util.baseIRI = namedNode('http://example.org/');
+        return expect(util.getBaseIRI('abc'))
+          .toEqualRdfTerm(namedNode('http://example.org/abc'));
+      });
     });
   });
 
