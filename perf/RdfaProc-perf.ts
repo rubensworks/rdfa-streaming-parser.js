@@ -18,7 +18,7 @@ console.time(TEST);
 
 let lines: string[] = [];
 createReadStream(fileName)
-  .on('data', (line) => lines.push(line))
+  .on('data', (line) => lines.push(<any> line))
   .on('error', (e) => {
     console.error(e);
     process.exit(1);
