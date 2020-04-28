@@ -123,12 +123,6 @@ describe('RdfaParser', () => {
     });
 
     describe('should error', () => {
-      it('when writing after closed', async () => {
-        parser.end();
-        return expect(() => parser.write('abc'))
-          .toThrow(new Error('write after end'));
-      });
-
       it('when an error is thrown in onTagClose', async () => {
         parser.onTagClose = () => {
           throw new Error('Dummy error');
