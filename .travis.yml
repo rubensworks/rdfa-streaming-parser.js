@@ -1,19 +1,8 @@
-language: node_js
-node_js:
- - "8"
- - "10"
- - "12"
- - "node"
+import: rubensworks/travis-presets:node.yml@master
 install: npm install --ignore-scripts
 script:
-  - npm run build
-  - npm run lint
-  - npm test
   - npm run spec
   - npm run spec-role
-after_success:
-  - npm run coveralls
 cache:
-  - npm
   - directories:
     - .rdf-test-suite-cache
