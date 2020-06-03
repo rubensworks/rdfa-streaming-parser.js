@@ -28,7 +28,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
   private readonly activeTagStack: IActiveTag[] = [];
 
   constructor(options?: IRdfaParserOptions) {
-    super({ objectMode: true });
+    super({ readableObjectMode: true });
     options = options || {};
     this.options = options;
 
@@ -65,7 +65,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
    * @return {RDF.Stream} A quad stream.
    */
   public import(stream: EventEmitter): RDF.Stream {
-    const output = new PassThrough({ objectMode: true });
+    const output = new PassThrough({ readableObjectMode: true });
     stream.on('error', (error) => parsed.emit('error', error));
     stream.on('data', (data) => output.write(data));
     stream.on('end', () => output.emit('end'));
