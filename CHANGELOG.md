@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v1.2.2"></a>
+## [v1.2.2](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.2.0...v1.2.2) - 2020-06-03
+
+### Fixed
+* [Fix incompatibility with WhatWG streams](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/8b7964eb24f70b23f0c5811b730b752e95d3695d)
+
+### Changed
+* [Update dependency @types/rdf-js to v3, Closes #17](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/4c45c2f3b41146934678c6c9e53b29afcd5c440c)
+
 <a name="v1.2.1"></a>
 ## [v1.2.1](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.2.0...v1.2.1) - 2020-03-28
 
