@@ -67,8 +67,8 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
   public import(stream: EventEmitter): RDF.Stream {
     const output = new PassThrough({ readableObjectMode: true });
     stream.on('error', (error) => parsed.emit('error', error));
-    stream.on('data', (data) => output.write(data));
-    stream.on('end', () => output.emit('end'));
+    stream.on('data', (data) => output.push(data));
+    stream.on('end', () => output.push(null));
     const parsed = output.pipe(new RdfaParser(this.options));
     return parsed;
   }
