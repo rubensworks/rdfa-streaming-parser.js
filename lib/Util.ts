@@ -2,6 +2,7 @@ import * as RDF from "rdf-js";
 import {resolve} from "relative-to-absolute-iri";
 import {IActiveTag} from "./IActiveTag";
 import {RDFA_CONTENTTYPES, RdfaProfile} from "./RdfaProfile";
+import {DataFactory} from "rdf-data-factory";
 
 /**
  * A collection of utility functions.
@@ -35,7 +36,7 @@ export class Util {
   private readonly baseIRIDocument: RDF.NamedNode;
 
   constructor(dataFactory: RDF.DataFactory, baseIRI: string) {
-    this.dataFactory = dataFactory || require('@rdfjs/data-model');
+    this.dataFactory = dataFactory || new DataFactory();
     this.baseIRI = this.dataFactory.namedNode(baseIRI || '');
     this.baseIRIDocument = this.baseIRI;
   }

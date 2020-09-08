@@ -1,22 +1,24 @@
-import {blankNode, literal, namedNode} from "@rdfjs/data-model";
+import {DataFactory} from "rdf-data-factory";
 import "jest-rdf";
 import {Util} from "../lib/Util";
+
+const DF = new DataFactory();
 
 describe('Util', () => {
 
   it('should be constructable with null dataFactory and null baseIRI', () => {
     const instance = new Util(null, null);
     expect(instance).toBeInstanceOf(Util);
-    expect((<any> instance).dataFactory).toBe(require('@rdfjs/data-model'));
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode(''));
+    expect((<any> instance).dataFactory).toBeInstanceOf(DataFactory);
+    expect((<any> instance).baseIRI).toEqualRdfTerm(DF.namedNode(''));
   });
 
   it('should be constructable with non-null dataFactory and non-null baseIRI', () => {
-    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => DF.namedNode('abc') };
     const instance = new Util(dataFactory, 'abc');
     expect(instance).toBeInstanceOf(Util);
     expect((<any> instance).dataFactory).toBe(dataFactory);
-    expect((<any> instance).baseIRI).toEqualRdfTerm(namedNode('abc'));
+    expect((<any> instance).baseIRI).toEqualRdfTerm(DF.namedNode('abc'));
   });
 
   describe('#parseNamespace', () => {
@@ -282,13 +284,13 @@ describe('Util', () => {
       it('should create relative IRIs when CURIEs are not allowed', async () => {
         const activeTag: any = {};
         return expect(util.createIri('http://ex.org/abc', activeTag, false, false, true))
-          .toEqualRdfTerm(namedNode('http://ex.org/abc'));
+          .toEqualRdfTerm(DF.namedNode('http://ex.org/abc'));
       });
 
       it('should create absolute IRIs when CURIEs are not allowed', async () => {
         const activeTag: any = {};
         return expect(util.createIri('abc', activeTag, false, false, true))
-          .toEqualRdfTerm(namedNode('http://example.org/abc'));
+          .toEqualRdfTerm(DF.namedNode('http://example.org/abc'));
       });
 
       it('should not create invalid IRIs when CURIEs are not allowed in vocab mode', async () => {
@@ -300,7 +302,7 @@ describe('Util', () => {
       it('should create blank nodes if allowBlankNode is true', async () => {
         const activeTag: any = {};
         return expect(util.createIri('_:b1', activeTag, false, true, true))
-          .toEqualRdfTerm(blankNode('b1'));
+          .toEqualRdfTerm(DF.blankNode('b1'));
       });
 
       it('should create blank nodes unless allowBlankNode is false', async () => {
@@ -316,7 +318,7 @@ describe('Util', () => {
           },
         };
         return expect(util.createIri('ex:def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('http://example.org/def'));
+          .toEqualRdfTerm(DF.namedNode('http://example.org/def'));
       });
 
       it('should handle prefixed IRIs with unknown prefixes', async () => {
@@ -324,7 +326,7 @@ describe('Util', () => {
           prefixesAll: {},
         };
         return expect(util.createIri('ex:def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('ex:def'));
+          .toEqualRdfTerm(DF.namedNode('ex:def'));
       });
 
       it('should handle relative IRIs', async () => {
@@ -332,7 +334,7 @@ describe('Util', () => {
           prefixesAll: {},
         };
         return expect(util.createIri('def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('http://example.org/def'));
+          .toEqualRdfTerm(DF.namedNode('http://example.org/def'));
       });
 
       it('should not handle relative IRIs in vocab mode without active vocab', async () => {
@@ -349,7 +351,7 @@ describe('Util', () => {
           vocab: 'http://vocab.org/',
         };
         return expect(util.createIri('def', activeTag, true, true, true))
-          .toEqualRdfTerm(namedNode('http://vocab.org/def'));
+          .toEqualRdfTerm(DF.namedNode('http://vocab.org/def'));
       });
 
       it('should handle prefixed relative IRIs', async () => {
@@ -359,25 +361,25 @@ describe('Util', () => {
           },
         };
         return expect(util.createIri('abc:def', activeTag, false, true, true))
-          .toEqualRdfTerm(namedNode('http://example.org/abc/def'));
+          .toEqualRdfTerm(DF.namedNode('http://example.org/abc/def'));
       });
 
       it('should handle explicit blank nodes', async () => {
         const activeTag: any = {};
         return expect(util.createIri('[_:b]', activeTag, false, true, true))
-          .toEqual(blankNode('b'));
+          .toEqual(DF.blankNode('b'));
       });
 
       it('should handle blank nodes with no label', async () => {
         const activeTag: any = {};
         return expect(util.createIri('_:', activeTag, false, true, true))
-          .toEqual(blankNode('b_identity'));
+          .toEqual(DF.blankNode('b_identity'));
       });
 
       it('should handle explicit blank nodes with no label', async () => {
         const activeTag: any = {};
         return expect(util.createIri('[_:]', activeTag, false, true, true))
-          .toEqual(blankNode('b_identity'));
+          .toEqual(DF.blankNode('b_identity'));
       });
 
       it('should handle explicit IRIs', async () => {
@@ -385,7 +387,7 @@ describe('Util', () => {
           prefixesAll: {},
         };
         return expect(util.createIri('[http://example.org]', activeTag, false, true, true))
-          .toEqual(namedNode('http://example.org'));
+          .toEqual(DF.namedNode('http://example.org'));
       });
 
       it('should return null for invalid explicit IRIs', async () => {
@@ -403,7 +405,7 @@ describe('Util', () => {
           },
         };
         return expect(util.createIri('license', activeTag, true, true, true))
-          .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
+          .toEqual(DF.namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
       it('should do case-insensitive term expansion', async () => {
@@ -413,7 +415,7 @@ describe('Util', () => {
           },
         };
         return expect(util.createIri('LiCeNSe', activeTag, true, true, true))
-          .toEqual(namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
+          .toEqual(DF.namedNode('http://www.w3.org/1999/xhtml/vocab#license'));
       });
 
       it('should make term expansion give priority to vocab', async () => {
@@ -424,7 +426,7 @@ describe('Util', () => {
           vocab: 'http://vocab.org/',
         };
         return expect(util.createIri('license', activeTag, true, true, true))
-          .toEqual(namedNode('http://vocab.org/license'));
+          .toEqual(DF.namedNode('http://vocab.org/license'));
       });
 
       it('should resolve relative prefixes against baseIRI in base-mode', async () => {
@@ -434,7 +436,7 @@ describe('Util', () => {
           },
         };
         return expect(util.createIri('pre:suffix', activeTag, false, true, true))
-          .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
+          .toEqual(DF.namedNode('http://example.org/relative/prefix#suffix'));
       });
 
       it('should resolve relative prefixes against baseIRI in vocab-mode', async () => {
@@ -444,7 +446,7 @@ describe('Util', () => {
           },
         };
         return expect(util.createIri('pre:suffix', activeTag, true, true, true))
-          .toEqual(namedNode('http://example.org/relative/prefix#suffix'));
+          .toEqual(DF.namedNode('http://example.org/relative/prefix#suffix'));
       });
 
       it('should resolve empty terms in base-mode to the baseIRI', async () => {
@@ -453,7 +455,7 @@ describe('Util', () => {
           vocab: 'http://vocab.org/',
         };
         return expect(util.createIri('', activeTag, false, true, true))
-          .toEqual(namedNode('http://example.org/'));
+          .toEqual(DF.namedNode('http://example.org/'));
       });
 
       it('should resolve null terms in base-mode to the baseIRI', async () => {
@@ -462,7 +464,7 @@ describe('Util', () => {
           vocab: 'http://vocab.org/',
         };
         return expect(util.createIri(null, activeTag, false, true, true))
-          .toEqual(namedNode('http://example.org/'));
+          .toEqual(DF.namedNode('http://example.org/'));
       });
 
       it('should resolve empty terms in vocab-mode to the baseIRI', async () => {
@@ -471,7 +473,7 @@ describe('Util', () => {
           vocab: 'http://vocab.org/',
         };
         return expect(util.createIri('', activeTag, true, true, true))
-          .toEqual(namedNode('http://vocab.org/'));
+          .toEqual(DF.namedNode('http://vocab.org/'));
       });
 
       it('should resolve null terms in vocab-mode to the baseIRI', async () => {
@@ -480,7 +482,7 @@ describe('Util', () => {
           vocab: 'http://vocab.org/',
         };
         return expect(util.createIri(null, activeTag, true, true, true))
-          .toEqual(namedNode('http://vocab.org/'));
+          .toEqual(DF.namedNode('http://vocab.org/'));
       });
     });
 
@@ -488,15 +490,15 @@ describe('Util', () => {
       it('should create string literals', async () => {
         const activeTag: any = {};
         return expect(util.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc'));
+          .toEqualRdfTerm(DF.literal('abc'));
       });
 
       it('should create datatyped literals', async () => {
         const activeTag: any = {
-          datatype: namedNode('http://example.org/datatype'),
+          datatype: DF.namedNode('http://example.org/datatype'),
         };
         return expect(util.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
+          .toEqualRdfTerm(DF.literal('abc', DF.namedNode('http://example.org/datatype')));
       });
 
       it('should create language literals', async () => {
@@ -504,16 +506,16 @@ describe('Util', () => {
           language: 'en-us',
         };
         return expect(util.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc', 'en-us'));
+          .toEqualRdfTerm(DF.literal('abc', 'en-us'));
       });
 
       it('should give preference to datatype literals over language literals', async () => {
         const activeTag: any = {
-          datatype: namedNode('http://example.org/datatype'),
+          datatype: DF.namedNode('http://example.org/datatype'),
           language: 'en-us',
         };
         return expect(util.createLiteral('abc', activeTag))
-          .toEqualRdfTerm(literal('abc', namedNode('http://example.org/datatype')));
+          .toEqualRdfTerm(DF.literal('abc', DF.namedNode('http://example.org/datatype')));
       });
 
       it('should give interpret datetimes without Z', async () => {
@@ -521,8 +523,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-18T00:00:00', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+          .toEqualRdfTerm(DF.literal('2012-03-18T00:00:00',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
       });
 
       it('should give interpret datetimes with Z', async () => {
@@ -530,8 +532,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-18T00:00:00Z', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00Z',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+          .toEqualRdfTerm(DF.literal('2012-03-18T00:00:00Z',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
       });
 
       it('should give interpret datetimes with negative offset', async () => {
@@ -539,8 +541,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-18T00:00:00-10:00', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00-10:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+          .toEqualRdfTerm(DF.literal('2012-03-18T00:00:00-10:00',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
       });
 
       it('should give interpret datetimes with positive offset', async () => {
@@ -548,8 +550,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-18T00:00:00+10:00', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18T00:00:00+10:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
+          .toEqualRdfTerm(DF.literal('2012-03-18T00:00:00+10:00',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#dateTime')));
       });
 
       it('should give interpret times without Z', async () => {
@@ -557,8 +559,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('00:00:00', activeTag))
-          .toEqualRdfTerm(literal('00:00:00',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+          .toEqualRdfTerm(DF.literal('00:00:00',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#time')));
       });
 
       it('should give interpret times with positive offset', async () => {
@@ -566,8 +568,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('00:00:00+01:10', activeTag))
-          .toEqualRdfTerm(literal('00:00:00+01:10',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+          .toEqualRdfTerm(DF.literal('00:00:00+01:10',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#time')));
       });
 
       it('should give interpret times with negative offset', async () => {
@@ -575,8 +577,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('00:00:00-01:10', activeTag))
-          .toEqualRdfTerm(literal('00:00:00-01:10',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+          .toEqualRdfTerm(DF.literal('00:00:00-01:10',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#time')));
       });
 
       it('should give interpret times with Z', async () => {
@@ -584,8 +586,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('00:00:00Z', activeTag))
-          .toEqualRdfTerm(literal('00:00:00Z',
-            namedNode('http://www.w3.org/2001/XMLSchema#time')));
+          .toEqualRdfTerm(DF.literal('00:00:00Z',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#time')));
       });
 
       it('should give interpret dates', async () => {
@@ -593,8 +595,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-18', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18',
-            namedNode('http://www.w3.org/2001/XMLSchema#date')));
+          .toEqualRdfTerm(DF.literal('2012-03-18',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#date')));
       });
 
       it('should give interpret dates with Z', async () => {
@@ -602,8 +604,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-18Z', activeTag))
-          .toEqualRdfTerm(literal('2012-03-18Z',
-            namedNode('http://www.w3.org/2001/XMLSchema#date')));
+          .toEqualRdfTerm(DF.literal('2012-03-18Z',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#date')));
       });
 
       it('should give interpret years', async () => {
@@ -611,8 +613,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012', activeTag))
-          .toEqualRdfTerm(literal('2012',
-            namedNode('http://www.w3.org/2001/XMLSchema#gYear')));
+          .toEqualRdfTerm(DF.literal('2012',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#gYear')));
       });
 
       it('should give interpret years', async () => {
@@ -620,8 +622,8 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03', activeTag))
-          .toEqualRdfTerm(literal('2012-03',
-            namedNode('http://www.w3.org/2001/XMLSchema#gYearMonth')));
+          .toEqualRdfTerm(DF.literal('2012-03',
+            DF.namedNode('http://www.w3.org/2001/XMLSchema#gYearMonth')));
       });
 
       it('should give not interpret invalid dates (1)', async () => {
@@ -629,7 +631,7 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral(' 2012-03-12', activeTag))
-          .toEqualRdfTerm(literal(' 2012-03-12'));
+          .toEqualRdfTerm(DF.literal(' 2012-03-12'));
       });
 
       it('should give not interpret invalid dates (2)', async () => {
@@ -637,7 +639,7 @@ describe('Util', () => {
           interpretObjectAsTime: true,
         };
         return expect(util.createLiteral('2012-03-12 ', activeTag))
-          .toEqualRdfTerm(literal('2012-03-12 '));
+          .toEqualRdfTerm(DF.literal('2012-03-12 '));
       });
     });
 
@@ -650,7 +652,7 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('ex:abc', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/abc'),
           ]);
       });
 
@@ -662,8 +664,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('ex:abc ex:def', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
+            DF.namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/def'),
           ]);
       });
 
@@ -675,8 +677,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('ex:abc\tex:def', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
+            DF.namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/def'),
           ]);
       });
 
@@ -688,8 +690,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('ex:abc \tex:def', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
+            DF.namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/def'),
           ]);
       });
 
@@ -701,8 +703,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('ex:abc\t    \t\t\t   ex:def', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
+            DF.namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/def'),
           ]);
       });
 
@@ -714,8 +716,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('  \t\t  ex:abc ex:def  \t   \t', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
+            DF.namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/def'),
           ]);
       });
 
@@ -727,8 +729,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('ex:abc\nex:def', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://example.org/abc'),
-            namedNode('http://example.org/def'),
+            DF.namedNode('http://example.org/abc'),
+            DF.namedNode('http://example.org/def'),
           ]);
       });
 
@@ -753,8 +755,8 @@ describe('Util', () => {
         };
         return expect(util.createVocabIris('termA termB', activeTag, true, true))
           .toEqualRdfTermArray([
-            namedNode('http://vocab.org/termA'),
-            namedNode('http://vocab.org/termB'),
+            DF.namedNode('http://vocab.org/termA'),
+            DF.namedNode('http://vocab.org/termB'),
           ]);
       });
 
@@ -785,36 +787,36 @@ describe('Util', () => {
     describe('#getResourceOrBaseIri', () => {
       it('should return the baseIRI for true', async () => {
         const activeTag: any = {
-          localBaseIRI: namedNode('http://base.org/'),
+          localBaseIRI: DF.namedNode('http://base.org/'),
         };
         return expect(util.getResourceOrBaseIri(true, activeTag))
-          .toEqualRdfTerm(namedNode('http://base.org/'));
+          .toEqualRdfTerm(DF.namedNode('http://base.org/'));
       });
 
       it('should return the term otherwise', async () => {
         const activeTag: any = {
-          localBaseIRI: namedNode('http://base.org/'),
+          localBaseIRI: DF.namedNode('http://base.org/'),
         };
-        return expect(util.getResourceOrBaseIri(namedNode('http://term.org/'), activeTag))
-          .toEqualRdfTerm(namedNode('http://term.org/'));
+        return expect(util.getResourceOrBaseIri(DF.namedNode('http://term.org/'), activeTag))
+          .toEqualRdfTerm(DF.namedNode('http://term.org/'));
       });
     });
 
     describe('#getBaseIRI', () => {
       it('should return the baseIRI without hash', async () => {
         return expect(util.getBaseIRI('http://base.org/'))
-          .toEqualRdfTerm(namedNode('http://base.org/'));
+          .toEqualRdfTerm(DF.namedNode('http://base.org/'));
       });
 
       it('should return the baseIRI with hash', async () => {
         return expect(util.getBaseIRI('http://base.org/#hash'))
-          .toEqualRdfTerm(namedNode('http://base.org/'));
+          .toEqualRdfTerm(DF.namedNode('http://base.org/'));
       });
 
       it('should return a relative baseIRI', async () => {
-        util.baseIRI = namedNode('http://example.org/');
+        util.baseIRI = DF.namedNode('http://example.org/');
         return expect(util.getBaseIRI('abc'))
-          .toEqualRdfTerm(namedNode('http://example.org/abc'));
+          .toEqualRdfTerm(DF.namedNode('http://example.org/abc'));
       });
     });
   });

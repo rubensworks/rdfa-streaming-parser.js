@@ -1,65 +1,66 @@
-import {namedNode} from "@rdfjs/data-model";
+import {DataFactory} from "rdf-data-factory";
 import "jest-rdf";
 import * as RDF from "rdf-js";
 import {PassThrough} from "stream";
 import {RdfaParser} from "../lib/RdfaParser";
 import {RDFA_FEATURES} from "../lib/RdfaProfile";
-const DataFactory = require('@rdfjs/data-model');
 const streamifyString = require('streamify-string');
 const arrayifyStream = require('arrayify-stream');
 const quad = require('rdf-quad');
+
+const DF = new DataFactory();
 
 describe('RdfaParser', () => {
 
   it('should be constructable without args', () => {
     const instance = new RdfaParser();
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).util.dataFactory).toBe(require('@rdfjs/data-model'));
-    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode(''));
-    expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).util.dataFactory).toBeInstanceOf(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(DF.namedNode(''));
+    expect((<any> instance).defaultGraph).toBe(DF.defaultGraph());
   });
 
   it('should be constructable with empty args', () => {
     const instance = new RdfaParser({});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).util.dataFactory).toBe(DataFactory);
-    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode(''));
-    expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).util.dataFactory).toBeInstanceOf(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(DF.namedNode(''));
+    expect((<any> instance).defaultGraph).toBe(DF.defaultGraph());
   });
 
   it('should be constructable with args with a custom data factory', () => {
-    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => DF.namedNode('abc') };
     const instance = new RdfaParser({dataFactory});
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).util.dataFactory).toBe(dataFactory);
-    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('abc'));
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(DF.namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe('abc');
   });
 
   it('should be constructable with args with a custom base IRI', () => {
     const instance = new RdfaParser({baseIRI: 'myBaseIRI'});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).util.dataFactory).toBe(DataFactory);
-    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('myBaseIRI'));
-    expect((<any> instance).defaultGraph).toBe(DataFactory.defaultGraph());
+    expect((<any> instance).util.dataFactory).toBeInstanceOf(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(DF.namedNode('myBaseIRI'));
+    expect((<any> instance).defaultGraph).toBe(DF.defaultGraph());
   });
 
   it('should be constructable with args with a custom default graph', () => {
-    const defaultGraph = DataFactory.namedNode('abc');
+    const defaultGraph = DF.namedNode('abc');
     const instance = new RdfaParser({defaultGraph});
     expect(instance).toBeInstanceOf(RdfaParser);
-    expect((<any> instance).util.dataFactory).toBe(DataFactory);
-    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode(''));
+    expect((<any> instance).util.dataFactory).toBeInstanceOf(DataFactory);
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(DF.namedNode(''));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
   });
 
   it('should be constructable with args with a custom data factory, base IRI and default graph', () => {
-    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => namedNode('abc') };
-    const defaultGraph = DataFactory.namedNode('abc');
+    const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => DF.namedNode('abc') };
+    const defaultGraph = DF.namedNode('abc');
     const instance = new RdfaParser({ dataFactory, baseIRI: 'myBaseIRI', defaultGraph });
     expect(instance).toBeInstanceOf(RdfaParser);
     expect((<any> instance).util.dataFactory).toBe(dataFactory);
-    expect((<any> instance).util.baseIRI).toEqualRdfTerm(namedNode('abc'));
+    expect((<any> instance).util.baseIRI).toEqualRdfTerm(DF.namedNode('abc'));
     expect((<any> instance).defaultGraph).toBe(defaultGraph);
   });
 
@@ -93,9 +94,9 @@ describe('RdfaParser', () => {
     });
 
     describe('#emitTriple', () => {
-      it('should emit on invalid terms', async () => {
+      it('should emit on valid terms', async () => {
         const spy = jest.spyOn(parser, 'push');
-        parser.emitTriple(namedNode('http://s'), namedNode('http://p'), namedNode('http://o'));
+        parser.emitTriple(DF.namedNode('http://s'), DF.namedNode('http://p'), DF.namedNode('http://o'));
         expect(spy).toHaveBeenCalledWith(quad(
           'http://s',
           'http://p',
@@ -105,19 +106,19 @@ describe('RdfaParser', () => {
 
       it('should not emit on invalid subject', async () => {
         const spy = jest.spyOn(parser, 'push');
-        parser.emitTriple(namedNode('s'), namedNode('http://p'), namedNode('http://o'));
+        parser.emitTriple(DF.namedNode('s'), DF.namedNode('http://p'), DF.namedNode('http://o'));
         expect(spy).not.toHaveBeenCalled();
       });
 
       it('should not emit on invalid predicate', async () => {
         const spy = jest.spyOn(parser, 'push');
-        parser.emitTriple(namedNode('http://s'), namedNode('p'), namedNode('http://o'));
+        parser.emitTriple(DF.namedNode('http://s'), DF.namedNode('p'), DF.namedNode('http://o'));
         expect(spy).not.toHaveBeenCalled();
       });
 
       it('should not emit on invalid object', async () => {
         const spy = jest.spyOn(parser, 'push');
-        parser.emitTriple(namedNode('http://s'), namedNode('http://p'), namedNode('o'));
+        parser.emitTriple(DF.namedNode('http://s'), DF.namedNode('http://p'), DF.namedNode('o'));
         expect(spy).not.toHaveBeenCalled();
       });
     });
@@ -288,7 +289,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
         ]);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://base.com/'));
       });
 
       it('base tags are ignored when features.baseTag is disabled', async () => {
@@ -304,7 +305,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
         ]);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://example.org/'));
       });
 
       it('base tags with fragment and set the baseIRI', async () => {
@@ -319,7 +320,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
         ]);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://base.com/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://base.com/'));
       });
 
       it('base tags without href and not set the baseIRI', async () => {
@@ -331,7 +332,7 @@ with Bob</h2>
     <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(namedNode('http://example.org/'));
+        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://example.org/'));
       });
 
       it('typeof with about', async () => {
