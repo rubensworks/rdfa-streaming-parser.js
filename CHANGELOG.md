@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v1.3.0"></a>
+## [v1.3.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.2.2...v1.3.0) - 2020-09-15
+
+### Changed
+* [Migrate to rdf-data-factory](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/0552eb287b228cdfa305070803f9dd176041bbe0)
+
+### Fixed
+* [Fix import method sometimes failing on large streams](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/93c8f5f7d002d05bf5e23fa2c3fa5c97d6ac88d3)
+
 <a name="v1.2.2"></a>
 ## [v1.2.2](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.2.0...v1.2.2) - 2020-06-03
 
