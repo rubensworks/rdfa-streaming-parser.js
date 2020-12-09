@@ -30,7 +30,7 @@
   "dependencies": {
     "@types/rdf-js": "*",
     "rdf-data-factory": "^1.0.2",
-    "htmlparser2": "^5.0.0",
+    "htmlparser2": "^6.0.0",
     "relative-to-absolute-iri": "^1.0.2"
   },
   "pre-commit": [
