@@ -1,6 +1,6 @@
 # RDFa Streaming Parser
 
-[![Build Status](https://travis-ci.org/rubensworks/rdfa-streaming-parser.js.svg?branch=master)](https://travis-ci.org/rubensworks/rdfa-streaming-parser.js)
+[![Build status](https://github.com/rubensworks/rdfa-streaming-parser.js/workflows/CI/badge.svg)](https://github.com/rubensworks/rdfa-streaming-parser.js/actions?query=workflow%3ACI)
 [![Coverage Status](https://coveralls.io/repos/github/rubensworks/rdfa-streaming-parser.js/badge.svg?branch=master)](https://coveralls.io/github/rubensworks/rdfa-streaming-parser.js?branch=master)
 [![npm version](https://badge.fury.io/js/rdfa-streaming-parser.svg)](https://www.npmjs.com/package/rdfa-streaming-parser)
 
