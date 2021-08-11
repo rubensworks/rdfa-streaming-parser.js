@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v1.5.0"></a>
+## [v1.5.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.4.0...v1.5.0) - 2021-08-11
+
+### Changed
+* [Migrate to @rdfjs/types](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/b73e115a97c4d515c09e64fa1049bdb1f7e8c0c8)
+* [Update dependency htmlparser2 to v6](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/816dc9e8b488a507a3115d2f7558f7d6ccc9b25a)
+
 <a name="v1.4.0"></a>
 ## [v1.4.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.3.0...v1.4.0) - 2020-10-12
 
