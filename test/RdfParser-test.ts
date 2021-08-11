@@ -1,6 +1,6 @@
 import {DataFactory} from "rdf-data-factory";
 import "jest-rdf";
-import * as RDF from "rdf-js";
+import * as RDF from "@rdfjs/types";
 import {PassThrough} from "stream";
 import {RdfaParser} from "../lib/RdfaParser";
 import {RDFA_FEATURES} from "../lib/RdfaProfile";

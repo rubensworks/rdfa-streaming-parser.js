@@ -1,7 +1,7 @@
 import {DomHandler} from "domhandler";
 import EventEmitter = NodeJS.EventEmitter;
 import {Parser as HtmlParser} from "htmlparser2";
-import * as RDF from "rdf-js";
+import * as RDF from "@rdfjs/types";
 import {PassThrough, Transform, TransformCallback} from "stream";
 import {IActiveTag} from "./IActiveTag";
 import {IHtmlParseListener} from "./IHtmlParseListener";

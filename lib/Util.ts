@@ -1,4 +1,4 @@
-import * as RDF from "rdf-js";
+import * as RDF from "@rdfjs/types";
 import {resolve} from "relative-to-absolute-iri";
 import {IActiveTag} from "./IActiveTag";
 import {RDFA_CONTENTTYPES, RdfaProfile} from "./RdfaProfile";
