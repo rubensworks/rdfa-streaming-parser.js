@@ -22,6 +22,17 @@ $ yarn add rdfa-streaming-parser
 ```
 
 This package also works out-of-the-box in browsers via tools such as [webpack](https://webpack.js.org/) and [browserify](http://browserify.org/).
+Webpack 5 no longer ships with Node.js core libraries, including `stream`.
+The [node-polyfill-webpack-plugin](https://www.npmjs.com/package/node-polyfill-webpack-plugin) module can provide this, with this addition to the webpack config:
+
+``` javascript
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
+
+module.exports = {
+    …
+    plugins: [ … new NodePolyfillPlugin() ]
+}
+```
 
 ## Require
 
