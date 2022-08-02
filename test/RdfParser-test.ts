@@ -4,8 +4,9 @@ import * as RDF from "@rdfjs/types";
 import {PassThrough} from "stream";
 import {RdfaParser} from "../lib/RdfaParser";
 import {RDFA_FEATURES} from "../lib/RdfaProfile";
+import arrayifyStream from "arrayify-stream";
+
 const streamifyString = require('streamify-string');
-const arrayifyStream = require('arrayify-stream');
 const quad = require('rdf-quad');
 
 const DF = new DataFactory();

@@ -74,7 +74,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
   }
 
   public _transform(chunk: any, encoding: string, callback: TransformCallback): void {
-    this.parser.write(chunk);
+    this.parser.write(chunk.toString());
     callback();
   }
 
