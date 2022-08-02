@@ -125,5 +125,6 @@
   },
   "resolutions": {
     "@types/rdf-js": "^4.0.0"
-  }
+  },
+  "sideEffects": false
 }
