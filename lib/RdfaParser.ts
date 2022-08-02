@@ -2,7 +2,7 @@ import {DomHandler} from "domhandler";
 import EventEmitter = NodeJS.EventEmitter;
 import {Parser as HtmlParser} from "htmlparser2";
 import * as RDF from "@rdfjs/types";
-import {PassThrough, Transform, TransformCallback} from "stream";
+import {PassThrough, Transform} from "readable-stream";
 import {IActiveTag} from "./IActiveTag";
 import {IHtmlParseListener} from "./IHtmlParseListener";
 import * as INITIAL_CONTEXT_XHTML from "./initial-context-xhtml.json";
@@ -73,12 +73,12 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     return parsed;
   }
 
-  public _transform(chunk: any, encoding: string, callback: TransformCallback): void {
+  public _transform(chunk: any, encoding: string, callback: (error?: Error | null, data?: any) => void): void {
     this.parser.write(chunk.toString());
     callback();
   }
 
-  public _flush(callback: TransformCallback): void {
+  public _flush(callback: (error?: Error | null, data?: any) => void): void {
     this.parser.end();
     callback();
   }
