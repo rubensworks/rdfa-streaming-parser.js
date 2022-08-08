@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.0"></a>
+## [v2.0.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.5.0...v2.0.0) - 2022-08-08
+
+This release has been marked as a major change due to the transition from Node's internal stream API to readable-stream. Most users should experience not breakages with this change.
+
+### Changed
+* [Move away from Node.js built-ins (#47)](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/3c088faebbdea89775e3bb6dfbff78623a508a38)
+* [Enable tree shacking](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/30c39e81527d1cc3e2bc5bd1a4c69ca38c056da0)
+
 <a name="v1.5.0"></a>
 ## [v1.5.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v1.4.0...v1.5.0) - 2021-08-11
 
