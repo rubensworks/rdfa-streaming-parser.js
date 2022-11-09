@@ -24,7 +24,9 @@
     "lib/**/*.d.ts",
     "lib/**/*.js",
     "lib/**/*.json",
+    "lib/**/*.js.map",
     "index.d.ts",
+    "index.js.map",
     "index.js"
   ],
   "dependencies": {
