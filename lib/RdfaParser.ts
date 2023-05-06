@@ -124,6 +124,8 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         const suffix = parentTag.prefixesCustom[prefix];
         const attributeKey = prefix === '' ? 'xmlns' : 'xmlns:' + prefix;
         if (!(attributeKey in attributes)) {
+          if (prefix !== '')
+            this.emitPrefix(prefix, suffix);
           attributes[attributeKey] = suffix;
         }
       }
@@ -238,7 +240,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
 
     // 3: handle prefixes
     activeTag.prefixesCustom = Util.parsePrefixes(attributes, parentTag.prefixesCustom,
-      this.features.xmlnsPrefixMappings);
+      this.features.xmlnsPrefixMappings, (prefix, suffix) => this.emitPrefix(prefix, suffix));
     activeTag.prefixesAll = Object.keys(activeTag.prefixesCustom).length > 0
       ? { ...parentTag.prefixesAll, ...activeTag.prefixesCustom } : parentTag.prefixesAll;
 
@@ -780,6 +782,18 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       return;
     }
     this.push(this.util.dataFactory.quad(subject, predicate, object, this.defaultGraph));
+  }
+
+  // TODO: Make sure we are not emitting things before the stream starts
+  /**
+   * Emit the prefix using the 'prefix' event
+   * @param prefix The prefix to emit.
+   * @param suffix The suffix to prefix.
+   */
+  protected emitPrefix(prefix: string, suffix: string) {
+    console.log('emit prefix function called', prefix, suffix)
+    if (suffix.indexOf(':') < 0)
+      this.emit('prefix', prefix, this.util.dataFactory.namedNode(suffix));
   }
 
   /**
