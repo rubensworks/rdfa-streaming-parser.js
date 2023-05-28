@@ -31,7 +31,7 @@
   ],
   "dependencies": {
     "@rdfjs/types": "*",
-    "htmlparser2": "^8.0.0",
+    "htmlparser2": "^9.0.0",
     "rdf-data-factory": "^1.1.0",
     "relative-to-absolute-iri": "^1.0.2",
     "readable-stream": "^4.0.0"
