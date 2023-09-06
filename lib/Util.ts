@@ -50,11 +50,13 @@ export class Util {
    */
   public static parsePrefixes(attributes: {[s: string]: string},
                               parentPrefixes: {[prefix: string]: string},
-                              xmlnsPrefixMappings: boolean): {[prefix: string]: string} {
+                              xmlnsPrefixMappings: boolean,
+                              cb?: (prefix: string, suffix: string) => void): {[prefix: string]: string} {
     const additionalPrefixes: {[prefix: string]: string} = {};
     if (xmlnsPrefixMappings) {
       for (const attribute in attributes) {
         if (attribute.startsWith('xmlns')) {
+          cb?.(attribute.substr(6), attributes[attribute])
           additionalPrefixes[attribute.substr(6)] = attributes[attribute];
         }
       }
@@ -67,6 +69,7 @@ export class Util {
         let prefixMatch;
         // tslint:disable-next-line:no-conditional-assignment
         while (prefixMatch = Util.PREFIX_REGEX.exec(attributes.prefix)) {
+          cb?.(prefixMatch[1], prefixMatch[2]);
           prefixes[prefixMatch[1]] = prefixMatch[2];
         }
       }
