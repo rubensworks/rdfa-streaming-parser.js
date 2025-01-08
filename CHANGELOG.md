@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v3.0.0"></a>
+## [v3.0.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v2.0.1...v3.0.0) - 2025-01-08
+
+### BREAKING CHANGES
+* [Update to rdf-data-factory v2](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/a06070d2b28bd3f778374c6bafe3b54ca55c1e38)
+    This includes a bump to @rdfjs/types@2.0.0, which requires TypeScript 5 and Node 14+
+
+### Changed
+* [Update dependency htmlparser2 to v9 (#55)](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/d425142755bf5b904f3cba6e65befa4e726e7c18)
+* [Update dependency @types/readable-stream to v4](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/cc4eca48f7ef225f8c17b312fae3898c26748907)
+
 <a name="v2.0.1"></a>
 ## [v2.0.1](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v2.0.0...v2.0.1) - 2022-11-09
 
