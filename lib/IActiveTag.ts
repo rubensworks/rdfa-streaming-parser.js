@@ -12,11 +12,13 @@ export interface IActiveTag {
   explicitNewSubject?: boolean;
   predicates?: RDF.NamedNode[];
   object?: RDF.NamedNode | RDF.BlankNode | boolean;
-  text?: string[];
+  textWithTags?: string[];
+  textWithoutTags?: string[];
   vocab?: string;
   language?: string;
   datatype?: RDF.NamedNode;
   collectChildTags?: boolean;
+  collectChildTagsForCurrentTag?: boolean;
   collectedPatternTag?: IRdfaPattern;
   interpretObjectAsTime?: boolean;
   incompleteTriples?: { predicate: RDF.Quad_Predicate, reverse: boolean, list?: boolean }[];

@@ -3708,6 +3708,23 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
+      it('@about and empty @datatype should force string literal value with sub-tags', async () => {
+        return expect(await parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Test 0290</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <p about="http://example.org/" property="rdf:value" datatype="">value <em>bar</em></p>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value bar"'),
+          ]);
+      });
+
       it('@href and empty @datatype should force string literal value', async () => {
         return expect(await parse(parser, `<html>
 <head>
@@ -3722,6 +3739,73 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
             quad('http://example.org/',
               'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
               '"value"'),
+          ]);
+      });
+
+      it('@href and empty @datatype should force string literal value with sub-tags', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test 0290</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <a href="http://example.org/" property="rdf:value" datatype="">value <em>bar</em></a>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value bar"'),
+          ]);
+      });
+
+      it('rdf:HTML datatype and empty @datatype should nestable', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test dummy</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <div datatype="rdf:HTML" property="schema:description">
+    <a href="http://example.org/" property="rdf:value" datatype="">value <em>bar</em></a>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value bar"'),
+            quad('http://example.org/',
+              'http://schema.org/description',
+              '"\n    <a href="http://example.org/" property="rdf:value" datatype="">value <em>bar</em></a>\n  "^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
+          ]);
+      });
+
+      it('rdf:HTML datatype and empty @datatype should nestable recursively', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test dummy</title>
+</head>
+<body>
+  <h1>@href becomes subject when @property and @datatype are present</h1>
+  <div datatype="rdf:HTML" property="schema:description">
+    <a href="http://example.org/" property="rdf:value" datatype="">value <em>bar</em><div datatype="rdf:HTML" property="schema:description2"><a href="http://example.org/" property="rdf:value2" datatype="">value2 <em>bar2</em></a></div></a>
+  </div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value2',
+              '"value2 bar2"'),
+            quad('http://example.org/',
+              'http://schema.org/description2',
+              '"<a href="http://example.org/" property="rdf:value2" datatype="">value2 <em>bar2</em></a>"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
+            quad('http://example.org/',
+              'http://www.w3.org/1999/02/22-rdf-syntax-ns#value',
+              '"value barvalue2 bar2"'),
+            quad('http://example.org/',
+              'http://schema.org/description',
+              '"\n    <a href="http://example.org/" property="rdf:value" datatype="">value <em>bar</em><div datatype="rdf:HTML" property="schema:description2"><a href="http://example.org/" property="rdf:value2" datatype="">value2 <em>bar2</em></a></div></a>\n  "^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
           ]);
       });
 
