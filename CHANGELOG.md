@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v3.0.1"></a>
+## [v3.0.1](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v3.0.0...v3.0.1) - 2025-01-13
+
+### Fixed
+* [Fix nested tag-capturing and non-capturing literals conflicting](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/864a748dbc95d92991fed692aa2f7286e979740a)
+
 <a name="v3.0.0"></a>
 ## [v3.0.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v2.0.1...v3.0.0) - 2025-01-08
 
