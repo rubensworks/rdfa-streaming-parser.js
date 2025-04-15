@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v3.0.2"></a>
+## [v3.0.2](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v3.0.1...v3.0.2) - 2025-04-15
+
+### Fixed
+* [Normalize language tags to lowercase, Closes comunica/comunica#1469](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/1006a41d6b1a510935b9f16d4618dcb11e3a065f)
+
 <a name="v3.0.1"></a>
 ## [v3.0.1](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v3.0.0...v3.0.1) - 2025-01-13
 
