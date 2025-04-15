@@ -509,6 +509,14 @@ describe('Util', () => {
           .toEqualRdfTerm(DF.literal('abc', 'en-us'));
       });
 
+      it('should create case-insensitive language literals', async () => {
+        const activeTag: any = {
+          language: 'EN-US',
+        };
+        return expect(util.createLiteral('abc', activeTag))
+            .toEqualRdfTerm(DF.literal('abc', 'en-us'));
+      });
+
       it('should give preference to datatype literals over language literals', async () => {
         const activeTag: any = {
           datatype: DF.namedNode('http://example.org/datatype'),

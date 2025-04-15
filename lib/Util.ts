@@ -203,7 +203,7 @@ export class Util {
         }
       }
     }
-    return this.dataFactory.literal(literal, activeTag.datatype || activeTag.language);
+    return this.dataFactory.literal(literal, activeTag.datatype || activeTag.language?.toLowerCase());
   }
 
   /**
