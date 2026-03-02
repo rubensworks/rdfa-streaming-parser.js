@@ -3809,6 +3809,30 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
           ]);
       });
 
+      it('rdf:HTML datatype should preserve child node with @property separated by intermediate plain element', async () => {
+        return expect(await parse(parser, `<html>
+<head>
+  <title>Test</title>
+</head>
+<body>
+  <div about="#foo" prefix="schema: http://schema.org/" datatype="rdf:HTML" property="schema:description">
+<div>
+<span property="schema:encodingFormat">WebM</span>
+</div>
+</div>
+</body>
+</html>`))
+          .toBeRdfIsomorphic([
+            quad('http://example.org/#foo',
+              'http://schema.org/encodingFormat',
+              '"WebM"'),
+            quad('http://example.org/#foo',
+              'http://schema.org/description',
+              '"\n<div xmlns:schema="http://schema.org/">\n<span property="schema:encodingFormat"' +
+              ' xmlns:schema="http://schema.org/">WebM</span>\n</div>\n"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
+          ]);
+      });
+
       it('@property does not set parent object without @typeof', async () => {
         return expect(await parse(parser, `<html>
 <head>

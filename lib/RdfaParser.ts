@@ -665,7 +665,11 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         // Reset text, unless the parent is also collecting text
         if (!parentTag.predicates) {
           activeTag.textWithoutTags = null;
-          activeTag.textWithTags = null;
+          // Preserve textWithTags when inside an HTML/XML literal context,
+          // so the element's HTML representation propagates to the ancestor literal accumulator
+          if (!activeTag.collectChildTags) {
+            activeTag.textWithTags = null;
+          }
         }
       }
 
