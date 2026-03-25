@@ -6,14 +6,14 @@ const DF = new DataFactory();
 
 describe('Util', () => {
 
-  it('should be constructable with null dataFactory and null baseIRI', () => {
-    const instance = new Util(null, null);
+  it('should be constructable with undefined dataFactory and undefined baseIRI', () => {
+    const instance = new Util(undefined, undefined);
     expect(instance).toBeInstanceOf(Util);
     expect((<any> instance).dataFactory).toBeInstanceOf(DataFactory);
     expect((<any> instance).baseIRI).toEqualRdfTerm(DF.namedNode(''));
   });
 
-  it('should be constructable with non-null dataFactory and non-null baseIRI', () => {
+  it('should be constructable with non-undefined dataFactory and non-undefined baseIRI', () => {
     const dataFactory: any = { defaultGraph: () => 'abc', namedNode: () => DF.namedNode('abc') };
     const instance = new Util(dataFactory, 'abc');
     expect(instance).toBeInstanceOf(Util);
@@ -277,7 +277,7 @@ describe('Util', () => {
     let util;
 
     beforeEach(() => {
-      util = new Util(null, 'http://example.org/');
+      util = new Util(undefined, 'http://example.org/');
     });
 
     describe('#createIri', () => {

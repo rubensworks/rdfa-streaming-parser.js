@@ -32,10 +32,10 @@ export class Util {
 
   public readonly dataFactory: RDF.DataFactory;
   public baseIRI: RDF.NamedNode;
-  public blankNodeFactory: () => RDF.BlankNode;
+  public blankNodeFactory: (() => RDF.BlankNode) | undefined;
   private readonly baseIRIDocument: RDF.NamedNode;
 
-  constructor(dataFactory: RDF.DataFactory, baseIRI: string) {
+  constructor(dataFactory: RDF.DataFactory | undefined, baseIRI: string | undefined) {
     this.dataFactory = dataFactory || new DataFactory();
     this.baseIRI = this.dataFactory.namedNode(baseIRI || '');
     this.baseIRIDocument = this.baseIRI;
@@ -86,8 +86,8 @@ export class Util {
   public static expandPrefixedTerm(term: string, activeTag: IActiveTag): string {
     // Check if the term is prefixed
     const colonIndex: number = term.indexOf(':');
-    let prefix: string;
-    let local: string;
+    let prefix: string | undefined;
+    let local: string | undefined;
     if (colonIndex >= 0) {
       prefix = term.substr(0, colonIndex);
       local = term.substr(colonIndex + 1);
@@ -234,7 +234,7 @@ export class Util {
                                       allowBlankNode: B): B extends true
     ? (RDF.NamedNode | RDF.BlankNode) : RDF.NamedNode;
   public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
-                                      allowBlankNode: B): RDF.NamedNode | RDF.BlankNode {
+                                      allowBlankNode: B): RDF.NamedNode | RDF.BlankNode | null {
     term = term || '';
 
     if (!allowSafeCurie) {
