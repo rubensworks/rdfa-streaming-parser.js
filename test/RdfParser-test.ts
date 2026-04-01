@@ -1,10 +1,10 @@
+import { PassThrough } from 'node:stream';
+import type * as RDF from '@rdfjs/types';
+import arrayifyStream from 'arrayify-stream';
 import { DataFactory } from 'rdf-data-factory';
 import 'jest-rdf';
-import type * as RDF from '@rdfjs/types';
-import { PassThrough } from 'node:stream';
 import { RdfaParser } from '../lib/RdfaParser';
 import { RDFA_FEATURES } from '../lib/RdfaProfile';
-import arrayifyStream from 'arrayify-stream';
 
 const quad = require('rdf-quad');
 const streamifyString = require('streamify-string');
@@ -127,7 +127,7 @@ describe('RdfaParser', () => {
         parser.onTagClose = () => {
           throw new Error('Dummy error');
         };
-        return expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -139,7 +139,7 @@ describe('RdfaParser', () => {
         parser.onTagOpen = () => {
           throw new Error('Dummy error');
         };
-        return expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -151,7 +151,7 @@ describe('RdfaParser', () => {
         parser.onText = () => {
           throw new Error('Dummy error');
         };
-        return expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -163,7 +163,7 @@ describe('RdfaParser', () => {
         parser.onEnd = () => {
           throw new Error('Dummy error');
         };
-        return expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -174,12 +174,12 @@ describe('RdfaParser', () => {
 
     describe('should parse', () => {
       it('an empty document', async() => {
-        return await expect(parse(parser, ``)).resolves
+        await expect(parse(parser, ``)).resolves
           .toBeRdfIsomorphic([]);
       });
 
       it('property attributes to predicates', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -191,7 +191,7 @@ describe('RdfaParser', () => {
       });
 
       it('multi-line strings', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 property="http://purl.org/dc/terms/title">The
@@ -205,7 +205,7 @@ with Bob</h2>
       });
 
       it('absolute about attributes to subjects', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 about="http://example2.org/" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -217,7 +217,7 @@ with Bob</h2>
       });
 
       it('relative about attributes to subjects', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 about="img.jpg" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -229,7 +229,7 @@ with Bob</h2>
       });
 
       it('blank node about attributes to subjects', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <h2 about="_:b1" property="http://purl.org/dc/terms/title">The Trouble with Bob</h2>
@@ -241,7 +241,7 @@ with Bob</h2>
       });
 
       it('content attributes to objects', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body>
     <div property="http://purl.org/dc/terms/title" resource="img.jpg"></div>
@@ -253,7 +253,7 @@ with Bob</h2>
       });
 
       it('prefixes and expand them', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
     <div property="dc:title" resource="img.jpg"></div>
@@ -265,7 +265,7 @@ with Bob</h2>
       });
 
       it('property with default prefix and expand them', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="dc: http://purl.org/dc/terms/ schema: http://schema.org/">
     <div property=":title" resource="img.jpg"></div>
@@ -288,7 +288,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
         ]);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://base.com/'));
+        await expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://base.com/'));
       });
 
       it('base tags are ignored when features.baseTag is disabled', async() => {
@@ -304,7 +304,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://example.org/', 'http://purl.org/dc/terms/title', 'http://example.org/img.jpg'),
         ]);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://example.org/'));
+        await expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://example.org/'));
       });
 
       it('base tags with fragment and set the baseIRI', async() => {
@@ -319,7 +319,7 @@ with Bob</h2>
         expect(output).toBeRdfIsomorphic([
           quad('http://base.com/', 'http://purl.org/dc/terms/title', 'http://base.com/img.jpg'),
         ]);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://base.com/'));
+        await expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://base.com/'));
       });
 
       it('base tags without href and not set the baseIRI', async() => {
@@ -331,11 +331,11 @@ with Bob</h2>
     <div property="dc:title" resource="img.jpg"></div>
 </body>
 </html>`);
-        return expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://example.org/'));
+        await expect(parser.util.baseIRI).toEqualRdfTerm(DF.namedNode('http://example.org/'));
       });
 
       it('typeof with about', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="schema: http://schema.org/">
     <h2 about="#myDoc" typeof="schema:Document">The Trouble with Bob</h2>
@@ -347,7 +347,7 @@ with Bob</h2>
       });
 
       it('empty typeof with defined vocab', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body vocab="http://schema.org/">
     <h2 about="#myDoc" typeof="">The Trouble with Bob</h2>
@@ -359,7 +359,7 @@ with Bob</h2>
       });
 
       it('typeofs with about', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="schema: http://schema.org/">
     <h2 about="#myDoc" typeof="schema:Document1 schema:Document2">The Trouble with Bob</h2>
@@ -372,7 +372,7 @@ with Bob</h2>
       });
 
       it('typeof with resource', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="schema: http://schema.org/">
     <h2 resource="#myDoc" typeof="schema:Document">The Trouble with Bob</h2>
@@ -384,7 +384,7 @@ with Bob</h2>
       });
 
       it('typeof with about and resource', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="schema: http://schema.org/">
     <h2 about="#myDoc1" resource="#myDoc2" typeof="schema:Document">The Trouble with Bob</h2>
@@ -396,7 +396,7 @@ with Bob</h2>
       });
 
       it('typeof without about and resource', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="schema: http://schema.org/">
     <h2 typeof="schema:Document">The Trouble with Bob</h2>
@@ -408,7 +408,7 @@ with Bob</h2>
       });
 
       it('typeof without about and resource and children', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head></head>
 <body prefix="schema: http://schema.org/">
     <div typeof="schema:Person">
@@ -425,7 +425,7 @@ with Bob</h2>
       });
 
       it('rel and href as resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rel="http://example.org/p" href="http://example.org/o" />
 </head>
@@ -438,7 +438,7 @@ with Bob</h2>
       });
 
       it('rel on root tag', async() => {
-        return await expect(parse(parser, `<html rel="http://example.org/p" href="http://example.org/o">
+        await expect(parse(parser, `<html rel="http://example.org/p" href="http://example.org/o">
 <head>
 </head>
 <body>
@@ -449,8 +449,8 @@ with Bob</h2>
           ]);
       });
 
-      it('rel and href as resource link', async() => {
-        return await expect(parse(parser, `<html>
+      it('rel and href as resource link with about and typeof', async() => {
+        await expect(parse(parser, `<html>
 <head>
     <link rel="http://example.org/p" href="http://example.org/o" about="http://example.org/s"
     typeof="http://example.org/Type" />
@@ -465,7 +465,7 @@ with Bob</h2>
       });
 
       it('rel and resource as resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rel="http://example.org/p" resource="http://example.org/o" />
 </head>
@@ -478,7 +478,7 @@ with Bob</h2>
       });
 
       it('rel (2x) and resource as resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rel="http://example.org/p1 http://example.org/p2" resource="http://example.org/o" />
 </head>
@@ -492,7 +492,7 @@ with Bob</h2>
       });
 
       it('rel and src as resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rel="http://example.org/p" src="http://example.org/o" />
 </head>
@@ -505,7 +505,7 @@ with Bob</h2>
       });
 
       it('rev and href as reverse resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rev="http://example.org/p" href="http://example.org/o" />
 </head>
@@ -518,7 +518,7 @@ with Bob</h2>
       });
 
       it('rev and resource as reverse resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rev="http://example.org/p" resource="http://example.org/o" />
 </head>
@@ -531,7 +531,7 @@ with Bob</h2>
       });
 
       it('rev and src as reverse resource link', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rev="http://example.org/p" src="http://example.org/o" />
 </head>
@@ -544,7 +544,7 @@ with Bob</h2>
       });
 
       it('rel, rev and src as reverse resource links', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
     <link rel="http://example.org/p1" rev="http://example.org/p2" src="http://example.org/o" />
 </head>
@@ -558,7 +558,7 @@ with Bob</h2>
       });
 
       it('resource should be prioritized over href', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -571,18 +571,18 @@ with Bob</h2>
       });
 
       it('complex combinations of about, rel, rev and href', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p>
-			This photo was taken by
-			<a about="photo1.jpg" rel="dc:creator" rev="foaf:img"
-   				href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.
-		</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p>
+      This photo was taken by
+      <a about="photo1.jpg" rel="dc:creator" rev="foaf:img"
+           href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.
+    </p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/photo1.jpg', 'http://purl.org/dc/elements/1.1/creator', 'http://www.blogger.com/profile/1109404'),
@@ -591,14 +591,14 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('content attributes', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p about="photo1.jpg" property="dc:title" content="Portrait of Mark" />
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p about="photo1.jpg" property="dc:title" content="Portrait of Mark" />
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/photo1.jpg', 'http://purl.org/dc/elements/1.1/title', '"Portrait of Mark"'),
@@ -606,14 +606,14 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('content that overrides text content', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p about="photo1.jpg" property="dc:title" content="Portrait of Mark">Mark Birbeck</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p about="photo1.jpg" property="dc:title" content="Portrait of Mark">Mark Birbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/photo1.jpg', 'http://purl.org/dc/elements/1.1/title', '"Portrait of Mark"'),
@@ -621,7 +621,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('nested text content', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
 <head>
 </head>
 <body>
@@ -640,7 +640,7 @@ foaf: http://xmlns.com/foaf/0.1/">
 
       it('inline nested text content', async() => {
         // Tslint:disable:max-line-length
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
 <head>
 </head>
 <body>
@@ -656,14 +656,14 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('datatype to set the object literal datatype', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="xsd:integer">3</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="xsd:integer">3</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"3"^^http://www.w3.org/2001/XMLSchema#integer'),
@@ -671,14 +671,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('datatype to set the object literal datatype for content attributes', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="xsd:integer" content="3" />
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="xsd:integer" content="3" />
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"3"^^http://www.w3.org/2001/XMLSchema#integer'),
@@ -686,14 +686,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('datatype to set the object literal datatype with strings in a nested tag', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="xsd:string"><b>Mark Birbeck</b></p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="xsd:string"><b>Mark Birbeck</b></p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"Mark Birbeck"'),
@@ -701,14 +701,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('datatype to set the object literal datatype with strings in nested tags', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="xsd:string"><b>M</b>ark <b>B</b>irbeck</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="xsd:string"><b>M</b>ark <b>B</b>irbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"Mark Birbeck"'),
@@ -716,15 +716,15 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('rdf:XMLLiteral datatype to preserve all nested tags', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"<b some="attribute" xmlns:dc="http://purl.org/dc/elements/1.1/"' +
@@ -738,13 +738,13 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       });
 
       it('rdf:XMLLiteral datatype to preserve all nested tags without xmlns and prefixes', async() => {
-        return await expect(parse(parser, `<html>
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
-	</body>
+        await expect(parse(parser, `<html>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/terms/title', '"<b some="attribute">M</b>ark <b>B</b>irbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'),
@@ -754,16 +754,16 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       it('rdf:XMLLiteral datatype to inherit all xmlns and prefixes', async() => {
         const attrs = 'xmlns="http://www.w3.org/1999/xhtml" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
           'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#"';
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
 xmlns:dc="http://purl.org/dc/elements/1.1/"
 prefix="xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', `"<b some="attribute" ${attrs}>M</b>ark <b ${attrs}>B</b>irbeck"` +
@@ -772,17 +772,17 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       });
 
       it('rdf:XMLLiteral datatype to inherit all xmlns and prefixes an properly merge with xmlns', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
 xmlns:dc="http://purl.org/dc/elements/1.1/"
 prefix="xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute" xmlns="XMLNS">M</b>ark
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:XMLLiteral"><b some="attribute" xmlns="XMLNS">M</b>ark
 <b xmlns:dc="DC">B</b>irbeck</p>
-	</body>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"<b some="attribute" xmlns="XMLNS" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
@@ -794,15 +794,15 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       });
 
       it('rdf:XMLLiteral datatype to preserve all nested tags and not ignore RDFa in children', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:XMLLiteral"><b property="foaf:firstName">Mark</b></p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:XMLLiteral"><b property="foaf:firstName">Mark</b></p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"<b property="foaf:firstName" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
@@ -816,15 +816,15 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       it('rdf:XMLLiteral datatype to preserve all nested tags and ignore RDFa in children ' +
         'if features.skipHandlingXmlLiteralChildren is enabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: { skipHandlingXmlLiteralChildren: true }});
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:XMLLiteral"><b property="foaf:firstName">Mark</b></p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:XMLLiteral"><b property="foaf:firstName">Mark</b></p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"<b property="foaf:firstName" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
@@ -835,15 +835,15 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       });
 
       it('rdf:HTML datatype to preserve all nested tags when features.htmlDatatype is enabled', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:HTML"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:HTML"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"<b some="attribute" xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
@@ -857,15 +857,15 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 
       it('rdf:HTML datatype to not preserve all nested tags when features.htmlDatatype is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#
 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" datatype="rdf:HTML"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" datatype="rdf:HTML"><b some="attribute">M</b>ark <b>B</b>irbeck</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"Mark Birbeck"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML'),
@@ -873,14 +873,14 @@ rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       });
 
       it('lang to set the object literal language', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" lang="en">abc</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" lang="en">abc</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"@en'),
@@ -889,14 +889,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
 
       it('lang should be ignored when features.langAttribute is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" lang="en">abc</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" lang="en">abc</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"'),
@@ -904,14 +904,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('xml:lang to set the object literal language', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" xml:lang="en">abc</p>
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" xml:lang="en">abc</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"@en'),
@@ -919,14 +919,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('lang to set the object literal language for content attributes', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" lang="en" content="abc" />
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" lang="en" content="abc" />
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"@en'),
@@ -934,14 +934,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('xml:lang to set the object literal language for content attributes', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" xml:lang="en" content="abc" />
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" xml:lang="en" content="abc" />
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"@en'),
@@ -949,14 +949,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('xml:lang is inherited', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#" xml:lang="en">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" content="abc" />
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" content="abc" />
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"@en'),
@@ -964,14 +964,14 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#" xml:lan
       });
 
       it('xml:lang can be unset', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#" xml:lang="en">
-	<head>
-		<title>Test 0006</title>
-	</head>
-	<body>
-		<p property="dc:title" content="abc" xml:lang="" />
-	</body>
+  <head>
+    <title>Test 0006</title>
+  </head>
+  <body>
+    <p property="dc:title" content="abc" xml:lang="" />
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"abc"'),
@@ -979,13 +979,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#" xml:lan
       });
 
       it('time tags with dates', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title">2012-03-18</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title">2012-03-18</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#date'),
@@ -994,13 +994,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
 
       it('time tags with dates when features.timeTag is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title">2012-03-18</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title">2012-03-18</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"2012-03-18"'),
@@ -1008,13 +1008,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with times', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title">00:00:00Z</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title">00:00:00Z</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"00:00:00Z"^^http://www.w3.org/2001/XMLSchema#time'),
@@ -1022,13 +1022,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with dateTimes', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title">2012-03-18T00:00:00Z</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title">2012-03-18T00:00:00Z</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"2012-03-18T00:00:00Z"^^http://www.w3.org/2001/XMLSchema#dateTime'),
@@ -1036,13 +1036,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with dates in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="2012-03-18">Today</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="2012-03-18">Today</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#date'),
@@ -1050,13 +1050,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with dates in datetime, with overridden datatype', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="2012-03-18" datatype="xsd:thing">Today</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="2012-03-18" datatype="xsd:thing">Today</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"2012-03-18"^^http://www.w3.org/2001/XMLSchema#thing'),
@@ -1065,13 +1065,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
 
       it('time tags with dates in datetime when features.datetimeAttribute is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="2012-03-18">Today</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="2012-03-18">Today</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"Today"'),
@@ -1079,13 +1079,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with times in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="00:00:00Z">Today</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="00:00:00Z">Today</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"00:00:00Z"^^http://www.w3.org/2001/XMLSchema#time'),
@@ -1093,13 +1093,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with dateTimes in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="2012-03-18T00:00:00Z">Today</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="2012-03-18T00:00:00Z">Today</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"2012-03-18T00:00:00Z"^^http://www.w3.org/2001/XMLSchema#dateTime'),
@@ -1107,13 +1107,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with full durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P2Y6M5DT12H35M30S">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P2Y6M5DT12H35M30S">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P2Y6M5DT12H35M30S"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1121,13 +1121,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with day and hour durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P1DT2H">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P1DT2H">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P1DT2H"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1135,13 +1135,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with month durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P20M">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P20M">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P20M"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1149,13 +1149,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with minute durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="PT20M">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="PT20M">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"PT20M"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1163,13 +1163,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with durations with optional 0s in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P0Y20M0D">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P0Y20M0D">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P0Y20M0D"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1177,13 +1177,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with 0 year durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P0Y">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P0Y">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P0Y"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1191,13 +1191,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with minus 60 days durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="-P60D">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="-P60D">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"-P60D"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1205,13 +1205,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with decimal second durations in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="PT1M30.5S">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="PT1M30.5S">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"PT1M30.5S"^^http://www.w3.org/2001/XMLSchema#duration'),
@@ -1219,13 +1219,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with invalid durations without T for time in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P1M30.5S">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P1M30.5S">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P1M30.5S"'),
@@ -1233,13 +1233,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('time tags with invalid durations with unknown character in datetime', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
-	<head>
-	</head>
-	<body>
-	  <time property="dc:title" datetime="P2X6M5DT12H35M30S">Long</time>
-	</body>
+  <head>
+  </head>
+  <body>
+    <time property="dc:title" datetime="P2X6M5DT12H35M30S">Long</time>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"P2X6M5DT12H35M30S"'),
@@ -1247,11 +1247,11 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('vocab emits an rdfa:usesVocabulary triple', async() => {
-        return await expect(parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
-	<body>
-	</body>
+        await expect(parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://www.w3.org/ns/rdfa#usesVocabulary', 'http://xmlns.com/foaf/0.1/'),
@@ -1259,12 +1259,12 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('vocab sets the active vocabulary', async() => {
-        return await expect(parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
-	<body>
-	  <p property="name">Name</p>
-	</body>
+        await expect(parse(parser, `<html vocab="http://xmlns.com/foaf/0.1/">
+  <head>
+  </head>
+  <body>
+    <p property="name">Name</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://www.w3.org/ns/rdfa#usesVocabulary', 'http://xmlns.com/foaf/0.1/'),
@@ -1273,12 +1273,12 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('vocab override the active vocabulary', async() => {
-        return await expect(parse(parser, `<html vocab="http://example.org/">
-	<head>
-	</head>
-	<body vocab="http://xmlns.com/foaf/0.1/">
-	  <p property="name">Name</p>
-	</body>
+        await expect(parse(parser, `<html vocab="http://example.org/">
+  <head>
+  </head>
+  <body vocab="http://xmlns.com/foaf/0.1/">
+    <p property="name">Name</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://www.w3.org/ns/rdfa#usesVocabulary', 'http://example.org/'),
@@ -1292,12 +1292,12 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
           baseIRI: 'http://example.org/',
           vocab: 'http://xmlns.com/foaf/0.1/',
         });
-        return await expect(parse(parser, `<html>
-	<head>
-	</head>
-	<body>
-	  <p property="name">Name</p>
-	</body>
+        await expect(parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+    <p property="name">Name</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://xmlns.com/foaf/0.1/name', '"Name"'),
@@ -1309,12 +1309,12 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
           baseIRI: 'http://example.org/',
           language: 'nl-be',
         });
-        return await expect(parse(parser, `<html>
-	<head>
-	</head>
-	<body>
-	  <p property="http://xmlns.com/foaf/0.1/name">Name</p>
-	</body>
+        await expect(parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+    <p property="http://xmlns.com/foaf/0.1/name">Name</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://xmlns.com/foaf/0.1/name', '"Name"@nl-be'),
@@ -1322,13 +1322,13 @@ foaf: http://xmlns.com/foaf/0.1/ xsd: http://www.w3.org/2001/XMLSchema#">
       });
 
       it('multiple properties', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
-	<body>
-	  <p property="dc:title foaf:title">Title</p>
-	</body>
+  <head>
+  </head>
+  <body>
+    <p property="dc:title foaf:title">Title</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"Title"'),
@@ -1337,14 +1337,14 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('multiple properties separated by newlines and spaces', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
-	<body>
-	  <p property="dc:title
-	  foaf:title">Title</p>
-	</body>
+  <head>
+  </head>
+  <body>
+    <p property="dc:title
+    foaf:title">Title</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/title', '"Title"'),
@@ -1353,17 +1353,17 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('chained rel and property', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
+  <head>
+  </head>
   <body>
-  	<p>
-    	This paper was written by
-    	<span rel="dc:creator">
-      		<span property="foaf:name">Ben Adida</span>.
-    	</span>
-	</p>
+    <p>
+      This paper was written by
+      <span rel="dc:creator">
+          <span property="foaf:name">Ben Adida</span>.
+      </span>
+  </p>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/creator', '_:b'),
@@ -1372,17 +1372,17 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('chained rev and property', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
+  <head>
+  </head>
   <body>
-  	<p>
-    	This paper was written by
-    	<span rev="dc:creator">
-      		<span property="foaf:name">Ben Adida</span>.
-    	</span>
-	</p>
+    <p>
+      This paper was written by
+      <span rev="dc:creator">
+          <span property="foaf:name">Ben Adida</span>.
+      </span>
+  </p>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('_:b', 'http://purl.org/dc/elements/1.1/creator', 'http://example.org/'),
@@ -1391,17 +1391,17 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('multiple chained rel and property', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/
 foaf: http://xmlns.com/foaf/0.1/">
-	<head>
-	</head>
+  <head>
+  </head>
   <body>
-  	<p>
-    	This paper was written by
-    	<span rel="dc:creator dc:creator2">
-      		<span property="foaf:name">Ben Adida</span>.
-    	</span>
-	</p>
+    <p>
+      This paper was written by
+      <span rel="dc:creator dc:creator2">
+          <span property="foaf:name">Ben Adida</span>.
+      </span>
+  </p>
 </html>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/creator', '_:b'),
@@ -1411,7 +1411,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and ignore rel if there is a property and rel is a non-CURIE and non-URI', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1429,7 +1429,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       it('and not ignore rel if there is a property and rel is a non-CURIE and non-URI if ' +
         'features.onlyAllowUriRelRevIfProperty is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1446,7 +1446,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and ignore rev if there is a property and rel is a non-CURIE and non-URI', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1462,7 +1462,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and not ignore rel if there is a property and rel is a CURIE', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1479,7 +1479,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and not ignore rel if there is a property and rel is a URI', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1496,7 +1496,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and not ignore rev if there is a property and rev is a CURIE', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1513,7 +1513,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and not ignore rev if there is a property and rev is a URI', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body>
@@ -1530,7 +1530,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('unsetting vocab', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body vocab="http://schema.org/">
@@ -1545,13 +1545,13 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rel with one typeof child should have their blank node be connected', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
-	</div>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p typeof="foaf:Person">Dan Brickley again:-)</p>
+  </div>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1561,15 +1561,15 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('complex blank node nesting', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p property="foaf:name">Dan Brickley</p>
-	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
-	</div>
-	<p property="foaf:name">Dan Brickley?</p>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p property="foaf:name">Dan Brickley</p>
+      <p typeof="foaf:Person">Dan Brickley again:-)</p>
+  </div>
+  <p property="foaf:name">Dan Brickley?</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1582,15 +1582,15 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('complex explicit blank node nesting', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p about="[_:]" property="foaf:name">Dan Brickley</p>
-	    <p about="[_:]" typeof="foaf:Person">Dan Brickley again:-)</p>
-	</div>
-	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p about="[_:]" property="foaf:name">Dan Brickley</p>
+      <p about="[_:]" typeof="foaf:Person">Dan Brickley again:-)</p>
+  </div>
+  <p about="[_:]" property="foaf:name">Dan Brickley?</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1602,15 +1602,15 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('complex partial explicit blank node nesting', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p property="foaf:name">Dan Brickley</p>
-	    <p about="[_:]" typeof="foaf:Person">Dan Brickley again:-)</p>
-	</div>
-	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p property="foaf:name">Dan Brickley</p>
+      <p about="[_:]" typeof="foaf:Person">Dan Brickley again:-)</p>
+  </div>
+  <p about="[_:]" property="foaf:name">Dan Brickley?</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1623,15 +1623,15 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('complex disconnected explicit blank node nesting', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p property="foaf:name">Dan Brickley</p>
-	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
-	</div>
-	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p property="foaf:name">Dan Brickley</p>
+      <p typeof="foaf:Person">Dan Brickley again:-)</p>
+  </div>
+  <p about="[_:]" property="foaf:name">Dan Brickley?</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1644,15 +1644,15 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('complex connected explicit blank node nesting', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p property="foaf:name">Dan Brickley</p>
-	    <p property="foaf:name">Dan Brickley again:-)</p>
-	</div>
-	<p about="[_:]" property="foaf:name">Dan Brickley?</p>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p property="foaf:name">Dan Brickley</p>
+      <p property="foaf:name">Dan Brickley again:-)</p>
+  </div>
+  <p about="[_:]" property="foaf:name">Dan Brickley?</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1664,13 +1664,13 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('blank node nesting with typeof', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div about="http://www.example.org/#somebody" rel="foaf:knows">
-	    <p typeof="foaf:Person">Dan Brickley again:-)</p>
-	</div>
+  <div about="http://www.example.org/#somebody" rel="foaf:knows">
+      <p typeof="foaf:Person">Dan Brickley again:-)</p>
+  </div>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -1684,8 +1684,8 @@ foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -1765,8 +1765,8 @@ foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div>
+  <div>
+    <div>
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -1784,12 +1784,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with one rdfa:copy with href', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -1813,12 +1813,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with one rdfa:copy with resource', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -1842,12 +1842,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with one rdfa:copy with src', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -1871,7 +1871,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('unreferenced rdfa:copy', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
@@ -1889,12 +1889,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with two rdfa:copy\'s', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -1930,12 +1930,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with blank node with two rdfa:copy\'s should only create a single blank node', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <div property="schema:refers-to" typeof="">
         <span property="schema:name">Muse</span>
       </div>
@@ -1961,11 +1961,11 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with two rdfa:copy\'s before the pattern definition', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
+  <div>
     <p typeof="schema:MusicEvent">
       <link property="rdfa:copy" href="#muse"/>
       <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
@@ -2002,12 +2002,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:Pattern with two rdfa:copy\'s next to each other', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -2032,17 +2032,17 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('out-of-order rdfa:Pattern with one rdfa:copy', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <p typeof="schema:MusicEvent">
+  <div>
+    <p typeof="schema:MusicEvent">
       <link property="rdfa:copy" href="#muse"/>
       <a property="schema:location" href="#united">United Center, Chicago, Illinois</a>
     </p>
 
-	  <div resource="#muse" typeof="rdfa:Pattern">
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -2061,15 +2061,15 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('in-order nested rdfa:Pattern and rdfa:copy', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#name" typeof="rdfa:Pattern">
-	    <span property="schema:name">Muse</span>
-	  </div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#name" typeof="rdfa:Pattern">
+      <span property="schema:name">Muse</span>
+    </div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -2093,20 +2093,20 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('mixed order nested rdfa:Pattern and rdfa:copy', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
       <link property="rdfa:copy" href="#name"/>
     </div>
     <div resource="#name" typeof="rdfa:Pattern">
-	    <span property="schema:name">Muse</span>
-	  </div>
+      <span property="schema:name">Muse</span>
+    </div>
 
     <p typeof="schema:MusicEvent">
       <link property="rdfa:copy" href="#muse"/>
@@ -2125,12 +2125,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('and ignore rdfa:copy to self-referencing rdfa:Pattern', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
   </head>
   <body>
-	<div>
-	  <div resource="#muse" typeof="rdfa:Pattern">
+  <div>
+    <div resource="#muse" typeof="rdfa:Pattern">
       <link property="schema:image" href="Muse1.jpg"/>
       <link property="schema:image" href="Muse2.jpg"/>
       <link property="schema:image" href="Muse3.jpg"/>
@@ -2155,7 +2155,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('rdfa:copy via resource attribute', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body vocab="http://schema.org/">
@@ -2174,7 +2174,7 @@ foaf: http://xmlns.com/foaf/0.1/">
 
       it('rdfa:copy and rdfa:Pattern are ignored when features.copyRdfaPatterns is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
 </head>
 <body vocab="http://schema.org/">
@@ -2194,12 +2194,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p about="" typeof="foaf:Document" property="foaf:topic">John Doe</p>
+    <p about="" typeof="foaf:Document" property="foaf:topic">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2209,12 +2209,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property and resource', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p typeof="foaf:Document" property="foaf:topic" resource="http://example.org/res">John Doe</p>
+    <p typeof="foaf:Document" property="foaf:topic" resource="http://example.org/res">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2224,12 +2224,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property and compact resource', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p typeof="foaf:Document" property="foaf:topic" resource="foaf:res">John Doe</p>
+    <p typeof="foaf:Document" property="foaf:topic" resource="foaf:res">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2239,12 +2239,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property and href', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p typeof="foaf:Document" property="foaf:topic" href="http://example.org/href">John Doe</p>
+    <p typeof="foaf:Document" property="foaf:topic" href="http://example.org/href">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2254,12 +2254,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property and compact href', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p typeof="foaf:Document" property="foaf:topic" href="foaf:href">John Doe</p>
+    <p typeof="foaf:Document" property="foaf:topic" href="foaf:href">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2269,12 +2269,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property and src', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p typeof="foaf:Document" property="foaf:topic" src="http://example.org/src">John Doe</p>
+    <p typeof="foaf:Document" property="foaf:topic" src="http://example.org/src">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2284,12 +2284,12 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof with a single property and compact src', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
   <head>
-		<title>Test 0051</title>
+    <title>Test 0051</title>
   </head>
   <body>
-  	<p typeof="foaf:Document" property="foaf:topic" src="foaf:src">John Doe</p>
+    <p typeof="foaf:Document" property="foaf:topic" src="foaf:src">John Doe</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2299,7 +2299,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof on root tag without property and about', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/" typeof="foaf:Document">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/" typeof="foaf:Document">
   <head>
   </head>
   <body>
@@ -2311,7 +2311,7 @@ foaf: http://xmlns.com/foaf/0.1/">
       });
 
       it('typeof on root tag with property and without about', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/"
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/"
 property="foaf:name" typeof="foaf:Document">
   <head>
   </head>
@@ -2325,11 +2325,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('properties with inlist', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
       <a inlist="" property="dc:creator"
                    href="http://ben.adida.net/#me">Ben Adida</a>,
       <a inlist="" property="dc:creator"
@@ -2352,11 +2352,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('properties with inlist and tag literals', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
       <a inlist="" property="dc:creator"
                    href="http://ben.adida.net/#me">Ben Adida</a>,
       <a inlist="" property="dc:creator">Mark Birbeck</a>, and
@@ -2378,11 +2378,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('properties with inlist and content literals', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
       <a inlist="" property="dc:creator"
                    href="http://ben.adida.net/#me">Ben Adida</a>,
       <a inlist="" property="dc:creator" content="Mark Birbeck">BlaBla</a>, and
@@ -2404,11 +2404,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('properties with inlist and datetime literals', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
       <a inlist="" property="dc:creator"
                    href="http://ben.adida.net/#me">Ben Adida</a>,
       <time inlist="" property="dc:creator" datetime="2018">BlaBla</time>, and
@@ -2430,11 +2430,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('properties and rel with inlist and mixed values', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
       <a inlist="" rel="dc:creator"
                    href="http://ben.adida.net/#me">Ben Adida</a>,
       <a inlist="" property="dc:creator">Mark Birbeck</a>, and
@@ -2456,12 +2456,12 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('inlist with incomplete triples', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
-  	  <span rel="dc:creator" inlist="">
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <span rel="dc:creator" inlist="">
         <a href="http://ben.adida.net/#me">Ben Adida</a>,
         <a href="http://twitter.com/markbirbeck">Mark Birbeck</a>, and
         <a href="http://www.ivan-herman.net/foaf#me">Ivan Herman</a>.
@@ -2482,12 +2482,12 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('an empty list', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
-  	  <span rel="dc:creator" inlist=""></span>
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <span rel="dc:creator" inlist=""></span>
     </p>
   </body>
 </html>`)).resolves
@@ -2498,12 +2498,12 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('a manual empty list', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
-  	  <span rel="dc:creator" resource="rdf:nil" />
+    <p prefix="bibo: http://purl.org/ontology/bibo/ dc: http://purl.org/dc/terms/" typeof="bibo:Chapter">
+      <span rel="dc:creator" resource="rdf:nil" />
     </p>
   </body>
 </html>`)).resolves
@@ -2514,11 +2514,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@rel and @inlist with decendent IRI elements creates list', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<div about="">
+    <div about="">
       <ol rel="rdf:value" inlist="">
         <li><a href="foo">Foo</a></li>
         <li><a href="bar">Bar</a></li>
@@ -2536,11 +2536,11 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about and @inlist creates a separate list', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p about="res" property="rdf:value" inlist="">Bar</p>
+    <p about="res" property="rdf:value" inlist="">Bar</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2551,12 +2551,12 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about and @inlist create a separate lists', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
   </head>
   <body>
-  	<p about="res" property="rdf:value" inlist="">Bar</p>
-  	<p about="res" property="rdf:value" inlist="">Foo</p>
+    <p about="res" property="rdf:value" inlist="">Bar</p>
+    <p about="res" property="rdf:value" inlist="">Foo</p>
   </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([
@@ -2570,7 +2570,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@property and @resource with child @inlist', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0226</title>
 </head>
@@ -2589,7 +2589,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@rel and @resource with child @inlist', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0226</title>
 </head>
@@ -2608,7 +2608,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('xmlns definition', async() => {
-        return await expect(parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
+        await expect(parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
    <head>
       <link rel="ex:next" href="http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml" />
    </head>
@@ -2623,7 +2623,7 @@ property="foaf:name" typeof="foaf:Document">
 
       it('xmlns definition when features.xmlnsPrefixMappings is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
+        await expect(parse(parser, `<html xmlns:ex="http://example.org/" version="XHTML+RDFa 1.1">
    <head>
       <link rel="ex:next" href="http://rdfa.info/test-suite/test-cases/rdfa1.1/xhtml1/0062.xhtml" />
    </head>
@@ -2637,7 +2637,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2650,7 +2650,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing with @typeof', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2664,7 +2664,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing in object', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Test 0298: Testing @typeof and @about=[]</title>
 </head>
@@ -2680,7 +2680,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing with child rel', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2693,7 +2693,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing with child tag', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2706,7 +2706,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing with child tag with property', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2720,7 +2720,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('no @about with @typeof', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Test 0298: Testing @typeof and @about=[]</title>
 </head>
@@ -2737,7 +2737,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@about that resolves to nothing in object with @typeof', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Test 0298: Testing @typeof and @about=[]</title>
 </head>
@@ -2754,7 +2754,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('standalone @href', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2765,7 +2765,7 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('standalone @src', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 </head>
 <body>
@@ -2776,19 +2776,19 @@ property="foaf:name" typeof="foaf:Document">
       });
 
       it('@resource with nested [] property', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
 prefix="dc: http://purl.org/dc/elements/1.1/">
    <head>
    </head>
    <body>
     <div>
-	<p about="https://mydomain.org/">
-		<p resource="[]">
-			<span property="dc:contributor">Shane McCarron</span>
-			contributed to this test.
-		</p>
-	</p>
-	</div>
+  <p about="https://mydomain.org/">
+    <p resource="[]">
+      <span property="dc:contributor">Shane McCarron</span>
+      contributed to this test.
+    </p>
+  </p>
+  </div>
    </body>`)).resolves
           .toBeRdfIsomorphic([
             quad('http://example.org/', 'http://purl.org/dc/elements/1.1/contributor', '"Shane McCarron"'),
@@ -2796,21 +2796,21 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@about and @resource with []', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
 prefix="dc: http://purl.org/dc/elements/1.1/">
    <head>
    </head>
    <body>
     <div>
-	<p about="https://mydomain.org/">
-		<span about="[]" property="dc:title">Test Case 0121</span>
-		checks to make sure RDFa processors resolve the empty CURIE correctly.
-		<p resource="[]">
-			<span property="dc:contributor">Shane McCarron</span>
-			contributed to this test.
-		</p>
-	</p>
-	</div>
+  <p about="https://mydomain.org/">
+    <span about="[]" property="dc:title">Test Case 0121</span>
+    checks to make sure RDFa processors resolve the empty CURIE correctly.
+    <p resource="[]">
+      <span property="dc:contributor">Shane McCarron</span>
+      contributed to this test.
+    </p>
+  </p>
+  </div>
    </body>`)).resolves
           .toBeRdfIsomorphic([
             quad('https://mydomain.org/', 'http://purl.org/dc/elements/1.1/title', '"Test Case 0121"'),
@@ -2820,19 +2820,19 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
 
       it('@resource with nested [] property in XML mode', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', profile: 'xml' });
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
 prefix="dc: http://purl.org/dc/elements/1.1/">
    <head>
    </head>
    <body>
     <div>
-	<p about="https://mydomain.org/">
-		<p resource="[]">
-			<span property="dc:contributor">Shane McCarron</span>
-			contributed to this test.
-		</p>
-	</p>
-	</div>
+  <p about="https://mydomain.org/">
+    <p resource="[]">
+      <span property="dc:contributor">Shane McCarron</span>
+      contributed to this test.
+    </p>
+  </p>
+  </div>
    </body>`)).resolves
           .toBeRdfIsomorphic([
             quad('https://mydomain.org/', 'http://purl.org/dc/elements/1.1/contributor', '"Shane McCarron"'),
@@ -2841,21 +2841,21 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
 
       it('@about and @resource with [] in XML mode', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', profile: 'xml' });
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml"
 prefix="dc: http://purl.org/dc/elements/1.1/">
    <head>
    </head>
    <body>
     <div>
-	<p about="https://mydomain.org/">
-		<span about="[]" property="dc:title">Test Case 0121</span>
-		checks to make sure RDFa processors resolve the empty CURIE correctly.
-		<p resource="[]">
-			<span property="dc:contributor">Shane McCarron</span>
-			contributed to this test.
-		</p>
-	</p>
-	</div>
+  <p about="https://mydomain.org/">
+    <span about="[]" property="dc:title">Test Case 0121</span>
+    checks to make sure RDFa processors resolve the empty CURIE correctly.
+    <p resource="[]">
+      <span property="dc:contributor">Shane McCarron</span>
+      contributed to this test.
+    </p>
+  </p>
+  </div>
    </body>`)).resolves
           .toBeRdfIsomorphic([
             quad('https://mydomain.org/', 'http://purl.org/dc/elements/1.1/title', '"Test Case 0121"'),
@@ -2864,7 +2864,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@resource with [] is not allowed and resolved to nothing', async() => {
-        return await expect(parse(parser, `<!DOCTYPE html>
+        await expect(parse(parser, `<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
    <head>
    </head>
@@ -2878,7 +2878,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@typeof in <head>, and inherit parent object', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
    <head typeof="foaf:Document">
       <title>Test 0066</title>
    </head>
@@ -2892,7 +2892,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@typeof in <body>, and inherit parent object', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
    <head>
       <title>Test 0066</title>
    </head>
@@ -2906,7 +2906,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@typeof and @property in <body>, and inherit parent object', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
    <head>
       <title>Test 0066</title>
    </head>
@@ -2923,7 +2923,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       it('@typeof and @property in <body>, and not inherit parent object ' +
         'if features.inheritSubjectInHeadBody is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
    <head>
       <title>Test 0066</title>
    </head>
@@ -2938,7 +2938,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@typeof and @rel in <body>', async() => {
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
    <head>
       <title>Test 0066</title>
    </head>
@@ -2953,7 +2953,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
 
       it('@typeof and @rel in <body> when features.inheritSubjectInHeadBody is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
+        await expect(parse(parser, `<html prefix="foaf: http://xmlns.com/foaf/0.1/">
    <head>
       <title>Test 0066</title>
    </head>
@@ -2968,9 +2968,9 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('should ignore invalid datatypes', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/terms/">
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/terms/">
 <head>
-	<base href="http://www.example.org/me" />
+  <base href="http://www.example.org/me" />
 </head>
 <body>
   <p property="dc:language" datatype="pred/lang">JavaScript</p>
@@ -2982,7 +2982,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@property with no children should make empty literal', async() => {
-        return await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/">
+        await expect(parse(parser, `<html prefix="dc: http://purl.org/dc/elements/1.1/">
   <head>
     <title>Test 0257</title>
   </head>
@@ -2996,7 +2996,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@about and empty @datatype should force string literal value', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0290</title>
 </head>
@@ -3011,7 +3011,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@about and empty @datatype should force string literal value even with xmlns', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Test 0290</title>
 </head>
@@ -3026,7 +3026,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@about and empty @datatype should force string literal value with sub-tags', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Test 0290</title>
 </head>
@@ -3041,7 +3041,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@href and empty @datatype should force string literal value', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0290</title>
 </head>
@@ -3056,7 +3056,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@href and empty @datatype should force string literal value with sub-tags', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0290</title>
 </head>
@@ -3071,7 +3071,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('rdf:HTML datatype and empty @datatype should nestable', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test dummy</title>
 </head>
@@ -3089,7 +3089,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('rdf:HTML datatype and empty @datatype should nestable recursively', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test dummy</title>
 </head>
@@ -3109,7 +3109,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@property does not set parent object without @typeof', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0296</title>
 </head>
@@ -3128,7 +3128,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@property does set parent object with @typeof', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0296</title>
 </head>
@@ -3147,7 +3147,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@resource that resolves to nothing should fallback to @href or @src', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0300: Testing @resource=[]</title>
 </head>
@@ -3161,7 +3161,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('@rel should not do vocab expansion when another valid value is present', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
 <head>
   <title>Test 0334: @resource changes the current subject for the nested elements</title>
 </head>
@@ -3181,7 +3181,7 @@ prefix="dc: http://purl.org/dc/elements/1.1/">
       });
 
       it('xml:base to set the baseIRI within the current scope', async() => {
-        return await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
+        await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
 <root width="12cm" height="4cm" viewBox="0 0 1200 400"
 xml:base="http://example.com/"
 xmlns:dc="http://purl.org/dc/terms/"
@@ -3201,7 +3201,7 @@ xmlns="http://www.w3.org/2000/svg">
       });
 
       it('xml:base shoud not set the baseIRI outside the current scope', async() => {
-        return await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
+        await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
 <root width="12cm" height="4cm" viewBox="0 0 1200 400"
 xmlns:dc="http://purl.org/dc/terms/"
 xmlns="http://www.w3.org/2000/svg">
@@ -3222,7 +3222,7 @@ xmlns="http://www.w3.org/2000/svg">
 
       it('xml:base not to set the baseIRI when features.xmlBase is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
+        await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
 <root width="12cm" height="4cm" viewBox="0 0 1200 400"
 xml:base="http://example.com/"
 xmlns:dc="http://purl.org/dc/terms/"
@@ -3244,7 +3244,7 @@ xmlns="http://www.w3.org/2000/svg">
       it('should be able to ignore base tag and resolve relative IRIs against baseIRI', async() => {
         const features = { baseTag: false, xmlBase: true, xmlnsPrefixMappings: true };
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features });
-        return await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
+        await expect(parse(parser, `<?xml version="1.0" encoding="UTF-8"?>
 <root>
 <head>
   <base href="http://example.com/"/>
@@ -3261,7 +3261,7 @@ xmlns="http://www.w3.org/2000/svg">
       });
 
       it('should be able to ignore base tag and resolve relative IRIs against baseIRI in HTML-mode', async() => {
-        return await expect(parse(parser, `<!DOCTYPE html>
+        await expect(parse(parser, `<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <base href="http://example.com/"/>
@@ -3278,7 +3278,7 @@ xmlns="http://www.w3.org/2000/svg">
       });
 
       it('should handle whitespace alternatives', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1"
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1"
 prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
 <head>
   <title>Test</title>
@@ -3298,7 +3298,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       });
 
       it('should handle terms from the XHTML initial context', async() => {
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1">
 <head>
   <title>Test 0259</title>
 </head>
@@ -3320,7 +3320,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       it('should handle terms from the XHTML initial context ' +
         'unless features.xhtmlInitialContext is disabled', async() => {
         parser = new RdfaParser({ baseIRI: 'http://example.org/', features: {}});
-        return await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1">
+        await expect(parse(parser, `<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1">
 <head>
   <title>Test 0259</title>
 </head>
@@ -3336,23 +3336,23 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       });
 
       it('property with blank node values should be ignored', async() => {
-        return await expect(parse(parser, `<html>
-	<head>
-	</head>
-	<body>
-	  <p property="_:b">Value ignored</p>
-	</body>
+        await expect(parse(parser, `<html>
+  <head>
+  </head>
+  <body>
+    <p property="_:b">Value ignored</p>
+  </body>
 </html>`)).resolves
           .toBeRdfIsomorphic([]);
       });
 
       it('role attribute with id', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
-		<title>Test 0305</title>
+    <title>Test 0305</title>
   </head>
   <body>
-	<div id="heading1" role="heading">
+  <div id="heading1" role="heading">
       <p>Some contents that are a header</p>
     </div>
   </body>
@@ -3363,12 +3363,12 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       });
 
       it('role attribute without id', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
-		<title>Test 0305</title>
+    <title>Test 0305</title>
   </head>
   <body>
-	<div role="heading">
+  <div role="heading">
       <p>Some contents that are a header</p>
     </div>
   </body>
@@ -3379,12 +3379,12 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       });
 
       it('role attribute with multiple values', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
-		<title>Test 0305</title>
+    <title>Test 0305</title>
   </head>
   <body>
-	<div id="heading1" role="heading1 heading2">
+  <div id="heading1" role="heading1 heading2">
       <p>Some contents that are a header</p>
     </div>
   </body>
@@ -3396,12 +3396,12 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       });
 
       it('role attribute with absolute IRI', async() => {
-        return await expect(parse(parser, `<html>
+        await expect(parse(parser, `<html>
   <head>
-		<title>Test 0305</title>
+    <title>Test 0305</title>
   </head>
   <body>
-	<div id="heading1" role="http://ex.org/heading">
+  <div id="heading1" role="http://ex.org/heading">
       <p>Some contents that are a header</p>
     </div>
   </body>
@@ -3476,7 +3476,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
     <span about="#a" property="dc:title"></span>
   </body>
 </html>`);
-      return await expect(arrayifyStream(parser.import(stream))).resolves.toBeRdfIsomorphic([
+      await expect(arrayifyStream(parser.import(stream))).resolves.toBeRdfIsomorphic([
         quad('http://example.org/#a', 'http://purl.org/dc/elements/1.1/title', '""'),
       ]);
     });
@@ -3490,7 +3490,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
       <p>This is test #66.</p>
    </body>
 </html>`);
-      return await expect(arrayifyStream(parser.import(stream))).resolves.toBeRdfIsomorphic([
+      await expect(arrayifyStream(parser.import(stream))).resolves.toBeRdfIsomorphic([
         quad('http://example.org/', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://xmlns.com/foaf/0.1/Document'),
         quad('http://example.org/', 'http://xmlns.com/foaf/0.1/name', 'http://example.org/'),
       ]);
@@ -3499,7 +3499,7 @@ prefix="xhv: http://www.w3.org/1999/xhtml/vocab#">
     it('should forward error events', async() => {
       const stream = new PassThrough();
       stream._read = () => stream.emit('error', new Error('my error'));
-      return expect(arrayifyStream(parser.import(stream))).rejects.toThrow(new Error('my error'));
+      await expect(arrayifyStream(parser.import(stream))).rejects.toThrow(new Error('my error'));
     });
   });
 });

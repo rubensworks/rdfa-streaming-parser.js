@@ -2,6 +2,10 @@ const config = require('@rubensworks/eslint-config');
 
 module.exports = config([
   {
+    // Exclude performance benchmark scripts from linting
+    ignores: [ 'perf/**' ],
+  },
+  {
     files: [ '**/*.ts' ],
     languageOptions: {
       parserOptions: {
@@ -12,14 +16,18 @@ module.exports = config([
   },
   {
     rules: {
-      // This rule requires strictNullChecks, which is not enabled in this project
-      'ts/prefer-nullish-coalescing': 'off',
-
       // Allow importing Node.js built-in modules (used in tests and webpack config)
       'import/no-nodejs-modules': 'off',
 
       // Allow file extensions in import paths (required for JSON imports)
       'import/extensions': 'off',
+    },
+  },
+  {
+    files: [ '**/*.ts' ],
+    rules: {
+      // This rule requires strictNullChecks, which is not enabled in this project
+      'ts/prefer-nullish-coalescing': 'off',
 
       // Extended naming conventions for this project
       'ts/naming-convention': [

@@ -29,7 +29,7 @@ export class Util {
     { regex: /^\d+$/u, type: 'gYear' },
   ];
 
-  private static readonly IRI_REGEX: RegExp = /^([A-Za-z][\d+-.A-Za-z]*|_):[^ "<>[\\\]`{|}]*$/;
+  private static readonly IRI_REGEX: RegExp = /^([A-Za-z][\d+-.A-Za-z]*|_):[^ "<>[\\\]`{|}]*$/u;
 
   public readonly dataFactory: RDF.DataFactory;
   public baseIRI: RDF.NamedNode;
@@ -49,7 +49,11 @@ export class Util {
    * @param {boolean} xmlnsPrefixMappings If prefixes should be extracted from xmlnsPrefixMappings.
    * @return {{[p: string]: string}} The new prefixes.
    */
-  public static parsePrefixes(attributes: Record<string, string>, parentPrefixes: Record<string, string>, xmlnsPrefixMappings: boolean): Record<string, string> {
+  public static parsePrefixes(
+    attributes: Record<string, string>,
+    parentPrefixes: Record<string, string>,
+    xmlnsPrefixMappings: boolean,
+  ): Record<string, string> {
     const additionalPrefixes: Record<string, string> = {};
     if (xmlnsPrefixMappings) {
       for (const attribute in attributes) {
@@ -63,9 +67,9 @@ export class Util {
       const prefixes: Record<string, string> = { ...parentPrefixes, ...additionalPrefixes };
 
       if (attributes.prefix) {
-        let prefixMatch;
-        // Tslint:disable-next-line:no-conditional-assignment
-        while (prefixMatch = Util.PREFIX_REGEX.exec(attributes.prefix)) {
+        let prefixMatch: RegExpExecArray | null;
+        // eslint-disable-next-line no-cond-assign
+        while ((prefixMatch = Util.PREFIX_REGEX.exec(attributes.prefix)) !== null) {
           prefixes[prefixMatch[1]] = prefixMatch[2];
         }
       }
@@ -78,7 +82,7 @@ export class Util {
   /**
    * Expand the given term value based on the given prefixes.
    * @param {string} term A term value.
-   * @param {{[p: string]: string}[]} prefixes The available prefixes.
+   * @param {IActiveTag} activeTag The active tag containing prefix mappings.
    * @return {string} An expanded URL, or the term as-is.
    */
   public static expandPrefixedTerm(term: string, activeTag: IActiveTag): string {
@@ -175,14 +179,19 @@ export class Util {
    * @param {boolean} allowBlankNode If blank nodes are allowed.
    * @return {Term[]} The IRI terms.
    */
-  public createVocabIris<B extends boolean>(terms: string, activeTag: IActiveTag, allowTerms: boolean,
-    allowBlankNode: B): B extends true
+  public createVocabIris<TB extends boolean>(terms: string, activeTag: IActiveTag, allowTerms: boolean,
+    allowBlankNode: TB): TB extends true
     ? (RDF.BlankNode | RDF.NamedNode)[] : RDF.NamedNode[];
-  public createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean, allowBlankNode: boolean): (RDF.NamedNode | RDF.BlankNode)[] {
-    return terms.split(/\s+/)
+  public createVocabIris(
+    terms: string,
+    activeTag: IActiveTag,
+    allowTerms: boolean,
+    allowBlankNode: boolean,
+  ): (RDF.NamedNode | RDF.BlankNode)[] {
+    return terms.split(/\s+/u)
       .filter(term => term && (allowTerms || term.includes(':')))
       .map(property => this.createIri(property, activeTag, true, true, allowBlankNode))
-      .filter(term => term != null);
+      .filter(term => term !== null);
   }
 
   /**
@@ -194,7 +203,7 @@ export class Util {
   public createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
     if (activeTag.interpretObjectAsTime && !activeTag.datatype) {
       for (const entry of Util.TIME_REGEXES) {
-        if (entry.regex.exec(literal)) {
+        if (entry.regex.test(literal)) {
           activeTag.datatype = this.dataFactory.namedNode(Util.XSD + entry.type);
           break;
         }
@@ -227,10 +236,20 @@ export class Util {
    * @param {boolean} allowBlankNode If blank nodes are allowed. Otherwise null will be returned.
    * @return {Term} An RDF term or null.
    */
-  public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
-    allowBlankNode: B): B extends true
-    ? (RDF.NamedNode | RDF.BlankNode) : RDF.NamedNode;
-  public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean, allowBlankNode: B): RDF.NamedNode | RDF.BlankNode | null {
+  public createIri<TB extends boolean>(
+    term: string,
+    activeTag: IActiveTag,
+    vocab: boolean,
+    allowSafeCurie: boolean,
+    allowBlankNode: TB,
+  ): TB extends true ? (RDF.NamedNode | RDF.BlankNode) : RDF.NamedNode;
+  public createIri<TB extends boolean>(
+    term: string,
+    activeTag: IActiveTag,
+    vocab: boolean,
+    allowSafeCurie: boolean,
+    allowBlankNode: TB,
+  ): RDF.NamedNode | RDF.BlankNode | null {
     term = term || '';
 
     if (!allowSafeCurie) {

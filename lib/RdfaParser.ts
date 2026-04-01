@@ -93,12 +93,13 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     let parentTag: IActiveTag = this.activeTagStack[parentTagI];
     // If we skipped a tag, make sure we DO use the lang, prefixes and vocab of the skipped tag
     if (parentTagI !== this.activeTagStack.length - 1) {
+      const lastTag = this.activeTagStack.at(-1)!;
       parentTag = {
         ...parentTag,
-        language: this.activeTagStack.at(-1).language,
-        prefixesAll: this.activeTagStack.at(-1).prefixesAll,
-        prefixesCustom: this.activeTagStack.at(-1).prefixesCustom,
-        vocab: this.activeTagStack.at(-1).vocab,
+        language: lastTag.language,
+        prefixesAll: lastTag.prefixesAll,
+        prefixesCustom: lastTag.prefixesCustom,
+        vocab: lastTag.vocab,
       };
     }
 
@@ -240,7 +241,9 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
 
     // 3: handle prefixes
     activeTag.prefixesCustom = Util.parsePrefixes(
-      attributes, parentTag.prefixesCustom, Boolean(this.features.xmlnsPrefixMappings),
+      attributes,
+      parentTag.prefixesCustom,
+      Boolean(this.features.xmlnsPrefixMappings),
     );
     activeTag.prefixesAll = Object.keys(activeTag.prefixesCustom).length > 0 ?
         { ...parentTag.prefixesAll, ...activeTag.prefixesCustom } :
@@ -587,7 +590,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
   }
 
   public onText(data: string): void {
-    const activeTag: IActiveTag = this.activeTagStack.at(-1);
+    const activeTag: IActiveTag = this.activeTagStack.at(-1)!;
 
     // Collect text in pattern tag if needed
     if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag) {
@@ -608,8 +611,8 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
 
   public onTagClose(): void {
     // Get the active tag
-    const activeTag: IActiveTag = this.activeTagStack.at(-1);
-    const parentTag: IActiveTag = this.activeTagStack.at(-2);
+    const activeTag: IActiveTag = this.activeTagStack.at(-1)!;
+    const parentTag: IActiveTag = this.activeTagStack.at(-2)!;
 
     if (!(activeTag.collectChildTags && parentTag.collectChildTags && this.features.skipHandlingXmlLiteralChildren)) {
       // If we detect a finalized rdfa:Pattern tag, store it
@@ -758,7 +761,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
    * @returns {boolean} If the subject can be inherited.
    */
   protected isInheritSubjectInHeadBody(name: string): boolean {
-    return this.features.inheritSubjectInHeadBody && (name === 'head' || name === 'body');
+    return Boolean(this.features.inheritSubjectInHeadBody) && (name === 'head' || name === 'body');
   }
 
   /**
@@ -778,10 +781,8 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     if (activeTag.explicitNewSubject) {
       const bNode = this.util.createBlankNode();
       this.emitTriple(this.util.getResourceOrBaseIri(subject, activeTag), predicate, bNode);
-      this.emitTriple(bNode, this.util.dataFactory.namedNode(`${Util.RDF}first`),
-        this.util.getResourceOrBaseIri(currentObjectResource, activeTag));
-      this.emitTriple(bNode, this.util.dataFactory.namedNode(`${Util.RDF}rest`),
-        this.util.dataFactory.namedNode(`${Util.RDF}nil`));
+      this.emitTriple(bNode, this.util.dataFactory.namedNode(`${Util.RDF}first`), this.util.getResourceOrBaseIri(currentObjectResource, activeTag));
+      this.emitTriple(bNode, this.util.dataFactory.namedNode(`${Util.RDF}rest`), this.util.dataFactory.namedNode(`${Util.RDF}nil`));
     } else {
       let predicateList = activeTag.listMappingLocal[predicate.value];
       if (!predicateList) {
