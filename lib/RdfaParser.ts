@@ -1,29 +1,29 @@
-import {DomHandler} from "domhandler";
+import type { DomHandler } from 'domhandler';
 import EventEmitter = NodeJS.EventEmitter;
-import {Parser as HtmlParser} from "htmlparser2";
-import * as RDF from "@rdfjs/types";
-import {PassThrough, Transform} from "readable-stream";
-import {IActiveTag} from "./IActiveTag";
-import {IHtmlParseListener} from "./IHtmlParseListener";
-import * as INITIAL_CONTEXT_XHTML from "./initial-context-xhtml.json";
-import * as INITIAL_CONTEXT from "./initial-context.json";
-import {IRdfaPattern} from "./IRdfaPattern";
-import {IRdfaFeatures, RDFA_FEATURES, RdfaProfile} from "./RdfaProfile";
-import {Util} from "./Util";
+import type * as RDF from '@rdfjs/types';
+import { Parser as HtmlParser } from 'htmlparser2';
+import { PassThrough, Transform } from 'readable-stream';
+import type { IActiveTag } from './IActiveTag';
+import type { IHtmlParseListener } from './IHtmlParseListener';
+import * as INITIAL_CONTEXT_XHTML from './initial-context-xhtml.json';
+import * as INITIAL_CONTEXT from './initial-context.json';
+import type { IRdfaPattern } from './IRdfaPattern';
+import type { IRdfaFeatures, RdfaProfile } from './RdfaProfile';
+import { RDFA_FEATURES } from './RdfaProfile';
+import { Util } from './Util';
 
 /**
  * A stream transformer that parses RDFa (text) streams to an {@link RDF.Stream}.
  */
 export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.Stream> {
-
   private readonly options: IRdfaParserOptions;
   private readonly util: Util;
   private readonly defaultGraph?: RDF.Quad_Graph;
   private readonly parser: HtmlParser;
   private readonly features: IRdfaFeatures;
   private readonly htmlParseListener?: IHtmlParseListener;
-  private readonly rdfaPatterns: {[patternId: string]: IRdfaPattern} | undefined;
-  private readonly pendingRdfaPatternCopies: {[copyTargetPatternId: string]: IActiveTag[]} | undefined;
+  private readonly rdfaPatterns: Record<string, IRdfaPattern> | undefined;
+  private readonly pendingRdfaPatternCopies: Record<string, IActiveTag[]> | undefined;
 
   private readonly activeTagStack: IActiveTag[] = [];
 
@@ -53,7 +53,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         ...INITIAL_CONTEXT['@context'],
         ...this.features.xhtmlInitialContext ? INITIAL_CONTEXT_XHTML['@context'] : {},
       },
-      prefixesCustom : {},
+      prefixesCustom: {},
       skipElement: false,
       vocab: options.vocab,
     });
@@ -66,8 +66,8 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
    */
   public import(stream: EventEmitter): RDF.Stream {
     const output = new PassThrough({ readableObjectMode: true });
-    stream.on('error', (error) => parsed.emit('error', error));
-    stream.on('data', (data) => output.push(data));
+    stream.on('error', error => parsed.emit('error', error));
+    stream.on('data', data => output.push(data));
     stream.on('end', () => output.push(null));
     const parsed = output.pipe(new RdfaParser(this.options));
     return parsed;
@@ -83,7 +83,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     callback();
   }
 
-  public onTagOpen(name: string, attributes: {[s: string]: string}) {
+  public onTagOpen(name: string, attributes: Record<string, string>) {
     // Determine the parent tag (ignore skipped tags)
     let parentTagI: number = this.activeTagStack.length - 1;
     while (parentTagI > 0 && this.activeTagStack[parentTagI].skipElement) {
@@ -94,10 +94,10 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     if (parentTagI !== this.activeTagStack.length - 1) {
       parentTag = {
         ...parentTag,
-        language: this.activeTagStack[this.activeTagStack.length - 1].language,
-        prefixesAll: this.activeTagStack[this.activeTagStack.length - 1].prefixesAll,
-        prefixesCustom: this.activeTagStack[this.activeTagStack.length - 1].prefixesCustom,
-        vocab: this.activeTagStack[this.activeTagStack.length - 1].vocab,
+        language: this.activeTagStack.at(-1).language,
+        prefixesAll: this.activeTagStack.at(-1).prefixesAll,
+        prefixesCustom: this.activeTagStack.at(-1).prefixesCustom,
+        vocab: this.activeTagStack.at(-1).vocab,
       };
     }
 
@@ -107,7 +107,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       collectChildTagsForCurrentTag: parentTag.collectChildTagsForCurrentTag,
       incompleteTriples: [],
       inlist: 'inlist' in attributes,
-      listMapping: <{[predicate: string]: (RDF.Term|boolean)[]}> <any> [],
+      listMapping: <Record<string, (RDF.Term | boolean)[]>> <any> [],
       listMappingLocal: parentTag.listMapping,
       localBaseIRI: parentTag.localBaseIRI,
       name,
@@ -123,32 +123,32 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       // Sort prefixes alphabetically for deterministic namespace declaration order
       for (const prefix of Object.keys(parentTag.prefixesCustom).sort()) {
         const suffix = parentTag.prefixesCustom[prefix];
-        const attributeKey = prefix === '' ? 'xmlns' : 'xmlns:' + prefix;
+        const attributeKey = prefix === '' ? 'xmlns' : `xmlns:${prefix}`;
         if (!(attributeKey in attributes)) {
           attributes[attributeKey] = suffix;
         }
       }
 
-      const attributesSerialized = Object.keys(attributes).map((key) => `${key}="${attributes[key]}"`).join(' ');
-      activeTag.textWithTags = [`<${name}${attributesSerialized ? ' ' + attributesSerialized : ''}>`];
+      const attributesSerialized = Object.keys(attributes).map(key => `${key}="${attributes[key]}"`).join(' ');
+      activeTag.textWithTags = [ `<${name}${attributesSerialized ? ` ${attributesSerialized}` : ''}>` ];
       if (this.features.skipHandlingXmlLiteralChildren) {
         return;
       }
     }
 
-    let allowTermsInRelPredicates: boolean = true;
-    let allowTermsInRevPredicates: boolean = true;
+    let allowTermsInRelPredicates = true;
+    let allowTermsInRevPredicates = true;
     if (this.features.onlyAllowUriRelRevIfProperty) {
       // Ignore illegal rel/rev values when property is present
       if ('property' in attributes && 'rel' in attributes) {
         allowTermsInRelPredicates = false;
-        if (attributes.rel.indexOf(':') < 0) {
+        if (!attributes.rel.includes(':')) {
           delete attributes.rel;
         }
       }
       if ('property' in attributes && 'rev' in attributes) {
         allowTermsInRevPredicates = false;
-        if (attributes.rev.indexOf(':') < 0) {
+        if (!attributes.rev.includes(':')) {
           delete attributes.rev;
         }
       }
@@ -203,7 +203,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     if (this.features.baseTag && name === 'base' && attributes.href) {
       this.util.baseIRI = this.util.getBaseIRI(attributes.href);
     }
-    // xml:base attributes override the baseIRI of the current tag and children
+    // Xml:base attributes override the baseIRI of the current tag and children
     if (this.features.xmlBase && attributes['xml:base']) {
       activeTag.localBaseIRI = this.util.getBaseIRI(attributes['xml:base']);
     }
@@ -226,7 +226,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         activeTag.vocab = attributes.vocab;
         this.emitTriple(
           this.util.getBaseIriTerm(activeTag),
-          this.util.dataFactory.namedNode(Util.RDFA + 'usesVocabulary'),
+          this.util.dataFactory.namedNode(`${Util.RDFA}usesVocabulary`),
           this.util.dataFactory.namedNode(activeTag.vocab),
         );
       } else {
@@ -238,16 +238,16 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     }
 
     // 3: handle prefixes
-    activeTag.prefixesCustom = Util.parsePrefixes(attributes, parentTag.prefixesCustom,
-      Boolean(this.features.xmlnsPrefixMappings));
-    activeTag.prefixesAll = Object.keys(activeTag.prefixesCustom).length > 0
-      ? { ...parentTag.prefixesAll, ...activeTag.prefixesCustom } : parentTag.prefixesAll;
+    activeTag.prefixesCustom = Util.parsePrefixes(attributes, parentTag.prefixesCustom, Boolean(this.features.xmlnsPrefixMappings));
+    activeTag.prefixesAll = Object.keys(activeTag.prefixesCustom).length > 0 ?
+        { ...parentTag.prefixesAll, ...activeTag.prefixesCustom } :
+      parentTag.prefixesAll;
 
     // Handle role attribute
     if (this.features.roleAttribute && attributes.role) {
-      const roleSubject = attributes.id
-        ? this.util.createIri('#' + attributes.id, activeTag, false, false, false)
-        : this.util.createBlankNode();
+      const roleSubject = attributes.id ?
+        this.util.createIri(`#${attributes.id}`, activeTag, false, false, false) :
+        this.util.createBlankNode();
       // Temporarily override vocab
       const vocabOld = activeTag.vocab;
       activeTag.vocab = 'http://www.w3.org/1999/xhtml/vocab#';
@@ -277,7 +277,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         // Determine new subject
         if ('about' in attributes) {
           newSubject = this.util.createIri(attributes.about, activeTag, false, true, true);
-          activeTag.explicitNewSubject = !!newSubject;
+          activeTag.explicitNewSubject = Boolean(newSubject);
         } else if (isRootTag) {
           newSubject = true;
         } else if (parentTag.object) {
@@ -311,12 +311,11 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         // 5.2
         if ('about' in attributes || 'resource' in attributes) {
           newSubject = this.util.createIri(attributes.about || attributes.resource, activeTag, false, true, true);
-          activeTag.explicitNewSubject = !!newSubject;
+          activeTag.explicitNewSubject = Boolean(newSubject);
         }
         if (!newSubject && ('href' in attributes || 'src' in attributes)) {
-          newSubject = this.util.createIri(attributes.href || attributes.src,
-            activeTag, false, false, true);
-          activeTag.explicitNewSubject = !!newSubject;
+          newSubject = this.util.createIri(attributes.href || attributes.src, activeTag, false, false, true);
+          activeTag.explicitNewSubject = Boolean(newSubject);
         }
         if (!newSubject) {
           if (isRootTag) {
@@ -339,13 +338,13 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
           typedResource = newSubject;
         }
       }
-    } else { // either rel or rev is present
+    } else { // Either rel or rev is present
       // 6: Determine the new subject when rel or rev are present
 
       // Define new subject
       if ('about' in attributes) {
         newSubject = this.util.createIri(attributes.about, activeTag, false, true, true);
-        activeTag.explicitNewSubject = !!newSubject;
+        activeTag.explicitNewSubject = Boolean(newSubject);
         if ('typeof' in attributes) {
           typedResource = newSubject;
         }
@@ -382,7 +381,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       for (const type of this.util.createVocabIris(attributes.typeof, activeTag, true, true)) {
         this.emitTriple(
           this.util.getResourceOrBaseIri(typedResource, activeTag),
-          this.util.dataFactory.namedNode(Util.RDF + 'type'),
+          this.util.dataFactory.namedNode(`${Util.RDF}type`),
           type,
         );
       }
@@ -397,8 +396,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     if (currentObjectResource) {
       // Handle list mapping
       if ('rel' in attributes && 'inlist' in attributes) {
-        for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates,
-          false)) {
+        for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
           this.addListMapping(activeTag, newSubject!, predicate, currentObjectResource);
         }
       }
@@ -406,8 +404,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       // Determine predicates using rel or rev (unless rel and inlist are present)
       if (!('rel' in attributes && 'inlist' in attributes)) {
         if ('rel' in attributes) {
-          for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates,
-            false)) {
+          for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
             this.emitTriple(
               this.util.getResourceOrBaseIri(newSubject!, activeTag),
               predicate,
@@ -416,8 +413,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
           }
         }
         if ('rev' in attributes) {
-          for (const predicate of this.util.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates,
-            false)) {
+          for (const predicate of this.util.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates, false)) {
             this.emitTriple(
               this.util.getResourceOrBaseIri(currentObjectResource, activeTag),
               predicate,
@@ -432,21 +428,18 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
     if (!currentObjectResource) {
       if ('rel' in attributes) {
         if ('inlist' in attributes) {
-          for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates,
-            false)) {
+          for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
             this.addListMapping(activeTag, newSubject!, predicate, false);
             activeTag.incompleteTriples!.push({ predicate, reverse: false, list: true });
           }
         } else {
-          for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates,
-            false)) {
+          for (const predicate of this.util.createVocabIris(attributes.rel, activeTag, allowTermsInRelPredicates, false)) {
             activeTag.incompleteTriples!.push({ predicate, reverse: false });
           }
         }
       }
       if ('rev' in attributes) {
-        for (const predicate of this.util.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates,
-          false)) {
+        for (const predicate of this.util.createVocabIris(attributes.rev, activeTag, allowTermsInRevPredicates, false)) {
           activeTag.incompleteTriples!.push({ predicate, reverse: true });
         }
       }
@@ -465,10 +458,10 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       // Save datatype attribute value in active tag
       let localObjectResource: RDF.Term | boolean | undefined;
       if ('datatype' in attributes) {
-        activeTag.datatype = <RDF.NamedNode> this.util.createIri(attributes.datatype, activeTag, true, true, false);
-        if (activeTag.datatype
-          && (activeTag.datatype.value === Util.RDF + 'XMLLiteral'
-            || (this.features.htmlDatatype && activeTag.datatype.value === Util.RDF + 'HTML'))) {
+        activeTag.datatype = this.util.createIri(attributes.datatype, activeTag, true, true, false);
+        if (activeTag.datatype &&
+          (activeTag.datatype.value === `${Util.RDF}XMLLiteral` ||
+            (this.features.htmlDatatype && activeTag.datatype.value === `${Util.RDF}HTML`))) {
           activeTag.collectChildTags = true;
           activeTag.collectChildTagsForCurrentTag = true;
         }
@@ -556,23 +549,21 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       const subject = this.util.getResourceOrBaseIri(parentTag.subject!, activeTag);
       const object = this.util.getResourceOrBaseIri(newSubject, activeTag);
       for (const incompleteTriple of parentTag.incompleteTriples!) {
-        if (!incompleteTriple.reverse) {
-          if (incompleteTriple.list) {
-            // Find the active tag that defined the list by going up the stack
-            let firstInListTag: any = null;
-            for (let i = this.activeTagStack.length - 1; i >= 0; i--) {
-              if (this.activeTagStack[i].inlist) {
-                firstInListTag = this.activeTagStack[i];
-                break;
-              }
-            }
-            // firstInListTag is guaranteed to be non-null
-            this.addListMapping(firstInListTag!, newSubject, incompleteTriple.predicate, object);
-          } else {
-            this.emitTriple(subject, incompleteTriple.predicate, object);
-          }
-        } else {
+        if (incompleteTriple.reverse) {
           this.emitTriple(object, incompleteTriple.predicate, subject);
+        } else if (incompleteTriple.list) {
+          // Find the active tag that defined the list by going up the stack
+          let firstInListTag: any = null;
+          for (let i = this.activeTagStack.length - 1; i >= 0; i--) {
+            if (this.activeTagStack[i].inlist) {
+              firstInListTag = this.activeTagStack[i];
+              break;
+            }
+          }
+          // FirstInListTag is guaranteed to be non-null
+          this.addListMapping(firstInListTag, newSubject, incompleteTriple.predicate, object);
+        } else {
+          this.emitTriple(subject, incompleteTriple.predicate, object);
         }
       }
     }
@@ -586,7 +577,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
   }
 
   public onText(data: string) {
-    const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
+    const activeTag: IActiveTag = this.activeTagStack.at(-1);
 
     // Collect text in pattern tag if needed
     if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag) {
@@ -607,14 +598,13 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
 
   public onTagClose() {
     // Get the active tag
-    const activeTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 1];
-    const parentTag: IActiveTag = this.activeTagStack[this.activeTagStack.length - 2];
+    const activeTag: IActiveTag = this.activeTagStack.at(-1);
+    const parentTag: IActiveTag = this.activeTagStack.at(-2);
 
     if (!(activeTag.collectChildTags && parentTag.collectChildTags && this.features.skipHandlingXmlLiteralChildren)) {
-
       // If we detect a finalized rdfa:Pattern tag, store it
-      if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag
-        && activeTag.collectedPatternTag.rootPattern) {
+      if (this.features.copyRdfaPatterns && activeTag.collectedPatternTag &&
+        activeTag.collectedPatternTag.rootPattern) {
         const patternId = activeTag.collectedPatternTag.attributes.resource;
 
         // Remove resource and typeof attributes to avoid it being seen as a new pattern
@@ -642,14 +632,14 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
       if (activeTag.predicates) {
         const subject = this.util.getResourceOrBaseIri(activeTag.subject!, activeTag);
         let textSegments: string[];
-        if (!activeTag.collectChildTagsForCurrentTag) {
-          textSegments = activeTag.textWithoutTags || [];
-        } else {
+        if (activeTag.collectChildTagsForCurrentTag) {
           textSegments = activeTag.textWithTags || [];
           if (activeTag.collectChildTags && parentTag.collectChildTags) {
             // If we are inside an XMLLiteral child that also has RDFa content, ignore the tag name that was collected.
             textSegments = textSegments.slice(1);
           }
+        } else {
+          textSegments = activeTag.textWithoutTags || [];
         }
         const object = this.util.createLiteral(textSegments.join(''), activeTag);
         if (activeTag.inlist) {
@@ -681,21 +671,18 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
             const bnodes = values.map(() => this.util.createBlankNode());
             for (let i = 0; i < values.length; i++) {
               const object = this.util.getResourceOrBaseIri(values[i], activeTag);
-              this.emitTriple(bnodes[i], this.util.dataFactory.namedNode(Util.RDF + 'first'),
-                object);
-              this.emitTriple(bnodes[i], this.util.dataFactory.namedNode(Util.RDF + 'rest'),
-                (i < values.length - 1) ? bnodes[i + 1] : this.util.dataFactory.namedNode(Util.RDF + 'nil'));
+              this.emitTriple(bnodes[i], this.util.dataFactory.namedNode(`${Util.RDF}first`), object);
+              this.emitTriple(bnodes[i], this.util.dataFactory.namedNode(`${Util.RDF}rest`), (i < values.length - 1) ? bnodes[i + 1] : this.util.dataFactory.namedNode(`${Util.RDF}nil`));
             }
 
             // Emit triple for the first linked list chain
             this.emitTriple(subject, predicate, bnodes[0]);
           } else {
             // Empty list, just emit rdf:nil
-            this.emitTriple(subject, predicate, this.util.dataFactory.namedNode(Util.RDF + 'nil'));
+            this.emitTriple(subject, predicate, this.util.dataFactory.namedNode(`${Util.RDF}nil`));
           }
         }
       }
-
     }
 
     // Remove the active tag from the stack
@@ -708,17 +695,17 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
 
     // If we still have text contents, try to append it to the parent tag
     if (activeTag.textWithTags && parentTag) {
-      if (!parentTag.textWithTags) {
-        parentTag.textWithTags = activeTag.textWithTags;
-      } else {
+      if (parentTag.textWithTags) {
         parentTag.textWithTags = parentTag.textWithTags.concat(activeTag.textWithTags);
+      } else {
+        parentTag.textWithTags = activeTag.textWithTags;
       }
     }
     if (activeTag.textWithoutTags && parentTag) {
-      if (!parentTag.textWithoutTags) {
-        parentTag.textWithoutTags = activeTag.textWithoutTags;
-      } else {
+      if (parentTag.textWithoutTags) {
         parentTag.textWithoutTags = parentTag.textWithoutTags.concat(activeTag.textWithoutTags);
+      } else {
+        parentTag.textWithoutTags = activeTag.textWithoutTags;
       }
     }
   }
@@ -772,15 +759,12 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
    * @param {Term} predicate A predicate term.
    * @param {Term | boolean} currentObjectResource The current object resource.
    */
-  protected addListMapping(activeTag: IActiveTag, subject: RDF.Quad_Subject | boolean, predicate: RDF.Quad_Predicate,
-                           currentObjectResource: RDF.Quad_Object | boolean) {
+  protected addListMapping(activeTag: IActiveTag, subject: RDF.Quad_Subject | boolean, predicate: RDF.Quad_Predicate, currentObjectResource: RDF.Quad_Object | boolean) {
     if (activeTag.explicitNewSubject) {
       const bNode = this.util.createBlankNode();
       this.emitTriple(this.util.getResourceOrBaseIri(subject, activeTag), predicate, bNode);
-      this.emitTriple(bNode, this.util.dataFactory.namedNode(Util.RDF + 'first'),
-        this.util.getResourceOrBaseIri(currentObjectResource, activeTag));
-      this.emitTriple(bNode, this.util.dataFactory.namedNode(Util.RDF + 'rest'),
-        this.util.dataFactory.namedNode(Util.RDF + 'nil'));
+      this.emitTriple(bNode, this.util.dataFactory.namedNode(`${Util.RDF}first`), this.util.getResourceOrBaseIri(currentObjectResource, activeTag));
+      this.emitTriple(bNode, this.util.dataFactory.namedNode(`${Util.RDF}rest`), this.util.dataFactory.namedNode(`${Util.RDF}nil`));
     } else {
       let predicateList = activeTag.listMappingLocal[predicate.value];
       if (!predicateList) {
@@ -800,9 +784,9 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
    */
   protected emitTriple(subject: RDF.Quad_Subject, predicate: RDF.Quad_Predicate, object: RDF.Quad_Object) {
     // Validate IRIs
-    if ((subject.termType === 'NamedNode' && subject.value.indexOf(':') < 0)
-      || (predicate.termType === 'NamedNode' && predicate.value.indexOf(':') < 0)
-      || (object.termType === 'NamedNode' && object.value.indexOf(':') < 0)) {
+    if ((subject.termType === 'NamedNode' && !subject.value.includes(':')) ||
+      (predicate.termType === 'NamedNode' && !predicate.value.includes(':')) ||
+      (object.termType === 'NamedNode' && !object.value.includes(':'))) {
       return;
     }
     this.push(this.util.dataFactory.quad(subject, predicate, object, this.defaultGraph));
@@ -820,16 +804,16 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
 
     // Ensure that blank nodes within patterns are instantiated only once.
     // All next pattern copies will reuse the instantiated blank nodes from the first pattern.
-    if (!pattern.constructedBlankNodes) {
+    if (pattern.constructedBlankNodes) {
+      let blankNodeIndex = 0;
+      this.util.blankNodeFactory = () => pattern.constructedBlankNodes![blankNodeIndex++];
+    } else {
       pattern.constructedBlankNodes = [];
       this.util.blankNodeFactory = () => {
         const bNode = this.util.dataFactory.blankNode();
         pattern.constructedBlankNodes!.push(bNode);
         return bNode;
       };
-    } else {
-      let blankNodeIndex = 0;
-      this.util.blankNodeFactory = () => pattern.constructedBlankNodes![blankNodeIndex++];
     }
 
     // Apply everything within the pattern
@@ -888,7 +872,7 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
             this.emit('error', e);
           }
         },
-        onopentag: (name: string, attributes: {[s: string]: string}) => {
+        onopentag: (name: string, attributes: Record<string, string>) => {
           try {
             this.onTagOpen(name, attributes);
             if (this.htmlParseListener) {
@@ -913,9 +897,9 @@ export class RdfaParser extends Transform implements RDF.Sink<EventEmitter, RDF.
         decodeEntities: true,
         recognizeSelfClosing: true,
         xmlMode,
-      });
+      },
+    );
   }
-
 }
 
 export interface IRdfaParserOptions {

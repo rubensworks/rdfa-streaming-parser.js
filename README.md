@@ -35,7 +35,6 @@ _or_
 const RdfaParser = require("rdfa-streaming-parser").RdfaParser;
 ```
 
-
 ## Usage
 
 `RdfaParser` is a Node [Transform stream](https://nodejs.org/api/stream.html#stream_class_stream_transform)

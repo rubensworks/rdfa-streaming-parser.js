@@ -1,8 +1,8 @@
-const { RdfaParser } = require("..");
+const { RdfaParser } = require('..');
 
 module.exports = {
-  parse: function (data, baseIRI, options) {
+  parse(data, baseIRI, options) {
     return require('arrayify-stream').default(require('streamify-string')(data)
-      .pipe(new RdfaParser(Object.assign({ baseIRI }, options))));
+      .pipe(new RdfaParser({ baseIRI, ...options })));
   },
 };

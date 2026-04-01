@@ -71,7 +71,7 @@ export interface IRdfaFeatures {
  * A mapping of RDFa profile to a features object.
  */
 // tslint:disable:object-literal-sort-keys
-export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
+export const RDFA_FEATURES: Record<string, IRdfaFeatures> = {
   '': {
     baseTag: true,
     xmlBase: true,
@@ -86,7 +86,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     xhtmlInitialContext: true,
     roleAttribute: true,
   },
-  'core': {
+  core: {
     baseTag: false,
     xmlBase: false,
     langAttribute: true,
@@ -100,7 +100,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     xhtmlInitialContext: false,
     roleAttribute: false,
   },
-  'html': {
+  html: {
     baseTag: true,
     xmlBase: false,
     langAttribute: true,
@@ -114,7 +114,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     xhtmlInitialContext: false,
     roleAttribute: true,
   },
-  'xhtml': {
+  xhtml: {
     baseTag: true,
     xmlBase: false,
     langAttribute: true,
@@ -128,7 +128,7 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     xhtmlInitialContext: true,
     roleAttribute: true,
   },
-  'xml': {
+  xml: {
     baseTag: false,
     xmlBase: true,
     langAttribute: true,
@@ -143,10 +143,10 @@ export const RDFA_FEATURES: {[profile: string]: IRdfaFeatures} = {
     roleAttribute: true,
   },
 };
-// tslint:enable:object-literal-sort-keys
+// Tslint:enable:object-literal-sort-keys
 
 // tslint:disable:object-literal-sort-keys
-export const RDFA_CONTENTTYPES: {[contentType: string]: RdfaProfile} = {
+export const RDFA_CONTENTTYPES: Record<string, RdfaProfile> = {
   // HTML
   'text/html': 'html',
 
@@ -158,4 +158,4 @@ export const RDFA_CONTENTTYPES: {[contentType: string]: RdfaProfile} = {
   'text/xml': 'xml',
   'image/svg+xml': 'xml',
 };
-// tslint:enable:object-literal-sort-keys
+// Tslint:enable:object-literal-sort-keys

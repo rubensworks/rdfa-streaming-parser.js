@@ -7,12 +7,12 @@ export interface IHtmlParseListener {
    * @param {string} name The tag name.
    * @param {{[p: string]: string}} attributes A hash of attributes.
    */
-  onTagOpen(name: string, attributes: {[s: string]: string}): void;
+  onTagOpen: (name: string, attributes: Record<string, string>) => void;
 
   /**
    * Called when a tag is closed.
    */
-  onTagClose(): void;
+  onTagClose: () => void;
 
   /**
    * Called when text contents are parsed.
@@ -20,10 +20,10 @@ export interface IHtmlParseListener {
    * when for example the string is spread over multiple chunks.
    * @param {string} data A string.
    */
-  onText(data: string): void;
+  onText: (data: string) => void;
 
   /**
    * Called when parsing has ended.
    */
-  onEnd(): void;
+  onEnd: () => void;
 }
