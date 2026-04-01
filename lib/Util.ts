@@ -13,20 +13,20 @@ export class Util {
   public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
   public static readonly RDFA = 'http://www.w3.org/ns/rdfa#';
 
-  private static readonly PREFIX_REGEX: RegExp = /\s*([^\s:]*)*:\s*(\S*)*\s*/g;
+  private static readonly PREFIX_REGEX: RegExp = /\s*([^\s:]*)*:\s*(\S*)*\s*/gu;
   private static readonly TIME_REGEXES: { regex: RegExp; type: string }[] = [
     {
-      regex: /^-?P(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+(\.\d)?S)?)?$/,
+      regex: /^-?P(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+(\.\d)?S)?)?$/u,
       type: 'duration',
     },
     {
-      regex: /^\d+-\d\d-\d\dT\d\d:\d\d:\d\d((Z?)|([+-]\d\d:\d\d))$/,
+      regex: /^\d+-\d\d-\d\dT\d\d:\d\d:\d\d((Z?)|([+-]\d\d:\d\d))$/u,
       type: 'dateTime',
     },
-    { regex: /^\d+-\d\d-\d\dZ?$/, type: 'date' },
-    { regex: /^\d\d:\d\d:\d\d((Z?)|([+-]\d\d:\d\d))$/, type: 'time' },
-    { regex: /^\d+-\d\d$/, type: 'gYearMonth' },
-    { regex: /^\d+$/, type: 'gYear' },
+    { regex: /^\d+-\d\d-\d\dZ?$/u, type: 'date' },
+    { regex: /^\d\d:\d\d:\d\d((Z?)|([+-]\d\d:\d\d))$/u, type: 'time' },
+    { regex: /^\d+-\d\d$/u, type: 'gYearMonth' },
+    { regex: /^\d+$/u, type: 'gYear' },
   ];
 
   private static readonly IRI_REGEX: RegExp = /^([A-Za-z][\d+-.A-Za-z]*|_):[^ "<>[\\\]`{|}]*$/;
@@ -36,7 +36,7 @@ export class Util {
   public blankNodeFactory: (() => RDF.BlankNode) | undefined;
   private readonly baseIRIDocument: RDF.NamedNode;
 
-  constructor(dataFactory: RDF.DataFactory | undefined, baseIRI: string | undefined) {
+  public constructor(dataFactory: RDF.DataFactory | undefined, baseIRI: string | undefined) {
     this.dataFactory = dataFactory || new DataFactory();
     this.baseIRI = this.dataFactory.namedNode(baseIRI || '');
     this.baseIRIDocument = this.baseIRI;

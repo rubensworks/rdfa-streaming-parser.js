@@ -2,10 +2,14 @@
  * A type of RDFa profile
  */
 export type RdfaProfile =
-  '' | // All possible RDFa features
-  'core' | // https://www.w3.org/TR/rdfa-core/
-  'html' | // https://www.w3.org/TR/html-rdfa/
-  'xhtml' | // https://www.w3.org/TR/xhtml-rdfa/
+  // All possible RDFa features
+  '' |
+  // https://www.w3.org/TR/rdfa-core/
+  'core' |
+  // https://www.w3.org/TR/html-rdfa/
+  'html' |
+  // https://www.w3.org/TR/xhtml-rdfa/
+  'xhtml' |
   'xml';
 
 export interface IRdfaFeatures {
@@ -70,7 +74,6 @@ export interface IRdfaFeatures {
 /**
  * A mapping of RDFa profile to a features object.
  */
-// tslint:disable:object-literal-sort-keys
 export const RDFA_FEATURES: Record<string, IRdfaFeatures> = {
   '': {
     baseTag: true,
@@ -143,9 +146,7 @@ export const RDFA_FEATURES: Record<string, IRdfaFeatures> = {
     roleAttribute: true,
   },
 };
-// Tslint:enable:object-literal-sort-keys
 
-// tslint:disable:object-literal-sort-keys
 export const RDFA_CONTENTTYPES: Record<string, RdfaProfile> = {
   // HTML
   'text/html': 'html',
@@ -158,4 +159,3 @@ export const RDFA_CONTENTTYPES: Record<string, RdfaProfile> = {
   'text/xml': 'xml',
   'image/svg+xml': 'xml',
 };
-// Tslint:enable:object-literal-sort-keys
