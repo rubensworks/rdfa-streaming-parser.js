@@ -1,5 +1,5 @@
-import * as RDF from "@rdfjs/types";
-import {IActiveTag} from "./IActiveTag";
+import type * as RDF from '@rdfjs/types';
+import type { IActiveTag } from './IActiveTag';
 
 /**
  * A datastructure for storing an rdfa:Pattern.
@@ -7,7 +7,7 @@ import {IActiveTag} from "./IActiveTag";
 export interface IRdfaPattern {
   rootPattern: boolean;
   name: string;
-  attributes: {[s: string]: string};
+  attributes: Record<string, string>;
   text: string[];
   children: IRdfaPattern[];
   referenced: boolean;

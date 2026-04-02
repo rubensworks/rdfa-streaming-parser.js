@@ -1,41 +1,42 @@
-import * as RDF from "@rdfjs/types";
-import {resolve} from "relative-to-absolute-iri";
-import {IActiveTag} from "./IActiveTag";
-import {RDFA_CONTENTTYPES, RdfaProfile} from "./RdfaProfile";
-import {DataFactory} from "rdf-data-factory";
+import type * as RDF from '@rdfjs/types';
+import { DataFactory } from 'rdf-data-factory';
+import { resolve } from 'relative-to-absolute-iri';
+import type { IActiveTag } from './IActiveTag';
+import type { RdfaProfile } from './RdfaProfile';
+import { RDFA_CONTENTTYPES } from './RdfaProfile';
 
 /**
  * A collection of utility functions.
  */
 export class Util {
-
   public static readonly RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
   public static readonly XSD = 'http://www.w3.org/2001/XMLSchema#';
   public static readonly RDFA = 'http://www.w3.org/ns/rdfa#';
 
-  private static readonly PREFIX_REGEX: RegExp = /\s*([^:\s]*)*:\s*([^\s]*)*\s*/g;
-  private static readonly TIME_REGEXES: { regex: RegExp, type: string }[] = [
+  private static readonly PREFIX_REGEX: RegExp = /\s*([^\s:]*)*:\s*(\S*)*\s*/gu;
+  private static readonly TIME_REGEXES: { regex: RegExp; type: string }[] = [
     {
-      regex: /^-?P([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+(\.[0-9])?S)?)?$/,
+      regex: /^-?P(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+(\.\d)?S)?)?$/u,
       type: 'duration',
     },
     {
-      regex: /^[0-9]+-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]((Z?)|([\+-][0-9][0-9]:[0-9][0-9]))$/,
+      regex: /^\d+-\d\d-\d\dT\d\d:\d\d:\d\d((Z?)|([+-]\d\d:\d\d))$/u,
       type: 'dateTime',
     },
-    { regex: /^[0-9]+-[0-9][0-9]-[0-9][0-9]Z?$/, type: 'date' },
-    { regex: /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]((Z?)|([\+-][0-9][0-9]:[0-9][0-9]))$/, type: 'time' },
-    { regex: /^[0-9]+-[0-9][0-9]$/, type: 'gYearMonth' },
-    { regex: /^[0-9]+$/, type: 'gYear' },
+    { regex: /^\d+-\d\d-\d\dZ?$/u, type: 'date' },
+    { regex: /^\d\d:\d\d:\d\d((Z?)|([+-]\d\d:\d\d))$/u, type: 'time' },
+    { regex: /^\d+-\d\d$/u, type: 'gYearMonth' },
+    { regex: /^\d+$/u, type: 'gYear' },
   ];
-  private static readonly IRI_REGEX: RegExp = /^([A-Za-z][A-Za-z0-9+-.]*|_):[^ "<>{}|\\\[\]`]*$/;
+
+  private static readonly IRI_REGEX: RegExp = /^([A-Za-z][\d+-.A-Za-z]*|_):[^ "<>[\\\]`{|}]*$/u;
 
   public readonly dataFactory: RDF.DataFactory;
   public baseIRI: RDF.NamedNode;
   public blankNodeFactory: (() => RDF.BlankNode) | undefined;
   private readonly baseIRIDocument: RDF.NamedNode;
 
-  constructor(dataFactory: RDF.DataFactory | undefined, baseIRI: string | undefined) {
+  public constructor(dataFactory: RDF.DataFactory | undefined, baseIRI: string | undefined) {
     this.dataFactory = dataFactory || new DataFactory();
     this.baseIRI = this.dataFactory.namedNode(baseIRI || '');
     this.baseIRIDocument = this.baseIRI;
@@ -48,39 +49,40 @@ export class Util {
    * @param {boolean} xmlnsPrefixMappings If prefixes should be extracted from xmlnsPrefixMappings.
    * @return {{[p: string]: string}} The new prefixes.
    */
-  public static parsePrefixes(attributes: {[s: string]: string},
-                              parentPrefixes: {[prefix: string]: string},
-                              xmlnsPrefixMappings: boolean): {[prefix: string]: string} {
-    const additionalPrefixes: {[prefix: string]: string} = {};
+  public static parsePrefixes(
+    attributes: Record<string, string>,
+    parentPrefixes: Record<string, string>,
+    xmlnsPrefixMappings: boolean,
+  ): Record<string, string> {
+    const additionalPrefixes: Record<string, string> = {};
     if (xmlnsPrefixMappings) {
       for (const attribute in attributes) {
         if (attribute.startsWith('xmlns')) {
-          additionalPrefixes[attribute.substr(6)] = attributes[attribute];
+          additionalPrefixes[attribute.slice(6)] = attributes[attribute];
         }
       }
     }
 
     if (attributes.prefix || Object.keys(additionalPrefixes).length > 0) {
-      const prefixes: {[prefix: string]: string} = { ...parentPrefixes, ...additionalPrefixes };
+      const prefixes: Record<string, string> = { ...parentPrefixes, ...additionalPrefixes };
 
       if (attributes.prefix) {
-        let prefixMatch;
-        // tslint:disable-next-line:no-conditional-assignment
-        while (prefixMatch = Util.PREFIX_REGEX.exec(attributes.prefix)) {
+        let prefixMatch: RegExpExecArray | null;
+        // eslint-disable-next-line no-cond-assign
+        while ((prefixMatch = Util.PREFIX_REGEX.exec(attributes.prefix)) !== null) {
           prefixes[prefixMatch[1]] = prefixMatch[2];
         }
       }
 
       return prefixes;
-    } else {
-      return parentPrefixes;
     }
+    return parentPrefixes;
   }
 
   /**
    * Expand the given term value based on the given prefixes.
    * @param {string} term A term value.
-   * @param {{[p: string]: string}[]} prefixes The available prefixes.
+   * @param {IActiveTag} activeTag The active tag containing prefix mappings.
    * @return {string} An expanded URL, or the term as-is.
    */
   public static expandPrefixedTerm(term: string, activeTag: IActiveTag): string {
@@ -89,13 +91,13 @@ export class Util {
     let prefix: string | undefined;
     let local: string | undefined;
     if (colonIndex >= 0) {
-      prefix = term.substr(0, colonIndex);
-      local = term.substr(colonIndex + 1);
+      prefix = term.slice(0, Math.max(0, colonIndex));
+      local = term.slice(colonIndex + 1);
     }
 
     // Expand default namespace
     if (prefix === '') {
-      return 'http://www.w3.org/1999/xhtml/vocab#' + local;
+      return `http://www.w3.org/1999/xhtml/vocab#${local}`;
     }
 
     // Try to expand the prefix
@@ -145,7 +147,7 @@ export class Util {
     let href: string = baseIriValue;
     const fragmentIndex = href.indexOf('#');
     if (fragmentIndex >= 0) {
-      href = href.substr(0, fragmentIndex);
+      href = href.slice(0, Math.max(0, fragmentIndex));
     }
     return this.dataFactory.namedNode(resolve(href, this.baseIRI.value));
   }
@@ -177,15 +179,19 @@ export class Util {
    * @param {boolean} allowBlankNode If blank nodes are allowed.
    * @return {Term[]} The IRI terms.
    */
-  public createVocabIris<B extends boolean>(terms: string, activeTag: IActiveTag, allowTerms: boolean,
-                                            allowBlankNode: B): B extends true
+  public createVocabIris<TB extends boolean>(terms: string, activeTag: IActiveTag, allowTerms: boolean,
+    allowBlankNode: TB): TB extends true
     ? (RDF.BlankNode | RDF.NamedNode)[] : RDF.NamedNode[];
-  public createVocabIris(terms: string, activeTag: IActiveTag, allowTerms: boolean,
-                         allowBlankNode: boolean): (RDF.NamedNode | RDF.BlankNode)[] {
-    return terms.split(/\s+/)
-      .filter((term) => term && (allowTerms || term.indexOf(':') >= 0))
-      .map((property) => this.createIri(property, activeTag, true, true, allowBlankNode))
-      .filter((term) => term != null);
+  public createVocabIris(
+    terms: string,
+    activeTag: IActiveTag,
+    allowTerms: boolean,
+    allowBlankNode: boolean,
+  ): (RDF.NamedNode | RDF.BlankNode)[] {
+    return terms.split(/\s+/u)
+      .filter(term => term && (allowTerms || term.includes(':')))
+      .map(property => this.createIri(property, activeTag, true, true, allowBlankNode))
+      .filter(term => term !== null);
   }
 
   /**
@@ -197,7 +203,7 @@ export class Util {
   public createLiteral(literal: string, activeTag: IActiveTag): RDF.Literal {
     if (activeTag.interpretObjectAsTime && !activeTag.datatype) {
       for (const entry of Util.TIME_REGEXES) {
-        if (literal.match(entry.regex)) {
+        if (entry.regex.test(literal)) {
           activeTag.datatype = this.dataFactory.namedNode(Util.XSD + entry.type);
           break;
         }
@@ -230,11 +236,20 @@ export class Util {
    * @param {boolean} allowBlankNode If blank nodes are allowed. Otherwise null will be returned.
    * @return {Term} An RDF term or null.
    */
-  public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
-                                      allowBlankNode: B): B extends true
-    ? (RDF.NamedNode | RDF.BlankNode) : RDF.NamedNode;
-  public createIri<B extends boolean>(term: string, activeTag: IActiveTag, vocab: boolean, allowSafeCurie: boolean,
-                                      allowBlankNode: B): RDF.NamedNode | RDF.BlankNode | null {
+  public createIri<TB extends boolean>(
+    term: string,
+    activeTag: IActiveTag,
+    vocab: boolean,
+    allowSafeCurie: boolean,
+    allowBlankNode: TB,
+  ): TB extends true ? (RDF.NamedNode | RDF.BlankNode) : RDF.NamedNode;
+  public createIri<TB extends boolean>(
+    term: string,
+    activeTag: IActiveTag,
+    vocab: boolean,
+    allowSafeCurie: boolean,
+    allowBlankNode: TB,
+  ): RDF.NamedNode | RDF.BlankNode | null {
     term = term || '';
 
     if (!allowSafeCurie) {
@@ -248,25 +263,23 @@ export class Util {
     }
 
     // Handle strict CURIEs
-    if (term.length > 0 && term[0] === '[' && term[term.length - 1] === ']') {
-      term = term.substr(1, term.length - 2);
+    if (term.length > 0 && term.startsWith('[') && term.at(-1) === ']') {
+      term = term.slice(1, 1 + term.length - 2);
 
       // Strict CURIEs MUST have a prefix separator
-      if (term.indexOf(':') < 0) {
+      if (!term.includes(':')) {
         return null;
       }
     }
 
     // Handle blank nodes
     if (term.startsWith('_:')) {
-      return allowBlankNode ? this.dataFactory.blankNode(term.substr(2) || 'b_identity') : null;
+      return allowBlankNode ? this.dataFactory.blankNode(term.slice(2) || 'b_identity') : null;
     }
 
     // Handle vocab IRIs
-    if (vocab) {
-      if (activeTag.vocab && term.indexOf(':') < 0) {
-        return this.dataFactory.namedNode(activeTag.vocab + term);
-      }
+    if (vocab && activeTag.vocab && !term.includes(':')) {
+      return this.dataFactory.namedNode(activeTag.vocab + term);
     }
 
     // Handle prefixed IRIs
@@ -282,5 +295,4 @@ export class Util {
     }
     return this.dataFactory.namedNode(iri);
   }
-
 }

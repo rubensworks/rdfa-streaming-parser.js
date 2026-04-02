@@ -18,6 +18,7 @@ yarn-error.log
 **/index.js.map
 **/index.d.ts
 coverage
+.eslintcache
 documentation
 .rdf-test-suite-cache
 
