@@ -23,21 +23,21 @@ describe('Util', () => {
   describe('#parseNamespace', () => {
     it('should parse a tag without prefix attribute', () => {
       const attributes = {};
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({});
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({});
     });
 
     it('should parse a tag with empty prefix attribute', () => {
       const attributes = {
         prefix: '',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({});
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({});
     });
 
     it('should parse a tag with one prefix', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
@@ -46,7 +46,7 @@ describe('Util', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/ abc: http://example.org',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
         abc: 'http://example.org',
         dc: 'http://purl.org/dc/terms/',
       });
@@ -56,7 +56,7 @@ describe('Util', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/ abc',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
@@ -65,14 +65,14 @@ describe('Util', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/ abc:',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
       });
     });
 
     it('should parse a tag without prefix attribute that inherits parent prefixes', () => {
       const attributes = {};
-      await expect(Util.parsePrefixes(attributes, {
+      expect(Util.parsePrefixes(attributes, {
         ex: 'http://example.org',
       }, false)).toEqual({
         ex: 'http://example.org',
@@ -83,7 +83,7 @@ describe('Util', () => {
       const attributes = {
         prefix: '',
       };
-      await expect(Util.parsePrefixes(attributes, {
+      expect(Util.parsePrefixes(attributes, {
         ex: 'http://example.org',
       }, false)).toEqual({
         ex: 'http://example.org',
@@ -94,7 +94,7 @@ describe('Util', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/',
       };
-      await expect(Util.parsePrefixes(attributes, {
+      expect(Util.parsePrefixes(attributes, {
         ex: 'http://example.org',
       }, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
@@ -106,7 +106,7 @@ describe('Util', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/',
       };
-      await expect(Util.parsePrefixes(attributes, {
+      expect(Util.parsePrefixes(attributes, {
         dc: 'http://example.org',
       }, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
@@ -117,7 +117,7 @@ describe('Util', () => {
       const attributes = {
         prefix: 'dc: http://purl.org/dc/terms/\nex: \nhttp://example.org/',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({
         dc: 'http://purl.org/dc/terms/',
         ex: 'http://example.org/',
       });
@@ -127,14 +127,14 @@ describe('Util', () => {
       const attributes = {
         'xmlns:ex': 'http://example.org/',
       };
-      await expect(Util.parsePrefixes(attributes, {}, false)).toEqual({});
+      expect(Util.parsePrefixes(attributes, {}, false)).toEqual({});
     });
 
     it('should parse an xmlns attribute if xmlnsPrefixMappings is true', () => {
       const attributes = {
         'xmlns:ex': 'http://example.org/',
       };
-      await expect(Util.parsePrefixes(attributes, {}, true)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, true)).toEqual({
         ex: 'http://example.org/',
       });
     });
@@ -143,7 +143,7 @@ describe('Util', () => {
       const attributes = {
         'xmlns:ex': 'http://example.org/',
       };
-      await expect(Util.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
+      expect(Util.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
         abc: 'def',
         ex: 'http://example.org/',
       });
@@ -154,7 +154,7 @@ describe('Util', () => {
         prefix: 'ex: http://example.org/',
         'xmlns:ex': 'http://exampleignored.org/',
       };
-      await expect(Util.parsePrefixes(attributes, {}, true)).toEqual({
+      expect(Util.parsePrefixes(attributes, {}, true)).toEqual({
         ex: 'http://example.org/',
       });
     });
@@ -164,7 +164,7 @@ describe('Util', () => {
         prefix: 'ex: http://example.org/',
         'xmlns:ex': 'http://exampleignored.org/',
       };
-      await expect(Util.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
+      expect(Util.parsePrefixes(attributes, { abc: 'def' }, true)).toEqual({
         abc: 'def',
         ex: 'http://example.org/',
       });
@@ -178,7 +178,7 @@ describe('Util', () => {
           dc: 'http://purl.org/dc/terms/',
         },
       };
-      await expect(Util.expandPrefixedTerm('dc:bla', activeTag))
+      expect(Util.expandPrefixedTerm('dc:bla', activeTag))
         .toBe('http://purl.org/dc/terms/bla');
     });
 
@@ -186,7 +186,7 @@ describe('Util', () => {
       const activeTag: any = {
         prefixesAll: {},
       };
-      await expect(Util.expandPrefixedTerm(':bla', activeTag))
+      expect(Util.expandPrefixedTerm(':bla', activeTag))
         .toBe('http://www.w3.org/1999/xhtml/vocab#bla');
     });
 
@@ -196,7 +196,7 @@ describe('Util', () => {
           term: 'http://purl.org/dc/terms/term',
         },
       };
-      await expect(Util.expandPrefixedTerm('term', activeTag))
+      expect(Util.expandPrefixedTerm('term', activeTag))
         .toBe('http://purl.org/dc/terms/term');
     });
 
@@ -206,7 +206,7 @@ describe('Util', () => {
           dc: 'http://purl.org/dc/terms/',
         },
       };
-      await expect(Util.expandPrefixedTerm('bla:bla', activeTag))
+      expect(Util.expandPrefixedTerm('bla:bla', activeTag))
         .toBe('bla:bla');
     });
 
@@ -216,7 +216,7 @@ describe('Util', () => {
           dc: 'http://purl.org/dc/terms/',
         },
       };
-      await expect(Util.expandPrefixedTerm('http://example.org/bla', activeTag))
+      expect(Util.expandPrefixedTerm('http://example.org/bla', activeTag))
         .toBe('http://example.org/bla');
     });
 
@@ -226,7 +226,7 @@ describe('Util', () => {
           dc: 'http://purl.org/dc/terms/',
         },
       };
-      await expect(Util.expandPrefixedTerm('bla', activeTag)).toBe('bla');
+      expect(Util.expandPrefixedTerm('bla', activeTag)).toBe('bla');
     });
 
     it('should not expand an empty term', () => {
@@ -235,38 +235,38 @@ describe('Util', () => {
           '': 'http://purl.org/dc/terms/',
         },
       };
-      await expect(Util.expandPrefixedTerm('', activeTag)).toBe('');
+      expect(Util.expandPrefixedTerm('', activeTag)).toBe('');
     });
   });
 
   describe('#contentTypeToProfile', () => {
     it('should return empty string for an unknown content type', () => {
-      await expect(Util.contentTypeToProfile('text/unknown'))
+      expect(Util.contentTypeToProfile('text/unknown'))
         .toBe('');
     });
 
     it('should return html for text/html', () => {
-      await expect(Util.contentTypeToProfile('text/html'))
+      expect(Util.contentTypeToProfile('text/html'))
         .toBe('html');
     });
 
     it('should return xhtml for application/xhtml+xml', () => {
-      await expect(Util.contentTypeToProfile('application/xhtml+xml'))
+      expect(Util.contentTypeToProfile('application/xhtml+xml'))
         .toBe('xhtml');
     });
 
     it('should return xml for application/xml', () => {
-      await expect(Util.contentTypeToProfile('application/xml'))
+      expect(Util.contentTypeToProfile('application/xml'))
         .toBe('xml');
     });
 
     it('should return xml for text/xml', () => {
-      await expect(Util.contentTypeToProfile('text/xml'))
+      expect(Util.contentTypeToProfile('text/xml'))
         .toBe('xml');
     });
 
     it('should return xml for image/svg+xml', () => {
-      await expect(Util.contentTypeToProfile('image/svg+xml'))
+      expect(Util.contentTypeToProfile('image/svg+xml'))
         .toBe('xml');
     });
   });
