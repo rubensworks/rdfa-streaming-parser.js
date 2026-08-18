@@ -1,6 +1,6 @@
 import { PassThrough } from 'node:stream';
 import type * as RDF from '@rdfjs/types';
-import arrayifyStream from 'arrayify-stream';
+import { arrayifyStream } from 'arrayify-stream';
 import { DataFactory } from 'rdf-data-factory';
 import 'jest-rdf';
 import { RdfaParser } from '../lib/RdfaParser';
