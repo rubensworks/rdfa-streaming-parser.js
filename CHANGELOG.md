@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v3.1.0"></a>
+## [v3.1.0](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v3.0.2...v3.1.0) - 2026-11-07
+
+### Changed
+* [Update dependency htmlparser2 to v10 (#61)](https://github.com/rubensworks/rdfa-streaming-parser.js/commit/bdc1b06d0033531436c6ac5f97f19c6791dfb2b5)
+
 <a name="v3.0.2"></a>
 ## [v3.0.2](https://github.com/rubensworks/rdfa-streaming-parser.js/compare/v3.0.1...v3.0.2) - 2025-04-15
 
